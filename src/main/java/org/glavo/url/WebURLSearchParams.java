@@ -16,6 +16,8 @@
 package org.glavo.url;
 
 import org.glavo.url.internal.UrlEncoded;
+import org.glavo.url.internal.SearchParamsOwner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -34,7 +36,7 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
     /// The ordered list of name-value tuples.
     private List<UrlEncoded.Tuple> list;
     /// The owning URL for live query synchronization.
-    private @Nullable WebURL url;
+    private @Nullable SearchParamsOwner owner;
 
     /// Creates an empty search parameter list.
     public WebURLSearchParams() {
@@ -68,13 +70,17 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
         this.list = UrlEncoded.parseUrlencodedString(input);
     }
 
-    /// Attaches this parameter list to an owning URL.
-    void attach(WebURL url) {
-        this.url = url;
+    /// Creates live search parameters for an internal URL implementation.
+    @ApiStatus.Internal
+    public static WebURLSearchParams createLive(String init, SearchParamsOwner owner) {
+        WebURLSearchParams params = new WebURLSearchParams(init, true);
+        params.owner = owner;
+        return params;
     }
 
     /// Replaces all tuples without running update steps.
-    void replaceAll(List<UrlEncoded.Tuple> tuples) {
+    @ApiStatus.Internal
+    public void replaceAllInternal(List<UrlEncoded.Tuple> tuples) {
         this.list = new ArrayList<>(tuples);
     }
 
@@ -211,9 +217,9 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
 
     /// Runs URLSearchParams update steps.
     private void updateSteps() {
-        if (url != null) {
+        if (owner != null) {
             String serializedQuery = toString();
-            url.setQueryFromSearchParams(serializedQuery.isEmpty() ? null : serializedQuery);
+            owner.setQueryFromSearchParams(serializedQuery.isEmpty() ? null : serializedQuery);
         }
     }
 

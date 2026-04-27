@@ -2,9 +2,9 @@
 
 ## Summary
 
-This plan ports `external/whatwg-url` 16.0.1 to Java 11 as the core implementation for this project.
+This plan ports `external/whatwg-url` 16.0.1 to Java 17 as the core implementation for this project.
 
-The target public API is a complete URL API centered on `org.glavo.url.WebURL`, plus `WebURLSearchParams`. The internal implementation should preserve the WHATWG URL algorithms closely enough to be validated by fixed-version Web Platform Tests.
+The target public API is a complete URL API centered on the sealed `org.glavo.url.WebURL` interface, plus `WebURLSearchParams`. The internal implementation should preserve the WHATWG URL algorithms closely enough to be validated by fixed-version Web Platform Tests.
 
 Reference baseline:
 
@@ -14,10 +14,10 @@ Reference baseline:
 
 ## Public API
 
-Implement `org.glavo.url.WebURL` with the observable behavior of the WHATWG `URL` interface:
+Implement the sealed `org.glavo.url.WebURL` interface with the observable behavior of the WHATWG `URL` interface:
 
-- Constructors accepting an input URL and an optional base URL.
-- Static `parse` and `canParse` methods.
+- Static `of`, `parse`, and `canParse` methods.
+- A non-exported implementation class under `org.glavo.url.internal`.
 - Accessors and mutators for `href`, `protocol`, `username`, `password`, `host`, `hostname`, `port`, `pathname`, `search`, and `hash`.
 - Read-only `origin` and live `searchParams`.
 - `toString` and `toJSON` returning the serialized URL.
@@ -103,7 +103,7 @@ Import or vendor the needed resources from the same WPT revision used by upstrea
 
 Create JUnit tests covering:
 
-- MDN constructor and relative URL examples.
+- MDN factory and relative URL examples.
 - Parse failures and `canParse`.
 - URL serialization and origin serialization.
 - Special schemes, non-special schemes, `file:`, opaque paths, IPv4, IPv6, credentials, default ports, query, and fragment behavior.
@@ -125,7 +125,7 @@ Use a ten-minute timeout for Gradle `test`.
 
 ## Assumptions
 
-- The main public class remains `WebURL`, matching the existing project entry point.
+- The main public URL type remains `WebURL`, now as a sealed interface with its implementation in `org.glavo.url.internal`.
 - `WebURLSearchParams` is added as a public companion class.
 - IDNA provider selection remains internal and automatic.
 - Non-UTF-8 document encoding support for low-level parsing is not a first-stage public API commitment.
@@ -140,4 +140,3 @@ Use a ten-minute timeout for Gradle `test`.
 5. `WebURLSearchParams` and live query synchronization.
 6. ICU/JDK IDNA provider layer and WPT IDNA conformance.
 7. Full WPT data test pass, fallback-difference documentation, and cleanup.
-

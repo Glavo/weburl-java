@@ -15,272 +15,128 @@
  */
 package org.glavo.url;
 
-import org.glavo.url.internal.UrlEncoded;
-import org.glavo.url.internal.UrlParser;
-import org.glavo.url.internal.UrlRecord;
+import org.glavo.url.internal.WebURLImpl;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-
-/// A Java implementation of the WHATWG `URL` interface.
+/// A WHATWG URL.
 @NotNullByDefault
-public final class WebURL {
-    /// The mutable internal URL record.
-    private UrlRecord url;
-    /// The live query parameter object.
-    private final WebURLSearchParams searchParams;
-
+public sealed interface WebURL permits WebURLImpl {
     /// Creates a URL from an absolute input string.
-    public WebURL(String input) {
-        this(input, (UrlRecord) null);
+    static WebURL of(String input) {
+        return WebURLImpl.of(input);
     }
 
     /// Creates a URL from an input string and a base URL string.
-    public WebURL(String input, String base) {
-        this(input, parseBase(base));
+    static WebURL of(String input, String base) {
+        return WebURLImpl.of(input, base);
     }
 
     /// Creates a URL from an input string and a base URL.
-    public WebURL(String input, WebURL base) {
-        this(input, base.url);
-    }
-
-    /// Creates a URL from an input string and an optional base record.
-    private WebURL(String input, @Nullable UrlRecord base) {
-        UrlRecord parsed = UrlParser.basicParse(input, base, null, null);
-        if (parsed == null) {
-            throw new IllegalArgumentException("Invalid URL: " + input);
-        }
-
-        this.url = parsed;
-        this.searchParams = new WebURLSearchParams(parsed.query == null ? "" : parsed.query, true);
-        this.searchParams.attach(this);
-    }
-
-    /// Creates a URL from a parsed record.
-    private WebURL(UrlRecord url) {
-        this.url = url;
-        this.searchParams = new WebURLSearchParams(url.query == null ? "" : url.query, true);
-        this.searchParams.attach(this);
+    static WebURL of(String input, WebURL base) {
+        return WebURLImpl.of(input, base);
     }
 
     /// Parses a URL and returns `null` on failure.
-    public static @Nullable WebURL parse(String input) {
-        UrlRecord parsed = UrlParser.basicParse(input, null, null, null);
-        return parsed == null ? null : new WebURL(parsed);
+    static @Nullable WebURL parse(String input) {
+        return WebURLImpl.parse(input);
     }
 
     /// Parses a URL against a base URL string and returns `null` on failure.
-    public static @Nullable WebURL parse(String input, String base) {
-        UrlRecord parsedBase = UrlParser.basicParse(base, null, null, null);
-        if (parsedBase == null) {
-            return null;
-        }
-        UrlRecord parsed = UrlParser.basicParse(input, parsedBase, null, null);
-        return parsed == null ? null : new WebURL(parsed);
+    static @Nullable WebURL parse(String input, String base) {
+        return WebURLImpl.parse(input, base);
     }
 
     /// Parses a URL against a base URL and returns `null` on failure.
-    public static @Nullable WebURL parse(String input, WebURL base) {
-        UrlRecord parsed = UrlParser.basicParse(input, base.url, null, null);
-        return parsed == null ? null : new WebURL(parsed);
+    static @Nullable WebURL parse(String input, WebURL base) {
+        return WebURLImpl.parse(input, base);
     }
 
     /// Returns whether an input can be parsed as a URL.
-    public static boolean canParse(String input) {
-        return UrlParser.basicParse(input, null, null, null) != null;
+    static boolean canParse(String input) {
+        return WebURLImpl.canParse(input);
     }
 
     /// Returns whether an input can be parsed against a base URL string.
-    public static boolean canParse(String input, String base) {
-        UrlRecord parsedBase = UrlParser.basicParse(base, null, null, null);
-        return parsedBase != null && UrlParser.basicParse(input, parsedBase, null, null) != null;
+    static boolean canParse(String input, String base) {
+        return WebURLImpl.canParse(input, base);
     }
 
     /// Returns whether an input can be parsed against a base URL.
-    public static boolean canParse(String input, WebURL base) {
-        return UrlParser.basicParse(input, base.url, null, null) != null;
+    static boolean canParse(String input, WebURL base) {
+        return WebURLImpl.canParse(input, base);
     }
 
     /// Returns the serialized URL.
-    public String getHref() {
-        return UrlParser.serializeUrl(url);
-    }
+    String getHref();
 
     /// Replaces the URL with a parsed absolute URL.
-    public void setHref(String value) {
-        UrlRecord parsed = UrlParser.basicParse(value, null, null, null);
-        if (parsed == null) {
-            throw new IllegalArgumentException("Invalid URL: " + value);
-        }
-
-        this.url = parsed;
-        this.searchParams.replaceAll(UrlEncoded.parseUrlencodedString(parsed.query == null ? "" : parsed.query));
-    }
+    void setHref(String value);
 
     /// Returns the serialized origin.
-    public String getOrigin() {
-        return UrlParser.serializeOrigin(url);
-    }
+    String getOrigin();
 
     /// Returns the protocol, including the trailing colon.
-    public String getProtocol() {
-        return url.scheme + ":";
-    }
+    String getProtocol();
 
     /// Sets the protocol.
-    public void setProtocol(String value) {
-        UrlParser.basicParse(value + ":", null, url, UrlParser.State.SCHEME_START);
-    }
+    void setProtocol(String value);
 
     /// Returns the username.
-    public String getUsername() {
-        return url.username;
-    }
+    String getUsername();
 
     /// Sets the username.
-    public void setUsername(String value) {
-        if (!UrlParser.cannotHaveAUsernamePasswordPort(url)) {
-            UrlParser.setTheUsername(url, value);
-        }
-    }
+    void setUsername(String value);
 
     /// Returns the password.
-    public String getPassword() {
-        return url.password;
-    }
+    String getPassword();
 
     /// Sets the password.
-    public void setPassword(String value) {
-        if (!UrlParser.cannotHaveAUsernamePasswordPort(url)) {
-            UrlParser.setThePassword(url, value);
-        }
-    }
+    void setPassword(String value);
 
     /// Returns the host, including the port when present.
-    public String getHost() {
-        if (url.host == null) {
-            return "";
-        }
-        String host = UrlParser.serializeHost(url.host);
-        return url.port == null ? host : host + ":" + url.port;
-    }
+    String getHost();
 
     /// Sets the host.
-    public void setHost(String value) {
-        if (!url.hasOpaquePath()) {
-            UrlParser.basicParse(value, null, url, UrlParser.State.HOST);
-        }
-    }
+    void setHost(String value);
 
     /// Returns the hostname.
-    public String getHostname() {
-        return url.host == null ? "" : UrlParser.serializeHost(url.host);
-    }
+    String getHostname();
 
     /// Sets the hostname.
-    public void setHostname(String value) {
-        if (!url.hasOpaquePath()) {
-            UrlParser.basicParse(value, null, url, UrlParser.State.HOSTNAME);
-        }
-    }
+    void setHostname(String value);
 
     /// Returns the port as a string.
-    public String getPort() {
-        return url.port == null ? "" : Integer.toString(url.port);
-    }
+    String getPort();
 
     /// Sets the port.
-    public void setPort(String value) {
-        if (UrlParser.cannotHaveAUsernamePasswordPort(url)) {
-            return;
-        }
-        if (value.isEmpty()) {
-            url.port = null;
-        } else {
-            UrlParser.basicParse(value, null, url, UrlParser.State.PORT);
-        }
-    }
+    void setPort(String value);
 
     /// Returns the serialized pathname.
-    public String getPathname() {
-        return UrlParser.serializePath(url);
-    }
+    String getPathname();
 
     /// Sets the pathname.
-    public void setPathname(String value) {
-        if (url.hasOpaquePath()) {
-            return;
-        }
-        url.path = new ArrayList<>();
-        url.opaquePath = null;
-        UrlParser.basicParse(value, null, url, UrlParser.State.PATH_START);
-    }
+    void setPathname(String value);
 
     /// Returns the search string, including the leading question mark when non-empty.
-    public String getSearch() {
-        return url.query == null || url.query.isEmpty() ? "" : "?" + url.query;
-    }
+    String getSearch();
 
     /// Sets the search string.
-    public void setSearch(String value) {
-        if (value.isEmpty()) {
-            url.query = null;
-            searchParams.replaceAll(new ArrayList<>());
-            return;
-        }
-
-        String input = value.charAt(0) == '?' ? value.substring(1) : value;
-        url.query = "";
-        UrlParser.basicParse(input, null, url, UrlParser.State.QUERY);
-        searchParams.replaceAll(UrlEncoded.parseUrlencodedString(input));
-    }
+    void setSearch(String value);
 
     /// Returns the live search parameters.
-    public WebURLSearchParams getSearchParams() {
-        return searchParams;
-    }
+    WebURLSearchParams getSearchParams();
 
     /// Returns the hash string, including the leading number sign when non-empty.
-    public String getHash() {
-        return url.fragment == null || url.fragment.isEmpty() ? "" : "#" + url.fragment;
-    }
+    String getHash();
 
     /// Sets the hash string.
-    public void setHash(String value) {
-        if (value.isEmpty()) {
-            url.fragment = null;
-            return;
-        }
-
-        String input = value.charAt(0) == '#' ? value.substring(1) : value;
-        url.fragment = "";
-        UrlParser.basicParse(input, null, url, UrlParser.State.FRAGMENT);
-    }
+    void setHash(String value);
 
     /// Returns the JSON representation of this URL.
-    public String toJSON() {
-        return getHref();
-    }
+    String toJSON();
 
     /// Returns the serialized URL.
     @Override
-    public String toString() {
-        return getHref();
-    }
-
-    /// Updates the query from a live `WebURLSearchParams` object.
-    void setQueryFromSearchParams(@Nullable String query) {
-        url.query = query;
-    }
-
-    /// Parses a base URL string.
-    private static UrlRecord parseBase(String base) {
-        UrlRecord parsedBase = UrlParser.basicParse(base, null, null, null);
-        if (parsedBase == null) {
-            throw new IllegalArgumentException("Invalid base URL: " + base);
-        }
-        return parsedBase;
-    }
+    String toString();
 }
