@@ -104,16 +104,6 @@ public final class WebURLImpl implements WebURL {
         return UrlParser.serializeUrl(url);
     }
 
-    /// Returns a URL created by parsing an absolute replacement URL.
-    @Override
-    public WebURL withHref(String value) {
-        UrlRecord parsed = UrlParser.basicParse(value, null, null, null);
-        if (parsed == null) {
-            throw new IllegalArgumentException("Invalid URL: " + value);
-        }
-        return new WebURLImpl(parsed);
-    }
-
     /// Returns the serialized origin.
     @Override
     public String getOrigin() {

@@ -70,9 +70,6 @@ public sealed interface WebURL permits WebURLImpl {
     /// Returns the serialized URL.
     String getHref();
 
-    /// Returns a URL created by parsing an absolute replacement URL.
-    WebURL withHref(String value);
-
     /// Returns the serialized origin.
     String getOrigin();
 

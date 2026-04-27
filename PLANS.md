@@ -18,7 +18,7 @@ Implement the sealed `org.glavo.url.WebURL` interface with the observable behavi
 
 - Static `of`, `parse`, and `canParse` methods.
 - A non-exported implementation class under `org.glavo.url.internal`.
-- Accessors and immutable `with...` methods for `href`, `protocol`, `username`, `password`, `host`, `hostname`, `port`, `pathname`, `search`, and `hash`.
+- Accessors for `href`, `origin`, and components, plus immutable `with...` methods for component-level updates.
 - Read-only `origin` and immutable `searchParams`.
 - `toString` and `toJSON` returning the serialized URL.
 
@@ -54,7 +54,7 @@ Build the port in layers:
 4. Build immutable `WebURL` and `WebURLSearchParams` on top of the internal record.
    - `with...` methods should invoke the same state override paths as upstream on copied URL records.
    - `WebURLSearchParams` updates must return new parameter lists.
-   - Replacing `href` must return a new URL record and refreshed `searchParams`.
+   - Whole-URL replacement should use `WebURL.of(...)` or `WebURL.parse(...)` instead of a `withHref` method.
 
 5. Add IDNA provider support.
    - Define an internal `IdnaProcessor`.
