@@ -9,6 +9,12 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    testImplementation {
+        extendsFrom(configurations.compileOnly.get())
+    }
+}
+
 dependencies {
     compileOnly("org.jetbrains:annotations:26.1.0")
     compileOnly("com.ibm.icu:icu4j:78.3")
