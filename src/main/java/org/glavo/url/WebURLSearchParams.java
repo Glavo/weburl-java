@@ -168,8 +168,8 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
     }
 
     /// Returns an iterable over name-value entries.
-    public Iterable<Map.Entry<String, String>> entries() {
-        return this;
+    public List<Map.Entry<String, String>> entries() {
+        return list;
     }
 
     /// Returns all names in tuple order.
