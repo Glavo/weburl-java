@@ -24,7 +24,7 @@ import java.util.ArrayList;
 
 /// Internal implementation of `WebURL`.
 @NotNullByDefault
-public final class WebURLImpl implements WebURL, SearchParamsOwner {
+public final class WebURLImpl implements WebURL {
     /// The mutable internal URL record.
     private UrlRecord url;
     /// The live query parameter object.
@@ -91,13 +91,17 @@ public final class WebURLImpl implements WebURL, SearchParamsOwner {
         }
 
         this.url = parsed;
-        this.searchParams = WebURLSearchParams.createLive(parsed.query == null ? "" : parsed.query, this);
+        this.searchParams = WebURLSearchParams.createLiveInternal(
+                parsed.query == null ? "" : parsed.query,
+                this::setQueryFromSearchParams);
     }
 
     /// Creates a URL from a parsed record.
     private WebURLImpl(UrlRecord url) {
         this.url = url;
-        this.searchParams = WebURLSearchParams.createLive(url.query == null ? "" : url.query, this);
+        this.searchParams = WebURLSearchParams.createLiveInternal(
+                url.query == null ? "" : url.query,
+                this::setQueryFromSearchParams);
     }
 
     /// Returns the serialized URL.
@@ -115,7 +119,7 @@ public final class WebURLImpl implements WebURL, SearchParamsOwner {
         }
 
         this.url = parsed;
-        this.searchParams.replaceAllInternal(UrlEncoded.parseUrlencodedString(parsed.query == null ? "" : parsed.query));
+        this.searchParams.replaceAllInternal(parsed.query == null ? "" : parsed.query);
     }
 
     /// Returns the serialized origin.
@@ -243,14 +247,14 @@ public final class WebURLImpl implements WebURL, SearchParamsOwner {
     public void setSearch(String value) {
         if (value.isEmpty()) {
             url.query = null;
-            searchParams.replaceAllInternal(new ArrayList<>());
+            searchParams.replaceAllInternal("");
             return;
         }
 
         String input = value.charAt(0) == '?' ? value.substring(1) : value;
         url.query = "";
         UrlParser.basicParse(input, null, url, UrlParser.State.QUERY);
-        searchParams.replaceAllInternal(UrlEncoded.parseUrlencodedString(input));
+        searchParams.replaceAllInternal(input);
     }
 
     /// Returns the live search parameters.
@@ -291,8 +295,7 @@ public final class WebURLImpl implements WebURL, SearchParamsOwner {
     }
 
     /// Updates the query from a live `WebURLSearchParams` object.
-    @Override
-    public void setQueryFromSearchParams(@Nullable String query) {
+    private void setQueryFromSearchParams(@Nullable String query) {
         url.query = query;
     }
 

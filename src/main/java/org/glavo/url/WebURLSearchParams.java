@@ -16,7 +16,6 @@
 package org.glavo.url;
 
 import org.glavo.url.internal.UrlEncoded;
-import org.glavo.url.internal.SearchParamsOwner;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -29,14 +28,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /// A Java implementation of the WHATWG `URLSearchParams` interface.
 @NotNullByDefault
 public final class WebURLSearchParams implements Iterable<Map.Entry<String, String>> {
     /// The ordered list of name-value tuples.
     private List<UrlEncoded.Tuple> list;
-    /// The owning URL for live query synchronization.
-    private @Nullable SearchParamsOwner owner;
+    /// The update callback for live query synchronization.
+    private @Nullable Consumer<@Nullable String> updateCallback;
 
     /// Creates an empty search parameter list.
     public WebURLSearchParams() {
@@ -64,6 +64,11 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
         }
     }
 
+    /// Creates a detached copy of another search parameter list.
+    public WebURLSearchParams(WebURLSearchParams init) {
+        this.list = new ArrayList<>(init.list);
+    }
+
     /// Creates search parameters from a query string with optional question-mark preservation.
     WebURLSearchParams(String init, boolean doNotStripQuestionMark) {
         String input = !doNotStripQuestionMark && init.startsWith("?") ? init.substring(1) : init;
@@ -72,16 +77,16 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
 
     /// Creates live search parameters for an internal URL implementation.
     @ApiStatus.Internal
-    public static WebURLSearchParams createLive(String init, SearchParamsOwner owner) {
+    public static WebURLSearchParams createLiveInternal(String init, Consumer<@Nullable String> updateCallback) {
         WebURLSearchParams params = new WebURLSearchParams(init, true);
-        params.owner = owner;
+        params.updateCallback = updateCallback;
         return params;
     }
 
     /// Replaces all tuples without running update steps.
     @ApiStatus.Internal
-    public void replaceAllInternal(List<UrlEncoded.Tuple> tuples) {
-        this.list = new ArrayList<>(tuples);
+    public void replaceAllInternal(String init) {
+        this.list = UrlEncoded.parseUrlencodedString(init);
     }
 
     /// Returns the number of tuples.
@@ -217,9 +222,9 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
 
     /// Runs URLSearchParams update steps.
     private void updateSteps() {
-        if (owner != null) {
+        if (updateCallback != null) {
             String serializedQuery = toString();
-            owner.setQueryFromSearchParams(serializedQuery.isEmpty() ? null : serializedQuery);
+            updateCallback.accept(serializedQuery.isEmpty() ? null : serializedQuery);
         }
     }
 

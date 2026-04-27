@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -86,5 +87,29 @@ public final class WebURLSearchParamsTest {
         assertEquals(List.of("1", "2", "3"), params.values());
         assertEquals("a=1;b=2;a=3;", callbacks.toString());
         assertEquals(params.iterator().next(), params.entries().iterator().next());
+    }
+
+    /// Tests constructing from ordered map entries.
+    @Test
+    public void constructsFromMapEntries() {
+        LinkedHashMap<String, String> input = new LinkedHashMap<>();
+        input.put("b", "2");
+        input.put("a", "1");
+
+        WebURLSearchParams params = new WebURLSearchParams(input);
+
+        assertEquals("b=2&a=1", params.toString());
+    }
+
+    /// Tests that copying live search parameters creates a detached list.
+    @Test
+    public void copiesLiveParamsAsDetachedParams() {
+        WebURL url = WebURL.of("https://example.test/?a=1");
+        WebURLSearchParams copy = new WebURLSearchParams(url.getSearchParams());
+
+        copy.set("a", "2");
+
+        assertEquals("https://example.test/?a=1", url.getHref());
+        assertEquals("a=2", copy.toString());
     }
 }
