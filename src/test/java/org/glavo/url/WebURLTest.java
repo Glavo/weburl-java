@@ -31,19 +31,19 @@ public final class WebURLTest {
     @Test
     public void parsesMdnExamples() {
         WebURL a = WebURL.of("/", "https://developer.mozilla.org");
-        assertEquals("https://developer.mozilla.org/", a.getHref());
+        assertEquals("https://developer.mozilla.org/", a.href());
 
         WebURL b = WebURL.of("https://developer.mozilla.org");
-        assertEquals("https://developer.mozilla.org/", b.getHref());
+        assertEquals("https://developer.mozilla.org/", b.href());
 
         WebURL c = WebURL.of("en-US/docs", b);
-        assertEquals("https://developer.mozilla.org/en-US/docs", c.getHref());
+        assertEquals("https://developer.mozilla.org/en-US/docs", c.href());
 
         WebURL d = WebURL.of("/en-US/docs", b);
-        assertEquals("https://developer.mozilla.org/en-US/docs", d.getHref());
+        assertEquals("https://developer.mozilla.org/en-US/docs", d.href());
 
         WebURL e = WebURL.of("/en-US/docs", "https://developer.mozilla.org/fr-FR/toto");
-        assertEquals("https://developer.mozilla.org/en-US/docs", e.getHref());
+        assertEquals("https://developer.mozilla.org/en-US/docs", e.href());
     }
 
     /// Tests parse and canParse failure handling.
@@ -60,10 +60,10 @@ public final class WebURLTest {
     @Test
     public void updatesComponentsWithSetters() {
         WebURL url = WebURL.of("https://user:pass@example.com:443/a/b?x=1#f");
-        assertEquals("https://example.com", url.getOrigin());
-        assertEquals("", url.getPort());
-        assertEquals("user", url.getUsername());
-        assertEquals("pass", url.getPassword());
+        assertEquals("https://example.com", url.origin());
+        assertEquals("", url.port());
+        assertEquals("user", url.username());
+        assertEquals("pass", url.password());
 
         WebURL updated = url
                 .withProtocol("http")
@@ -74,80 +74,80 @@ public final class WebURLTest {
                 .withSearch("?q=a b&x=1")
                 .withHash("#frag ment");
 
-        assertEquals("https://user:pass@example.com/a/b?x=1#f", url.getHref());
-        assertEquals("http://a%20b:p%40ss@example.org:8080/c%20d?q=a%20b&x=1#frag%20ment", updated.getHref());
-        assertEquals("?q=a%20b&x=1", updated.getSearch());
-        assertEquals("#frag%20ment", updated.getHash());
-        assertEquals("a b", updated.getSearchParams().get("q"));
+        assertEquals("https://user:pass@example.com/a/b?x=1#f", url.href());
+        assertEquals("http://a%20b:p%40ss@example.org:8080/c%20d?q=a%20b&x=1#frag%20ment", updated.href());
+        assertEquals("?q=a%20b&x=1", updated.search());
+        assertEquals("#frag%20ment", updated.hash());
+        assertEquals("a b", updated.searchParams().get("q"));
     }
 
     /// Tests immutable search parameter updates.
     @Test
     public void updatesSearchParamsImmutably() {
         WebURL url = WebURL.of("https://example.test/?a=1&a=2");
-        WebURLSearchParams params = url.getSearchParams();
+        WebURLSearchParams params = url.searchParams();
 
         assertEquals(2, params.size());
         assertEquals("1", params.get("a"));
         assertEquals(2, params.getAll("a").size());
 
         WebURLSearchParams appended = params.append("b", "x y");
-        assertEquals("https://example.test/?a=1&a=2", url.getHref());
+        assertEquals("https://example.test/?a=1&a=2", url.href());
         assertEquals("a=1&a=2", params.toString());
 
         WebURL updated = url.withSearchParams(appended.set("a", "3"));
-        assertEquals("https://example.test/?a=3&b=x+y", updated.getHref());
+        assertEquals("https://example.test/?a=3&b=x+y", updated.href());
 
         WebURL withoutSearch = updated.withSearch("");
-        assertEquals("", withoutSearch.getSearch());
+        assertEquals("", withoutSearch.search());
         assertEquals(2, params.size());
     }
 
     /// Tests host parsing and serialization.
     @Test
     public void parsesHosts() {
-        assertEquals("http://127.0.0.1/", WebURL.of("http://127.1").getHref());
-        assertEquals("http://[2001:db8::1]/", WebURL.of("http://[2001:db8::1]/").getHref());
-        assertEquals("https://xn--bcher-kva.example/", WebURL.of("https://bücher.example/").getHref());
+        assertEquals("http://127.0.0.1/", WebURL.of("http://127.1").href());
+        assertEquals("http://[2001:db8::1]/", WebURL.of("http://[2001:db8::1]/").href());
+        assertEquals("https://xn--bcher-kva.example/", WebURL.of("https://bücher.example/").href());
     }
 
     /// Tests file URL origin behavior.
     @Test
     public void returnsNullOriginForFileUrls() {
         WebURL url = WebURL.of("file:///C:/demo");
-        assertEquals("null", url.getOrigin());
+        assertEquals("null", url.origin());
     }
 
     /// Tests path normalization and percent-encoded dot segments.
     @Test
     public void normalizesPathSegments() {
         assertEquals("http://example.com/foo/baz",
-                WebURL.of("http://example.com/foo/./bar/../baz").getHref());
+                WebURL.of("http://example.com/foo/./bar/../baz").href());
         assertEquals("http://example.com/a/c",
-                WebURL.of("http://example.com/a/%2e/b/%2e%2e/c").getHref());
+                WebURL.of("http://example.com/a/%2e/b/%2e%2e/c").href());
     }
 
     /// Tests file URL Windows drive-letter normalization.
     @Test
     public void normalizesFileUrls() {
-        assertEquals("file:///c:/demo", WebURL.of("file:c|/demo").getHref());
-        assertEquals("file:///C:/demo", WebURL.of("file:///C|/demo").getHref());
-        assertEquals("file:///C:/demo", WebURL.of("file://localhost/C:/demo").getHref());
+        assertEquals("file:///c:/demo", WebURL.of("file:c|/demo").href());
+        assertEquals("file:///C:/demo", WebURL.of("file:///C|/demo").href());
+        assertEquals("file:///C:/demo", WebURL.of("file://localhost/C:/demo").href());
     }
 
     /// Tests percent encoding in path, query, and fragment.
     @Test
     public void encodesUrlComponents() {
-        assertEquals("data:text/plain,hi%20?x#%20y", WebURL.of("data:text/plain,hi ?x# y").getHref());
-        assertEquals("http://example.com/%zz", WebURL.of("http://example.com/%zz").getHref());
+        assertEquals("data:text/plain,hi%20?x#%20y", WebURL.of("data:text/plain,hi ?x# y").href());
+        assertEquals("http://example.com/%zz", WebURL.of("http://example.com/%zz").href());
         assertEquals("http://example.com/a%20b?x=1%202#h%20i",
-                WebURL.of("http://example.com/a b?x=1 2#h i").getHref());
+                WebURL.of("http://example.com/a b?x=1 2#h i").href());
     }
 
     /// Tests port parsing and default-port elision.
     @Test
     public void handlesPorts() {
-        assertEquals("http://example.com/", WebURL.of("http://example.com:80/").getHref());
+        assertEquals("http://example.com/", WebURL.of("http://example.com:80/").href());
         assertThrows(IllegalArgumentException.class, () -> WebURL.of("http://example.com:65536/"));
     }
 
@@ -156,49 +156,49 @@ public final class WebURLTest {
     public void ignoresSettersWhenUrlCannotAcceptComponent() {
         WebURL file = WebURL.of("file:///tmp/demo");
         WebURL changedFile = file.withUsername("user").withPassword("pass").withPort("123");
-        assertEquals("file:///tmp/demo", changedFile.getHref());
+        assertEquals("file:///tmp/demo", changedFile.href());
 
         WebURL opaque = WebURL.of("data:text/plain,hello");
         WebURL changedOpaque = opaque.withHost("example.com").withHostname("example.com").withPathname("/ignored");
-        assertEquals("data:text/plain,hello", changedOpaque.getHref());
+        assertEquals("data:text/plain,hello", changedOpaque.href());
     }
 
     /// Tests protocol setter constraints.
     @Test
     public void constrainsProtocolSetter() {
         WebURL special = WebURL.of("http://example.com:21/");
-        assertEquals("ftp://example.com/", special.withProtocol("ftp").getHref());
+        assertEquals("ftp://example.com/", special.withProtocol("ftp").href());
 
         WebURL cannotBecomeNonSpecial = WebURL.of("http://example.com/");
-        assertEquals("http://example.com/", cannotBecomeNonSpecial.withProtocol("foo").getHref());
+        assertEquals("http://example.com/", cannotBecomeNonSpecial.withProtocol("foo").href());
 
         WebURL nonSpecial = WebURL.of("foo://example.com/path");
-        assertEquals("foo://example.com/path", nonSpecial.withProtocol("https").getHref());
+        assertEquals("foo://example.com/path", nonSpecial.withProtocol("https").href());
     }
 
     /// Tests opaque base URL fragment-only parsing and blob origin serialization.
     @Test
     public void handlesOpaqueAndBlobUrls() {
-        assertEquals("data:text/plain,hello#frag", WebURL.of("#frag", "data:text/plain,hello").getHref());
-        assertEquals("https://example.com", WebURL.of("blob:https://example.com/id").getOrigin());
-        assertEquals("null", WebURL.of("blob:ftp://example.com/id").getOrigin());
+        assertEquals("data:text/plain,hello#frag", WebURL.of("#frag", "data:text/plain,hello").href());
+        assertEquals("https://example.com", WebURL.of("blob:https://example.com/id").origin());
+        assertEquals("null", WebURL.of("blob:ftp://example.com/id").origin());
     }
 
     /// Tests non-special authority and credentials handling.
     @Test
     public void handlesAuthorityBoundaries() {
-        assertEquals("foo://", WebURL.of("foo://").getHref());
-        assertEquals("foo://example.com/path", WebURL.of("foo://example.com/path").getHref());
-        assertEquals("foo://user:pass@example.com/path", WebURL.of("foo://user:pass@example.com/path").getHref());
-        assertEquals("http://user%40@example.com/", WebURL.of("http://user@@example.com/").getHref());
+        assertEquals("foo://", WebURL.of("foo://").href());
+        assertEquals("foo://example.com/path", WebURL.of("foo://example.com/path").href());
+        assertEquals("foo://user:pass@example.com/path", WebURL.of("foo://user:pass@example.com/path").href());
+        assertEquals("http://user%40@example.com/", WebURL.of("http://user@@example.com/").href());
     }
 
     /// Tests empty query and fragment preservation.
     @Test
     public void preservesEmptyQueryAndFragment() {
-        assertEquals("http://example.com/?x#y", WebURL.of("http://example.com?x#y").getHref());
-        assertEquals("http://example.com/#y", WebURL.of("http://example.com#y").getHref());
-        assertEquals("http://example.com/?", WebURL.of("http://example.com/?").getHref());
-        assertEquals("http://example.com/#", WebURL.of("http://example.com/#").getHref());
+        assertEquals("http://example.com/?x#y", WebURL.of("http://example.com?x#y").href());
+        assertEquals("http://example.com/#y", WebURL.of("http://example.com#y").href());
+        assertEquals("http://example.com/?", WebURL.of("http://example.com/?").href());
+        assertEquals("http://example.com/#", WebURL.of("http://example.com/#").href());
     }
 }

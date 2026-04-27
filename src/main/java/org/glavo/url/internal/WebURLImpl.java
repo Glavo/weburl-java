@@ -100,19 +100,19 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the serialized URL.
     @Override
-    public String getHref() {
+    public String href() {
         return UrlParser.serializeUrl(url);
     }
 
     /// Returns the serialized origin.
     @Override
-    public String getOrigin() {
+    public String origin() {
         return UrlParser.serializeOrigin(url);
     }
 
     /// Returns the protocol, including the trailing colon.
     @Override
-    public String getProtocol() {
+    public String protocol() {
         return url.scheme + ":";
     }
 
@@ -124,7 +124,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the username.
     @Override
-    public String getUsername() {
+    public String username() {
         return url.username;
     }
 
@@ -141,7 +141,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the password.
     @Override
-    public String getPassword() {
+    public String password() {
         return url.password;
     }
 
@@ -158,7 +158,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the host, including the port when present.
     @Override
-    public String getHost() {
+    public String host() {
         if (url.host == null) {
             return "";
         }
@@ -177,7 +177,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the hostname.
     @Override
-    public String getHostname() {
+    public String hostname() {
         return url.host == null ? "" : UrlParser.serializeHost(url.host);
     }
 
@@ -192,7 +192,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the port as a string.
     @Override
-    public String getPort() {
+    public String port() {
         return url.port == null ? "" : Integer.toString(url.port);
     }
 
@@ -213,7 +213,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the serialized pathname.
     @Override
-    public String getPathname() {
+    public String pathname() {
         return UrlParser.serializePath(url);
     }
 
@@ -231,7 +231,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the search string, including the leading question mark when non-empty.
     @Override
-    public String getSearch() {
+    public String search() {
         return url.query == null || url.query.isEmpty() ? "" : "?" + url.query;
     }
 
@@ -251,7 +251,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns immutable search parameters parsed from the current query.
     @Override
-    public WebURLSearchParams getSearchParams() {
+    public WebURLSearchParams searchParams() {
         return searchParams;
     }
 
@@ -266,7 +266,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the hash string, including the leading number sign when non-empty.
     @Override
-    public String getHash() {
+    public String hash() {
         return url.fragment == null || url.fragment.isEmpty() ? "" : "#" + url.fragment;
     }
 
@@ -287,13 +287,13 @@ public final class WebURLImpl implements WebURL {
     /// Returns the JSON representation of this URL.
     @Override
     public String toJSON() {
-        return getHref();
+        return href();
     }
 
     /// Returns the serialized URL.
     @Override
     public String toString() {
-        return getHref();
+        return href();
     }
 
     /// Returns the internal URL record for a `WebURL`.

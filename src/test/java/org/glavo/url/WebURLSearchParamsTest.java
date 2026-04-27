@@ -108,11 +108,11 @@ public final class WebURLSearchParamsTest {
     @Test
     public void copiesUrlParamsAsDetachedParams() {
         WebURL url = WebURL.of("https://example.test/?a=1");
-        WebURLSearchParams copy = new WebURLSearchParams(url.getSearchParams());
+        WebURLSearchParams copy = new WebURLSearchParams(url.searchParams());
 
         WebURLSearchParams updated = copy.set("a", "2");
 
-        assertEquals("https://example.test/?a=1", url.getHref());
+        assertEquals("https://example.test/?a=1", url.href());
         assertEquals("a=1", copy.toString());
         assertEquals("a=2", updated.toString());
     }
