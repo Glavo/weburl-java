@@ -16,6 +16,7 @@
 package org.glavo.url.internal;
 
 import org.glavo.url.WebURL;
+import org.glavo.url.WebURLParseException;
 import org.glavo.url.WebURLSearchParams;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -29,16 +30,22 @@ public final class WebURLImpl implements WebURL {
     private final WebURLSearchParams searchParams;
 
     /// Creates a URL from an absolute input string.
+    ///
+    /// Throws `WebURLParseException` when the input cannot be parsed.
     public static WebURL of(String input) {
         return new WebURLImpl(input, null);
     }
 
     /// Creates a URL from an input string and a base URL string.
+    ///
+    /// Throws `WebURLParseException` when the input or base URL cannot be parsed.
     public static WebURL of(String input, String base) {
         return new WebURLImpl(input, parseBase(base));
     }
 
     /// Creates a URL from an input string and a base URL.
+    ///
+    /// Throws `WebURLParseException` when the input cannot be parsed against the base URL.
     public static WebURL of(String input, WebURL base) {
         return new WebURLImpl(input, record(base));
     }
@@ -83,9 +90,10 @@ public final class WebURLImpl implements WebURL {
 
     /// Creates a URL from an input string and an optional base record.
     private WebURLImpl(String input, @Nullable UrlRecord base) {
-        UrlRecord parsed = UrlParser.basicParse(input, base, null, null);
+        UrlParser.ParseResult result = UrlParser.basicParseResult(input, base, null, null);
+        UrlRecord parsed = result.url();
         if (parsed == null) {
-            throw new IllegalArgumentException("Invalid URL: " + input);
+            throw parseExceptionOrIllegalArgument(result.error(), "Invalid URL: " + input);
         }
 
         this.url = parsed;
@@ -315,10 +323,19 @@ public final class WebURLImpl implements WebURL {
 
     /// Parses a base URL string.
     private static UrlRecord parseBase(String base) {
-        UrlRecord parsedBase = UrlParser.basicParse(base, null, null, null);
+        UrlParser.ParseResult result = UrlParser.basicParseResult(base, null, null, null);
+        UrlRecord parsedBase = result.url();
         if (parsedBase == null) {
-            throw new IllegalArgumentException("Invalid base URL: " + base);
+            throw parseExceptionOrIllegalArgument(result.error(), "Invalid base URL: " + base);
         }
         return parsedBase;
+    }
+
+    /// Returns the parser exception, or a generic argument exception when none is available.
+    private static IllegalArgumentException parseExceptionOrIllegalArgument(
+            @Nullable WebURLParseException exception,
+            String message
+    ) {
+        return exception == null ? new IllegalArgumentException(message) : exception;
     }
 }

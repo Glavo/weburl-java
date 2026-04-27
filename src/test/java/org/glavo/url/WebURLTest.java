@@ -56,6 +56,26 @@ public final class WebURLTest {
         assertTrue(WebURL.canParse("/en-US/docs", "https://developer.mozilla.org"));
     }
 
+    /// Tests typed parse exceptions for selected URL Standard validation errors.
+    @Test
+    public void reportsTypedParseExceptions() {
+        WebURLParseException missingScheme =
+                assertThrows(WebURLParseException.MissingSchemeNonRelativeURL.class,
+                        () -> WebURL.of("/en-US/docs"));
+        assertEquals("missing-scheme-non-relative-URL", missingScheme.errorName());
+
+        assertThrows(WebURLParseException.PortOutOfRange.class,
+                () -> WebURL.of("http://example.com:65536/"));
+        assertThrows(WebURLParseException.PortInvalid.class,
+                () -> WebURL.of("http://example.com:7z/"));
+        assertThrows(WebURLParseException.HostMissing.class,
+                () -> WebURL.of("https://:443"));
+        assertThrows(WebURLParseException.IPv6Unclosed.class,
+                () -> WebURL.of("https://[::1"));
+        assertThrows(WebURLParseException.IPv4TooManyParts.class,
+                () -> WebURL.of("https://1.2.3.4.5/"));
+    }
+
     /// Tests URL getters and setters.
     @Test
     public void updatesComponentsWithSetters() {

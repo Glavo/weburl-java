@@ -15,6 +15,7 @@
  */
 package org.glavo.url.internal;
 
+import org.glavo.url.WebURLParseException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,8 +51,45 @@ public final class UrlParser {
             @Nullable UrlRecord url,
             @Nullable State stateOverride
     ) {
+        return basicParseResult(input, baseUrl, url, stateOverride).url();
+    }
+
+    /// Runs the basic URL parser and returns the parse error when parsing fails.
+    public static ParseResult basicParseResult(
+            String input,
+            @Nullable UrlRecord baseUrl,
+            @Nullable UrlRecord url,
+            @Nullable State stateOverride
+    ) {
         StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride);
-        return stateMachine.failure ? null : stateMachine.url;
+        return new ParseResult(
+                stateMachine.failure ? null : stateMachine.url,
+                stateMachine.failure ? stateMachine.validationError : null);
+    }
+
+    /// The result of a basic URL parser run.
+    @NotNullByDefault
+    public static final class ParseResult {
+        /// The parsed URL record, or `null` when parsing failed.
+        private final @Nullable UrlRecord url;
+        /// The validation error that caused failure, or `null` when unavailable.
+        private final @Nullable WebURLParseException error;
+
+        /// Creates a parser result.
+        private ParseResult(@Nullable UrlRecord url, @Nullable WebURLParseException error) {
+            this.url = url;
+            this.error = error;
+        }
+
+        /// Returns the parsed URL record, or `null` when parsing failed.
+        public @Nullable UrlRecord url() {
+            return url;
+        }
+
+        /// Returns the validation error that caused failure, or `null` when unavailable.
+        public @Nullable WebURLParseException error() {
+            return error;
+        }
     }
 
     /// Serializes a URL record.
@@ -191,13 +229,13 @@ public final class UrlParser {
     }
 
     /// Parses a host string.
-    private static @Nullable UrlHost parseHost(String input, boolean opaque) {
+    private static UrlHost parseHost(String input, boolean opaque) {
         if (input.startsWith("[")) {
             if (!input.endsWith("]")) {
-                return null;
+                throw new WebURLParseException.IPv6Unclosed();
             }
-            int @Nullable [] address = parseIpv6(input.substring(1, input.length() - 1));
-            return address == null ? null : UrlHost.ipv6(address);
+            int[] address = parseIpv6(input.substring(1, input.length() - 1));
+            return UrlHost.ipv6(address);
         }
 
         if (opaque) {
@@ -206,36 +244,35 @@ public final class UrlParser {
 
         String domain = Encoding.utf8DecodeWithoutBom(PercentEncoding.percentDecodeString(input));
         String asciiDomain = domainToAscii(domain, false);
-        if (asciiDomain == null) {
-            return null;
-        }
 
         if (endsInANumber(asciiDomain)) {
-            Long ipv4 = parseIpv4(asciiDomain);
-            return ipv4 == null ? null : UrlHost.ipv4(ipv4);
+            return UrlHost.ipv4(parseIpv4(asciiDomain));
         }
 
         return UrlHost.domain(asciiDomain);
     }
 
     /// Parses an opaque host.
-    private static @Nullable UrlHost parseOpaqueHost(String input) {
+    private static UrlHost parseOpaqueHost(String input) {
         if (containsForbiddenHostCodePoint(input)) {
-            return null;
+            throw new WebURLParseException.HostInvalidCodePoint();
         }
         return UrlHost.opaque(PercentEncoding.utf8PercentEncodeString(
                 input, PercentEncoding::isC0ControlPercentEncode));
     }
 
     /// Converts a domain to ASCII.
-    private static @Nullable String domainToAscii(String domain, boolean strict) {
+    private static String domainToAscii(String domain, boolean strict) {
         String result = IdnaProcessor.toAscii(domain, strict);
         if (result == null) {
-            return null;
+            throw new WebURLParseException.DomainToASCII();
         }
         if (!strict) {
-            if (result.isEmpty() || containsForbiddenDomainCodePoint(result)) {
-                return null;
+            if (result.isEmpty()) {
+                throw new WebURLParseException.DomainToASCII();
+            }
+            if (containsForbiddenDomainCodePoint(result)) {
+                throw new WebURLParseException.DomainInvalidCodePoint();
             }
         }
         return result;
@@ -301,33 +338,33 @@ public final class UrlParser {
     }
 
     /// Parses an IPv4 address.
-    private static @Nullable Long parseIpv4(String input) {
+    private static long parseIpv4(String input) {
         List<String> parts = new ArrayList<>(Arrays.asList(input.split("\\.", -1)));
         if (parts.get(parts.size() - 1).isEmpty() && parts.size() > 1) {
             parts.remove(parts.size() - 1);
         }
         if (parts.size() > 4) {
-            return null;
+            throw new WebURLParseException.IPv4TooManyParts();
         }
 
         List<Long> numbers = new ArrayList<>();
         for (String part : parts) {
             Long number = parseIpv4Number(part);
             if (number == null) {
-                return null;
+                throw new WebURLParseException.IPv4NonNumericPart();
             }
             numbers.add(number);
         }
 
         for (int i = 0; i < numbers.size() - 1; i++) {
             if (numbers.get(i) > 255) {
-                return null;
+                throw new WebURLParseException.IPv4OutOfRangePart();
             }
         }
 
         long lastLimit = 1L << (8 * (5 - numbers.size()));
         if (numbers.get(numbers.size() - 1) >= lastLimit) {
-            return null;
+            throw new WebURLParseException.IPv4OutOfRangePart();
         }
 
         long ipv4 = numbers.remove(numbers.size() - 1);
@@ -340,7 +377,7 @@ public final class UrlParser {
     }
 
     /// Parses an IPv6 address.
-    private static int @Nullable [] parseIpv6(String inputString) {
+    private static int[] parseIpv6(String inputString) {
         int[] address = new int[8];
         int pieceIndex = 0;
         int compress = -1;
@@ -349,7 +386,7 @@ public final class UrlParser {
 
         if (codePoint(input, pointer) == ':') {
             if (codePoint(input, pointer + 1) != ':') {
-                return null;
+                throw new WebURLParseException.IPv6InvalidCompression();
             }
             pointer += 2;
             pieceIndex++;
@@ -358,12 +395,12 @@ public final class UrlParser {
 
         while (pointer < input.length) {
             if (pieceIndex == 8) {
-                return null;
+                throw new WebURLParseException.IPv6TooManyPieces();
             }
 
             if (codePoint(input, pointer) == ':') {
                 if (compress != -1) {
-                    return null;
+                    throw new WebURLParseException.IPv6MultipleCompression();
                 }
                 pointer++;
                 pieceIndex++;
@@ -380,8 +417,11 @@ public final class UrlParser {
             }
 
             if (codePoint(input, pointer) == '.') {
-                if (length == 0 || pieceIndex > 6) {
-                    return null;
+                if (length == 0) {
+                    throw new WebURLParseException.IPv4InIPv6InvalidCodePoint();
+                }
+                if (pieceIndex > 6) {
+                    throw new WebURLParseException.IPv4InIPv6TooManyPieces();
                 }
                 pointer -= length;
                 int numbersSeen = 0;
@@ -391,23 +431,23 @@ public final class UrlParser {
                         if (codePoint(input, pointer) == '.' && numbersSeen < 4) {
                             pointer++;
                         } else {
-                            return null;
+                            throw new WebURLParseException.IPv4InIPv6InvalidCodePoint();
                         }
                     }
                     if (!Infra.isAsciiDigit(codePoint(input, pointer))) {
-                        return null;
+                        throw new WebURLParseException.IPv4InIPv6InvalidCodePoint();
                     }
                     while (Infra.isAsciiDigit(codePoint(input, pointer))) {
                         int number = Character.digit(codePoint(input, pointer), 10);
                         if (ipv4Piece == null) {
                             ipv4Piece = number;
                         } else if (ipv4Piece == 0) {
-                            return null;
+                            throw new WebURLParseException.IPv4InIPv6InvalidCodePoint();
                         } else {
                             ipv4Piece = ipv4Piece * 10 + number;
                         }
                         if (ipv4Piece > 255) {
-                            return null;
+                            throw new WebURLParseException.IPv4InIPv6OutOfRangePart();
                         }
                         pointer++;
                     }
@@ -418,16 +458,16 @@ public final class UrlParser {
                     }
                 }
                 if (numbersSeen != 4) {
-                    return null;
+                    throw new WebURLParseException.IPv4InIPv6TooFewParts();
                 }
                 break;
             } else if (codePoint(input, pointer) == ':') {
                 pointer++;
                 if (codePoint(input, pointer) == EOF) {
-                    return null;
+                    throw new WebURLParseException.IPv6InvalidCodePoint();
                 }
             } else if (codePoint(input, pointer) != EOF) {
-                return null;
+                throw new WebURLParseException.IPv6InvalidCodePoint();
             }
 
             address[pieceIndex] = value;
@@ -445,7 +485,7 @@ public final class UrlParser {
                 swaps--;
             }
         } else if (pieceIndex != 8) {
-            return null;
+            throw new WebURLParseException.IPv6TooFewPieces();
         }
 
         return address;
@@ -651,8 +691,8 @@ public final class UrlParser {
         private final UrlRecord url;
         /// Whether parsing failed.
         private boolean failure;
-        /// Whether a parse error occurred.
-        private boolean parseError;
+        /// The most recent validation error recorded by this parser run.
+        private @Nullable WebURLParseException validationError;
         /// Current parser state.
         private State state;
         /// Temporary parser buffer.
@@ -676,14 +716,14 @@ public final class UrlParser {
             if (url == null) {
                 String trimmed = trimControlChars(text);
                 if (!trimmed.equals(text)) {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
                 text = trimmed;
             }
 
             String withoutTabsAndNewlines = trimTabAndNewline(text);
             if (!withoutTabsAndNewlines.equals(text)) {
-                parseError = true;
+                recordValidationError(new WebURLParseException.InvalidURLUnit());
             }
             this.input = withoutTabsAndNewlines.codePoints().toArray();
 
@@ -692,18 +732,44 @@ public final class UrlParser {
 
         /// Runs the parser loop.
         private void run() {
-            for (; pointer <= input.length; pointer++) {
-                int c = pointer == input.length ? EOF : input[pointer];
-                String cStr = c == EOF ? "" : new String(Character.toChars(c));
-                Result result = execute(c, cStr);
-                if (result == Result.STOP) {
-                    break;
+            try {
+                for (; pointer <= input.length; pointer++) {
+                    int c = pointer == input.length ? EOF : input[pointer];
+                    String cStr = c == EOF ? "" : new String(Character.toChars(c));
+                    Result result = execute(c, cStr);
+                    if (result == Result.STOP) {
+                        break;
+                    }
+                    if (result == Result.FAILURE) {
+                        failure = true;
+                        break;
+                    }
                 }
-                if (result == Result.FAILURE) {
-                    failure = true;
-                    break;
-                }
+            } catch (WebURLParseException exception) {
+                validationError = exception;
+                failure = true;
             }
+        }
+
+        /// Records a validation error without forcing parser failure.
+        private void recordValidationError(WebURLParseException error) {
+            validationError = error;
+        }
+
+        /// Records a validation error and returns a parser failure result.
+        private Result fail(WebURLParseException error) {
+            validationError = error;
+            return Result.FAILURE;
+        }
+
+        /// Returns a parser failure result without a corresponding public validation error.
+        private Result failApiValidation() {
+            return Result.FAILURE;
+        }
+
+        /// Returns a parser failure for `host-missing`.
+        private Result failHostMissing() {
+            return fail(new WebURLParseException.HostMissing());
         }
 
         /// Executes the current parser state.
@@ -764,8 +830,7 @@ public final class UrlParser {
                 state = State.NO_SCHEME;
                 pointer--;
             } else {
-                parseError = true;
-                return Result.FAILURE;
+                return failApiValidation();
             }
             return Result.CONTINUE;
         }
@@ -800,7 +865,7 @@ public final class UrlParser {
                 buffer = "";
                 if (url.scheme.equals("file")) {
                     if (codePoint(input, pointer + 1) != '/' || codePoint(input, pointer + 2) != '/') {
-                        parseError = true;
+                        recordValidationError(new WebURLParseException.SpecialSchemeMissingFollowingSolidus());
                     }
                     state = State.FILE;
                 } else if (isSpecial(url) && base != null && base.scheme.equals(url.scheme)) {
@@ -820,8 +885,7 @@ public final class UrlParser {
                 state = State.NO_SCHEME;
                 pointer = -1;
             } else {
-                parseError = true;
-                return Result.FAILURE;
+                return failApiValidation();
             }
             return Result.CONTINUE;
         }
@@ -829,7 +893,7 @@ public final class UrlParser {
         /// Parses the no-scheme state.
         private Result parseNoScheme(int c) {
             if (base == null || (base.hasOpaquePath() && c != '#')) {
-                return Result.FAILURE;
+                return fail(new WebURLParseException.MissingSchemeNonRelativeURL());
             } else if (base.hasOpaquePath() && c == '#') {
                 url.scheme = base.scheme;
                 url.opaquePath = base.opaquePath;
@@ -853,7 +917,7 @@ public final class UrlParser {
                 state = State.SPECIAL_AUTHORITY_IGNORE_SLASHES;
                 pointer++;
             } else {
-                parseError = true;
+                recordValidationError(new WebURLParseException.SpecialSchemeMissingFollowingSolidus());
                 state = State.RELATIVE;
                 pointer--;
             }
@@ -874,13 +938,13 @@ public final class UrlParser {
         /// Parses the relative state.
         private Result parseRelative(int c) {
             if (base == null) {
-                return Result.FAILURE;
+                return failApiValidation();
             }
             url.scheme = base.scheme;
             if (c == '/') {
                 state = State.RELATIVE_SLASH;
             } else if (isSpecial(url) && c == '\\') {
-                parseError = true;
+                recordValidationError(new WebURLParseException.InvalidReverseSolidus());
                 state = State.RELATIVE_SLASH;
             } else {
                 url.username = base.username;
@@ -911,11 +975,11 @@ public final class UrlParser {
         /// Parses the relative-slash state.
         private Result parseRelativeSlash(int c) {
             if (base == null) {
-                return Result.FAILURE;
+                return failApiValidation();
             }
             if (isSpecial(url) && (c == '/' || c == '\\')) {
                 if (c == '\\') {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidReverseSolidus());
                 }
                 state = State.SPECIAL_AUTHORITY_IGNORE_SLASHES;
             } else if (c == '/') {
@@ -937,7 +1001,7 @@ public final class UrlParser {
                 state = State.SPECIAL_AUTHORITY_IGNORE_SLASHES;
                 pointer++;
             } else {
-                parseError = true;
+                recordValidationError(new WebURLParseException.SpecialSchemeMissingFollowingSolidus());
                 state = State.SPECIAL_AUTHORITY_IGNORE_SLASHES;
                 pointer--;
             }
@@ -950,7 +1014,7 @@ public final class UrlParser {
                 state = State.AUTHORITY;
                 pointer--;
             } else {
-                parseError = true;
+                recordValidationError(new WebURLParseException.SpecialSchemeMissingFollowingSolidus());
             }
             return Result.CONTINUE;
         }
@@ -958,7 +1022,7 @@ public final class UrlParser {
         /// Parses the authority state.
         private Result parseAuthority(int c, String cStr) {
             if (c == '@') {
-                parseError = true;
+                recordValidationError(new WebURLParseException.InvalidCredentials());
                 if (atSignSeen) {
                     buffer = "%40" + buffer;
                 }
@@ -980,8 +1044,7 @@ public final class UrlParser {
                 buffer = "";
             } else if (c == EOF || c == '/' || c == '?' || c == '#' || (isSpecial(url) && c == '\\')) {
                 if (atSignSeen && buffer.isEmpty()) {
-                    parseError = true;
-                    return Result.FAILURE;
+                    return failHostMissing();
                 }
                 pointer -= countSymbols(buffer) + 1;
                 buffer = "";
@@ -999,33 +1062,24 @@ public final class UrlParser {
                 state = State.FILE_HOST;
             } else if (c == ':' && !insideBrackets) {
                 if (buffer.isEmpty()) {
-                    parseError = true;
-                    return Result.FAILURE;
+                    return failHostMissing();
                 }
                 if (stateOverride == State.HOSTNAME) {
-                    return Result.FAILURE;
+                    return failApiValidation();
                 }
                 UrlHost host = parseHost(buffer, isNotSpecial(url));
-                if (host == null) {
-                    return Result.FAILURE;
-                }
                 url.host = host;
                 buffer = "";
                 state = State.PORT;
             } else if (c == EOF || c == '/' || c == '?' || c == '#' || (isSpecial(url) && c == '\\')) {
                 pointer--;
                 if (isSpecial(url) && buffer.isEmpty()) {
-                    parseError = true;
-                    return Result.FAILURE;
+                    return failHostMissing();
                 } else if (stateOverride != null && buffer.isEmpty()
                         && (includesCredentials(url) || url.port != null)) {
-                    parseError = true;
-                    return Result.FAILURE;
+                    return failApiValidation();
                 }
                 UrlHost host = parseHost(buffer, isNotSpecial(url));
-                if (host == null) {
-                    return Result.FAILURE;
-                }
                 url.host = host;
                 buffer = "";
                 state = State.PATH_START;
@@ -1054,12 +1108,10 @@ public final class UrlParser {
                     try {
                         port = Integer.parseInt(buffer);
                     } catch (NumberFormatException ignored) {
-                        parseError = true;
-                        return Result.FAILURE;
+                        return fail(new WebURLParseException.PortOutOfRange());
                     }
                     if (port > 65535) {
-                        parseError = true;
-                        return Result.FAILURE;
+                        return fail(new WebURLParseException.PortOutOfRange());
                     }
                     Integer defaultPort = defaultPort(url.scheme);
                     url.port = defaultPort != null && defaultPort == port ? null : port;
@@ -1069,13 +1121,12 @@ public final class UrlParser {
                     }
                 }
                 if (stateOverride != null) {
-                    return Result.FAILURE;
+                    return failApiValidation();
                 }
                 state = State.PATH_START;
                 pointer--;
             } else {
-                parseError = true;
-                return Result.FAILURE;
+                return fail(new WebURLParseException.PortInvalid());
             }
             return Result.CONTINUE;
         }
@@ -1087,7 +1138,7 @@ public final class UrlParser {
 
             if (c == '/' || c == '\\') {
                 if (c == '\\') {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidReverseSolidus());
                 }
                 state = State.FILE_SLASH;
             } else if (base != null && base.scheme.equals("file")) {
@@ -1105,7 +1156,7 @@ public final class UrlParser {
                     if (!startsWithWindowsDriveLetter(input, pointer)) {
                         shortenPath(url);
                     } else {
-                        parseError = true;
+                        recordValidationError(new WebURLParseException.FileInvalidWindowsDriveLetter());
                         url.path = new ArrayList<>();
                     }
                     state = State.PATH;
@@ -1122,7 +1173,7 @@ public final class UrlParser {
         private Result parseFileSlash(int c) {
             if (c == '/' || c == '\\') {
                 if (c == '\\') {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidReverseSolidus());
                 }
                 state = State.FILE_HOST;
             } else {
@@ -1145,7 +1196,7 @@ public final class UrlParser {
             if (c == EOF || c == '/' || c == '\\' || c == '?' || c == '#') {
                 pointer--;
                 if (stateOverride == null && isWindowsDriveLetterString(buffer)) {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.FileInvalidWindowsDriveLetterHost());
                     state = State.PATH;
                 } else if (buffer.isEmpty()) {
                     url.host = UrlHost.domain("");
@@ -1155,9 +1206,6 @@ public final class UrlParser {
                     state = State.PATH_START;
                 } else {
                     UrlHost host = parseHost(buffer, isNotSpecial(url));
-                    if (host == null) {
-                        return Result.FAILURE;
-                    }
                     if (serializeHost(host).equals("localhost")) {
                         host = UrlHost.domain("");
                     }
@@ -1178,7 +1226,7 @@ public final class UrlParser {
         private Result parsePathStart(int c) {
             if (isSpecial(url)) {
                 if (c == '\\') {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidReverseSolidus());
                 }
                 state = State.PATH;
                 if (c != '/' && c != '\\') {
@@ -1206,7 +1254,7 @@ public final class UrlParser {
             if (c == EOF || c == '/' || (isSpecial(url) && c == '\\')
                     || (stateOverride == null && (c == '?' || c == '#'))) {
                 if (isSpecial(url) && c == '\\') {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidReverseSolidus());
                 }
 
                 if (isDoubleDot(buffer)) {
@@ -1233,7 +1281,7 @@ public final class UrlParser {
                 }
             } else {
                 if (PercentEncoding.startsInvalidPercentTriplet(input, pointer)) {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
                 buffer += PercentEncoding.utf8PercentEncodeCodePoint(c, PercentEncoding::isPathPercentEncode);
             }
@@ -1254,10 +1302,10 @@ public final class UrlParser {
                         + (remaining == '?' || remaining == '#' ? "%20" : " ");
             } else {
                 if (c != EOF && c != '%') {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
                 if (c != EOF && PercentEncoding.startsInvalidPercentTriplet(input, pointer)) {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
                 if (c != EOF) {
                     url.opaquePath = (url.opaquePath == null ? "" : url.opaquePath)
@@ -1283,7 +1331,7 @@ public final class UrlParser {
                 }
             } else {
                 if (PercentEncoding.startsInvalidPercentTriplet(input, pointer)) {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
                 buffer += cStr;
             }
@@ -1294,7 +1342,7 @@ public final class UrlParser {
         private Result parseFragment(int c) {
             if (c != EOF) {
                 if (PercentEncoding.startsInvalidPercentTriplet(input, pointer)) {
-                    parseError = true;
+                    recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
                 url.fragment = (url.fragment == null ? "" : url.fragment)
                         + PercentEncoding.utf8PercentEncodeCodePoint(c, PercentEncoding::isFragmentPercentEncode);

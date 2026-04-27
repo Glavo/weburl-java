@@ -23,16 +23,22 @@ import org.jetbrains.annotations.Nullable;
 @NotNullByDefault
 public sealed interface WebURL permits WebURLImpl {
     /// Creates a URL from an absolute input string.
+    ///
+    /// Throws `WebURLParseException` when the input cannot be parsed.
     static WebURL of(String input) {
         return WebURLImpl.of(input);
     }
 
     /// Creates a URL from an input string and a base URL string.
+    ///
+    /// Throws `WebURLParseException` when the input or base URL cannot be parsed.
     static WebURL of(String input, String base) {
         return WebURLImpl.of(input, base);
     }
 
     /// Creates a URL from an input string and a base URL.
+    ///
+    /// Throws `WebURLParseException` when the input cannot be parsed against the base URL.
     static WebURL of(String input, WebURL base) {
         return WebURLImpl.of(input, base);
     }
