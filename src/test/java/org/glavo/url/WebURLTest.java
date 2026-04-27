@@ -65,23 +65,25 @@ public final class WebURLTest {
         assertEquals("user", url.getUsername());
         assertEquals("pass", url.getPassword());
 
-        url.setProtocol("http");
-        url.setHost("example.org:8080");
-        url.setUsername("a b");
-        url.setPassword("p@ss");
-        url.setPathname("/c d");
-        url.setSearch("?q=a b&x=1");
-        url.setHash("#frag ment");
+        WebURL updated = url
+                .withProtocol("http")
+                .withHost("example.org:8080")
+                .withUsername("a b")
+                .withPassword("p@ss")
+                .withPathname("/c d")
+                .withSearch("?q=a b&x=1")
+                .withHash("#frag ment");
 
-        assertEquals("http://a%20b:p%40ss@example.org:8080/c%20d?q=a%20b&x=1#frag%20ment", url.getHref());
-        assertEquals("?q=a%20b&x=1", url.getSearch());
-        assertEquals("#frag%20ment", url.getHash());
-        assertEquals("a b", url.getSearchParams().get("q"));
+        assertEquals("https://user:pass@example.com/a/b?x=1#f", url.getHref());
+        assertEquals("http://a%20b:p%40ss@example.org:8080/c%20d?q=a%20b&x=1#frag%20ment", updated.getHref());
+        assertEquals("?q=a%20b&x=1", updated.getSearch());
+        assertEquals("#frag%20ment", updated.getHash());
+        assertEquals("a b", updated.getSearchParams().get("q"));
     }
 
-    /// Tests live search parameter synchronization.
+    /// Tests immutable search parameter updates.
     @Test
-    public void synchronizesSearchParamsWithUrl() {
+    public void updatesSearchParamsImmutably() {
         WebURL url = WebURL.of("https://example.test/?a=1&a=2");
         WebURLSearchParams params = url.getSearchParams();
 
@@ -89,15 +91,16 @@ public final class WebURLTest {
         assertEquals("1", params.get("a"));
         assertEquals(2, params.getAll("a").size());
 
-        params.append("b", "x y");
-        assertEquals("https://example.test/?a=1&a=2&b=x+y", url.getHref());
+        WebURLSearchParams appended = params.append("b", "x y");
+        assertEquals("https://example.test/?a=1&a=2", url.getHref());
+        assertEquals("a=1&a=2", params.toString());
 
-        params.set("a", "3");
-        assertEquals("https://example.test/?a=3&b=x+y", url.getHref());
+        WebURL updated = url.withSearchParams(appended.set("a", "3"));
+        assertEquals("https://example.test/?a=3&b=x+y", updated.getHref());
 
-        url.setSearch("");
-        assertEquals("", url.getSearch());
-        assertEquals(0, params.size());
+        WebURL withoutSearch = updated.withSearch("");
+        assertEquals("", withoutSearch.getSearch());
+        assertEquals(2, params.size());
     }
 
     /// Tests host parsing and serialization.
@@ -152,32 +155,25 @@ public final class WebURLTest {
     @Test
     public void ignoresSettersWhenUrlCannotAcceptComponent() {
         WebURL file = WebURL.of("file:///tmp/demo");
-        file.setUsername("user");
-        file.setPassword("pass");
-        file.setPort("123");
-        assertEquals("file:///tmp/demo", file.getHref());
+        WebURL changedFile = file.withUsername("user").withPassword("pass").withPort("123");
+        assertEquals("file:///tmp/demo", changedFile.getHref());
 
         WebURL opaque = WebURL.of("data:text/plain,hello");
-        opaque.setHost("example.com");
-        opaque.setHostname("example.com");
-        opaque.setPathname("/ignored");
-        assertEquals("data:text/plain,hello", opaque.getHref());
+        WebURL changedOpaque = opaque.withHost("example.com").withHostname("example.com").withPathname("/ignored");
+        assertEquals("data:text/plain,hello", changedOpaque.getHref());
     }
 
     /// Tests protocol setter constraints.
     @Test
     public void constrainsProtocolSetter() {
         WebURL special = WebURL.of("http://example.com:21/");
-        special.setProtocol("ftp");
-        assertEquals("ftp://example.com/", special.getHref());
+        assertEquals("ftp://example.com/", special.withProtocol("ftp").getHref());
 
         WebURL cannotBecomeNonSpecial = WebURL.of("http://example.com/");
-        cannotBecomeNonSpecial.setProtocol("foo");
-        assertEquals("http://example.com/", cannotBecomeNonSpecial.getHref());
+        assertEquals("http://example.com/", cannotBecomeNonSpecial.withProtocol("foo").getHref());
 
         WebURL nonSpecial = WebURL.of("foo://example.com/path");
-        nonSpecial.setProtocol("https");
-        assertEquals("foo://example.com/path", nonSpecial.getHref());
+        assertEquals("foo://example.com/path", nonSpecial.withProtocol("https").getHref());
     }
 
     /// Tests opaque base URL fragment-only parsing and blob origin serialization.

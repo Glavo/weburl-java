@@ -18,15 +18,15 @@ Implement the sealed `org.glavo.url.WebURL` interface with the observable behavi
 
 - Static `of`, `parse`, and `canParse` methods.
 - A non-exported implementation class under `org.glavo.url.internal`.
-- Accessors and mutators for `href`, `protocol`, `username`, `password`, `host`, `hostname`, `port`, `pathname`, `search`, and `hash`.
-- Read-only `origin` and live `searchParams`.
+- Accessors and immutable `with...` methods for `href`, `protocol`, `username`, `password`, `host`, `hostname`, `port`, `pathname`, `search`, and `hash`.
+- Read-only `origin` and immutable `searchParams`.
 - `toString` and `toJSON` returning the serialized URL.
 
 Implement `org.glavo.url.WebURLSearchParams` with the observable behavior of the WHATWG `URLSearchParams` interface:
 
 - Constructors from query strings and iterable/name-value data where practical for Java.
-- `size`, `append`, `delete`, `get`, `getAll`, `has`, `set`, `sort`, iteration, and `toString`.
-- Live synchronization with the owning `WebURL` query when created from a URL.
+- `size`, immutable `append`, immutable `delete`, `get`, `getAll`, `has`, immutable `set`, immutable `sort`, iteration, and `toString`.
+- URL query replacement through `WebURL.withSearchParams(...)`.
 
 Keep low-level parsing and serialization APIs internal for now. They may be exposed later only after the public shape is stable.
 
@@ -51,10 +51,10 @@ Build the port in layers:
    - Preserve behavior for special schemes, relative URLs, file URLs, credentials, ports, path shortening, query, and fragment parsing.
    - Avoid leaking mutable URL-record state through the public API.
 
-4. Build `WebURL` and `WebURLSearchParams` on top of the internal record.
-   - Setters should invoke the same state override paths as upstream.
-   - `searchParams` updates must rewrite the owning URL query.
-   - Assigning `href` must replace the URL record and refresh `searchParams`.
+4. Build immutable `WebURL` and `WebURLSearchParams` on top of the internal record.
+   - `with...` methods should invoke the same state override paths as upstream on copied URL records.
+   - `WebURLSearchParams` updates must return new parameter lists.
+   - Replacing `href` must return a new URL record and refreshed `searchParams`.
 
 5. Add IDNA provider support.
    - Define an internal `IdnaProcessor`.
@@ -107,8 +107,8 @@ Create JUnit tests covering:
 - Parse failures and `canParse`.
 - URL serialization and origin serialization.
 - Special schemes, non-special schemes, `file:`, opaque paths, IPv4, IPv6, credentials, default ports, query, and fragment behavior.
-- All public setters, including no-op setter cases.
-- `WebURLSearchParams` parsing, mutation, sorting, serialization, and live URL synchronization.
+- All immutable URL update methods, including no-op update cases.
+- `WebURLSearchParams` parsing, immutable updates, sorting, serialization, and URL query replacement.
 - Percent decoding and `application/x-www-form-urlencoded` behavior.
 - IDNA behavior with ICU available and JDK fallback behavior without ICU.
 
@@ -136,7 +136,7 @@ Use a ten-minute timeout for Gradle `test`.
 1. Foundation helpers and tests for encoding, percent encoding, and form-urlencoded behavior.
 2. URL record, host model, and serializers.
 3. Basic parser for absolute, relative, special, non-special, and `file:` URLs.
-4. Public `WebURL` API and setters.
-5. `WebURLSearchParams` and live query synchronization.
+4. Public immutable `WebURL` API and update methods.
+5. Immutable `WebURLSearchParams` and URL query replacement.
 6. ICU/JDK IDNA provider layer and WPT IDNA conformance.
 7. Full WPT data test pass, fallback-difference documentation, and cleanup.

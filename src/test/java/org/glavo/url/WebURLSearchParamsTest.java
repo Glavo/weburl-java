@@ -42,21 +42,24 @@ public final class WebURLSearchParamsTest {
         assertEquals("a=1&a=2&b=x+y&empty=", params.toString());
     }
 
-    /// Tests mutation operations.
+    /// Tests immutable update operations.
     @Test
-    public void mutatesTuples() {
+    public void updatesTuplesImmutably() {
         WebURLSearchParams params = new WebURLSearchParams("z=1&a=2&a=3");
 
         assertTrue(params.has("a"));
         assertTrue(params.has("a", "2"));
-        params.delete("a", "2");
-        assertFalse(params.has("a", "2"));
+        WebURLSearchParams deleted = params.delete("a", "2");
+        assertTrue(params.has("a", "2"));
+        assertFalse(deleted.has("a", "2"));
 
-        params.set("z", "9");
-        params.append("b", "space value");
-        params.sort();
+        WebURLSearchParams updated = deleted
+                .set("z", "9")
+                .append("b", "space value")
+                .sort();
 
-        assertEquals("a=3&b=space+value&z=9", params.toString());
+        assertEquals("z=1&a=2&a=3", params.toString());
+        assertEquals("a=3&b=space+value&z=9", updated.toString());
     }
 
     /// Tests iteration.
@@ -101,15 +104,16 @@ public final class WebURLSearchParamsTest {
         assertEquals("b=2&a=1", params.toString());
     }
 
-    /// Tests that copying live search parameters creates a detached list.
+    /// Tests that copying URL search parameters creates a detached list.
     @Test
-    public void copiesLiveParamsAsDetachedParams() {
+    public void copiesUrlParamsAsDetachedParams() {
         WebURL url = WebURL.of("https://example.test/?a=1");
         WebURLSearchParams copy = new WebURLSearchParams(url.getSearchParams());
 
-        copy.set("a", "2");
+        WebURLSearchParams updated = copy.set("a", "2");
 
         assertEquals("https://example.test/?a=1", url.getHref());
-        assertEquals("a=2", copy.toString());
+        assertEquals("a=1", copy.toString());
+        assertEquals("a=2", updated.toString());
     }
 }

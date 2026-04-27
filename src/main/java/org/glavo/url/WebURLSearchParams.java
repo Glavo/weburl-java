@@ -28,19 +28,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
-/// A Java implementation of the WHATWG `URLSearchParams` interface.
+/// An immutable Java representation of WHATWG `URLSearchParams`.
 @NotNullByDefault
 public final class WebURLSearchParams implements Iterable<Map.Entry<String, String>> {
     /// The ordered list of name-value tuples.
-    private List<UrlEncoded.Tuple> list;
-    /// The update callback for live query synchronization.
-    private @Nullable Consumer<@Nullable String> updateCallback;
+    private final @Unmodifiable List<UrlEncoded.Tuple> list;
 
     /// Creates an empty search parameter list.
     public WebURLSearchParams() {
-        this.list = new ArrayList<>();
+        this.list = List.of();
     }
 
     /// Creates search parameters from a query string.
@@ -50,43 +47,37 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
 
     /// Creates search parameters from map entries.
     public WebURLSearchParams(Map<String, String> init) {
-        this.list = new ArrayList<>();
+        ArrayList<UrlEncoded.Tuple> tuples = new ArrayList<>();
         for (Map.Entry<String, String> entry : init.entrySet()) {
-            list.add(new UrlEncoded.Tuple(entry.getKey(), entry.getValue()));
+            tuples.add(new UrlEncoded.Tuple(entry.getKey(), entry.getValue()));
         }
+        this.list = immutableTuples(tuples);
     }
 
     /// Creates search parameters from iterable map entries.
     public WebURLSearchParams(Iterable<? extends Map.Entry<String, String>> init) {
-        this.list = new ArrayList<>();
+        ArrayList<UrlEncoded.Tuple> tuples = new ArrayList<>();
         for (Map.Entry<String, String> entry : init) {
-            list.add(new UrlEncoded.Tuple(entry.getKey(), entry.getValue()));
+            tuples.add(new UrlEncoded.Tuple(entry.getKey(), entry.getValue()));
         }
+        this.list = immutableTuples(tuples);
     }
 
     /// Creates a detached copy of another search parameter list.
     public WebURLSearchParams(WebURLSearchParams init) {
-        this.list = new ArrayList<>(init.list);
+        this.list = immutableTuples(init.list);
     }
 
     /// Creates search parameters from a query string with optional question-mark preservation.
     WebURLSearchParams(String init, boolean doNotStripQuestionMark) {
         String input = !doNotStripQuestionMark && init.startsWith("?") ? init.substring(1) : init;
-        this.list = UrlEncoded.parseUrlencodedString(input);
+        this.list = immutableTuples(UrlEncoded.parseUrlencodedString(input));
     }
 
-    /// Creates live search parameters for an internal URL implementation.
+    /// Creates search parameters from an already-parsed URL query.
     @ApiStatus.Internal
-    public static WebURLSearchParams createLiveInternal(String init, Consumer<@Nullable String> updateCallback) {
-        WebURLSearchParams params = new WebURLSearchParams(init, true);
-        params.updateCallback = updateCallback;
-        return params;
-    }
-
-    /// Replaces all tuples without running update steps.
-    @ApiStatus.Internal
-    public void replaceAllInternal(String init) {
-        this.list = UrlEncoded.parseUrlencodedString(init);
+    public static WebURLSearchParams fromQueryInternal(String init) {
+        return new WebURLSearchParams(init, true);
     }
 
     /// Returns the number of tuples.
@@ -94,21 +85,23 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
         return list.size();
     }
 
-    /// Appends a tuple.
-    public void append(String name, String value) {
-        list.add(new UrlEncoded.Tuple(name, value));
-        updateSteps();
+    /// Returns search parameters with a tuple appended.
+    public WebURLSearchParams append(String name, String value) {
+        ArrayList<UrlEncoded.Tuple> tuples = mutableTuples();
+        tuples.add(new UrlEncoded.Tuple(name, value));
+        return new WebURLSearchParams(tuples, true);
     }
 
-    /// Deletes all tuples with the given name.
-    public void delete(String name) {
-        delete(name, null);
+    /// Returns search parameters without tuples that have the given name.
+    public WebURLSearchParams delete(String name) {
+        return delete(name, null);
     }
 
-    /// Deletes all tuples with the given name and value.
-    public void delete(String name, @Nullable String value) {
-        list.removeIf(tuple -> tuple.name().equals(name) && (value == null || tuple.value().equals(value)));
-        updateSteps();
+    /// Returns search parameters without tuples that have the given name and value.
+    public WebURLSearchParams delete(String name, @Nullable String value) {
+        ArrayList<UrlEncoded.Tuple> tuples = mutableTuples();
+        tuples.removeIf(tuple -> tuple.name().equals(name) && (value == null || tuple.value().equals(value)));
+        return new WebURLSearchParams(tuples, true);
     }
 
     /// Returns the first value for a name, or `null` when absent.
@@ -147,17 +140,18 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
         return false;
     }
 
-    /// Sets a name to one value, removing later duplicates.
-    public void set(String name, String value) {
+    /// Returns search parameters with a name set to one value, removing later duplicates.
+    public WebURLSearchParams set(String name, String value) {
+        ArrayList<UrlEncoded.Tuple> tuples = mutableTuples();
         boolean found = false;
-        for (int i = 0; i < list.size(); ) {
-            UrlEncoded.Tuple tuple = list.get(i);
+        for (int i = 0; i < tuples.size(); ) {
+            UrlEncoded.Tuple tuple = tuples.get(i);
             if (tuple.name().equals(name)) {
                 if (found) {
-                    list.remove(i);
+                    tuples.remove(i);
                 } else {
                     found = true;
-                    list.set(i, new UrlEncoded.Tuple(name, value));
+                    tuples.set(i, new UrlEncoded.Tuple(name, value));
                     i++;
                 }
             } else {
@@ -165,15 +159,16 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
             }
         }
         if (!found) {
-            list.add(new UrlEncoded.Tuple(name, value));
+            tuples.add(new UrlEncoded.Tuple(name, value));
         }
-        updateSteps();
+        return new WebURLSearchParams(tuples, true);
     }
 
-    /// Sorts tuples by name while preserving relative order for equal names.
-    public void sort() {
-        list.sort((left, right) -> left.name().compareTo(right.name()));
-        updateSteps();
+    /// Returns search parameters sorted by name while preserving relative order for equal names.
+    public WebURLSearchParams sort() {
+        ArrayList<UrlEncoded.Tuple> tuples = mutableTuples();
+        tuples.sort((left, right) -> left.name().compareTo(right.name()));
+        return new WebURLSearchParams(tuples, true);
     }
 
     /// Runs an action for each tuple in insertion order.
@@ -220,12 +215,19 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
         return UrlEncoded.serializeUrlencoded(list);
     }
 
-    /// Runs URLSearchParams update steps.
-    private void updateSteps() {
-        if (updateCallback != null) {
-            String serializedQuery = toString();
-            updateCallback.accept(serializedQuery.isEmpty() ? null : serializedQuery);
-        }
+    /// Creates immutable tuple storage.
+    private static List<UrlEncoded.Tuple> immutableTuples(List<UrlEncoded.Tuple> tuples) {
+        return Collections.unmodifiableList(new ArrayList<>(tuples));
+    }
+
+    /// Creates mutable tuple storage from this parameter list.
+    private ArrayList<UrlEncoded.Tuple> mutableTuples() {
+        return new ArrayList<>(list);
+    }
+
+    /// Creates search parameters from tuple storage.
+    private WebURLSearchParams(List<UrlEncoded.Tuple> tuples, boolean ignored) {
+        this.list = immutableTuples(tuples);
     }
 
     /// Iterator over immutable search parameter entries.

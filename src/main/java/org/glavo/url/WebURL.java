@@ -70,8 +70,8 @@ public sealed interface WebURL permits WebURLImpl {
     /// Returns the serialized URL.
     String getHref();
 
-    /// Replaces the URL with a parsed absolute URL.
-    void setHref(String value);
+    /// Returns a URL created by parsing an absolute replacement URL.
+    WebURL withHref(String value);
 
     /// Returns the serialized origin.
     String getOrigin();
@@ -79,59 +79,62 @@ public sealed interface WebURL permits WebURLImpl {
     /// Returns the protocol, including the trailing colon.
     String getProtocol();
 
-    /// Sets the protocol.
-    void setProtocol(String value);
+    /// Returns a URL with the protocol updated when the URL Standard permits the change.
+    WebURL withProtocol(String value);
 
     /// Returns the username.
     String getUsername();
 
-    /// Sets the username.
-    void setUsername(String value);
+    /// Returns a URL with the username updated when the URL can have credentials.
+    WebURL withUsername(String value);
 
     /// Returns the password.
     String getPassword();
 
-    /// Sets the password.
-    void setPassword(String value);
+    /// Returns a URL with the password updated when the URL can have credentials.
+    WebURL withPassword(String value);
 
     /// Returns the host, including the port when present.
     String getHost();
 
-    /// Sets the host.
-    void setHost(String value);
+    /// Returns a URL with the host updated when the URL has a non-opaque path.
+    WebURL withHost(String value);
 
     /// Returns the hostname.
     String getHostname();
 
-    /// Sets the hostname.
-    void setHostname(String value);
+    /// Returns a URL with the hostname updated when the URL has a non-opaque path.
+    WebURL withHostname(String value);
 
     /// Returns the port as a string.
     String getPort();
 
-    /// Sets the port.
-    void setPort(String value);
+    /// Returns a URL with the port updated when the URL can have a port.
+    WebURL withPort(String value);
 
     /// Returns the serialized pathname.
     String getPathname();
 
-    /// Sets the pathname.
-    void setPathname(String value);
+    /// Returns a URL with the pathname updated when the URL has a non-opaque path.
+    WebURL withPathname(String value);
 
     /// Returns the search string, including the leading question mark when non-empty.
     String getSearch();
 
-    /// Sets the search string.
-    void setSearch(String value);
+    /// Returns a URL with the search string updated.
+    WebURL withSearch(String value);
 
-    /// Returns the live search parameters.
+    /// Returns immutable search parameters parsed from the current query.
     WebURLSearchParams getSearchParams();
+
+    /// Returns a URL with the query replaced by serialized search parameters.
+    WebURL withSearchParams(WebURLSearchParams value);
 
     /// Returns the hash string, including the leading number sign when non-empty.
     String getHash();
 
-    /// Sets the hash string.
-    void setHash(String value);
+    /// Returns a URL with the hash string updated.
+    WebURL withHash(String value);
 
     /// Returns the JSON representation of this URL.
     String toJSON();
