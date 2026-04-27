@@ -97,13 +97,13 @@ public final class WebURLImpl implements WebURL {
         }
 
         this.url = parsed;
-        this.searchParams = WebURLSearchParams.fromQueryInternal(parsed.query == null ? "" : parsed.query);
+        this.searchParams = WebURLSearchParamsImpl.fromQueryInternal(parsed.query == null ? "" : parsed.query);
     }
 
     /// Creates a URL from a parsed record.
     private WebURLImpl(UrlRecord url) {
         this.url = url;
-        this.searchParams = WebURLSearchParams.fromQueryInternal(url.query == null ? "" : url.query);
+        this.searchParams = WebURLSearchParamsImpl.fromQueryInternal(url.query == null ? "" : url.query);
     }
 
     /// Returns the serialized URL.

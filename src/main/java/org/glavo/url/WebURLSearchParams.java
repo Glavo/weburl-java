@@ -15,212 +15,90 @@
  */
 package org.glavo.url;
 
-import org.glavo.url.internal.UrlEncoded;
-import org.jetbrains.annotations.ApiStatus;
+import org.glavo.url.internal.WebURLSearchParamsImpl;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 /// An immutable Java representation of WHATWG `URLSearchParams`.
 @NotNullByDefault
-public final class WebURLSearchParams implements Iterable<Map.Entry<String, String>> {
-    /// The ordered list of name-value tuples.
-    private final @Unmodifiable List<Map.Entry<String, String>> list;
-
+public sealed interface WebURLSearchParams
+        extends Iterable<Map.Entry<String, String>>
+        permits WebURLSearchParamsImpl {
     /// Creates an empty search parameter list.
-    public WebURLSearchParams() {
-        this.list = List.of();
+    static WebURLSearchParams of() {
+        return WebURLSearchParamsImpl.of();
     }
 
     /// Creates search parameters from a query string.
-    public WebURLSearchParams(String init) {
-        this(init, false);
+    static WebURLSearchParams of(String init) {
+        return WebURLSearchParamsImpl.of(init);
     }
 
     /// Creates search parameters from map entries.
-    public WebURLSearchParams(Map<String, String> init) {
-        this.list = immutableEntries(init.entrySet());
+    static WebURLSearchParams of(Map<String, String> init) {
+        return WebURLSearchParamsImpl.of(init);
     }
 
     /// Creates search parameters from iterable map entries.
-    public WebURLSearchParams(Iterable<? extends Map.Entry<String, String>> init) {
-        this.list = immutableEntries(init);
-    }
-
-    /// Creates a detached copy of another search parameter list.
-    public WebURLSearchParams(WebURLSearchParams init) {
-        this.list = immutableEntries(init.list);
-    }
-
-    /// Creates search parameters from a query string with optional question-mark preservation.
-    WebURLSearchParams(String init, boolean doNotStripQuestionMark) {
-        String input = !doNotStripQuestionMark && init.startsWith("?") ? init.substring(1) : init;
-        this.list = immutableEntries(UrlEncoded.parseUrlencodedString(input));
-    }
-
-    /// Creates search parameters from an already-parsed URL query.
-    @ApiStatus.Internal
-    public static WebURLSearchParams fromQueryInternal(String init) {
-        return new WebURLSearchParams(init, true);
+    static WebURLSearchParams of(Iterable<? extends Map.Entry<String, String>> init) {
+        return WebURLSearchParamsImpl.of(init);
     }
 
     /// Returns the number of tuples.
-    public int size() {
-        return list.size();
-    }
+    int size();
 
     /// Returns search parameters with a tuple appended.
-    public WebURLSearchParams append(String name, String value) {
-        ArrayList<Map.Entry<String, String>> tuples = mutableEntries();
-        tuples.add(Map.entry(name, value));
-        return new WebURLSearchParams(tuples, true);
-    }
+    WebURLSearchParams append(String name, String value);
 
     /// Returns search parameters without tuples that have the given name.
-    public WebURLSearchParams delete(String name) {
-        return delete(name, null);
-    }
+    WebURLSearchParams delete(String name);
 
     /// Returns search parameters without tuples that have the given name and value.
-    public WebURLSearchParams delete(String name, @Nullable String value) {
-        ArrayList<Map.Entry<String, String>> tuples = mutableEntries();
-        tuples.removeIf(tuple -> tuple.getKey().equals(name) && (value == null || tuple.getValue().equals(value)));
-        return new WebURLSearchParams(tuples, true);
-    }
+    WebURLSearchParams delete(String name, @Nullable String value);
 
     /// Returns the first value for a name, or `null` when absent.
-    public @Nullable String get(String name) {
-        for (Map.Entry<String, String> tuple : list) {
-            if (tuple.getKey().equals(name)) {
-                return tuple.getValue();
-            }
-        }
-        return null;
-    }
+    @Nullable String get(String name);
 
     /// Returns all values for a name.
-    public @Unmodifiable List<String> getAll(String name) {
-        List<String> output = new ArrayList<>();
-        for (Map.Entry<String, String> tuple : list) {
-            if (tuple.getKey().equals(name)) {
-                output.add(tuple.getValue());
-            }
-        }
-        return Collections.unmodifiableList(output);
-    }
+    @Unmodifiable List<String> getAll(String name);
 
     /// Returns whether a tuple with the given name exists.
-    public boolean has(String name) {
-        return has(name, null);
-    }
+    boolean has(String name);
 
     /// Returns whether a tuple with the given name and value exists.
-    public boolean has(String name, @Nullable String value) {
-        for (Map.Entry<String, String> tuple : list) {
-            if (tuple.getKey().equals(name) && (value == null || tuple.getValue().equals(value))) {
-                return true;
-            }
-        }
-        return false;
-    }
+    boolean has(String name, @Nullable String value);
 
     /// Returns search parameters with a name set to one value, removing later duplicates.
-    public WebURLSearchParams set(String name, String value) {
-        ArrayList<Map.Entry<String, String>> tuples = mutableEntries();
-        boolean found = false;
-        for (int i = 0; i < tuples.size(); ) {
-            Map.Entry<String, String> tuple = tuples.get(i);
-            if (tuple.getKey().equals(name)) {
-                if (found) {
-                    tuples.remove(i);
-                } else {
-                    found = true;
-                    tuples.set(i, Map.entry(name, value));
-                    i++;
-                }
-            } else {
-                i++;
-            }
-        }
-        if (!found) {
-            tuples.add(Map.entry(name, value));
-        }
-        return new WebURLSearchParams(tuples, true);
-    }
+    WebURLSearchParams set(String name, String value);
 
     /// Returns search parameters sorted by name while preserving relative order for equal names.
-    public WebURLSearchParams sort() {
-        ArrayList<Map.Entry<String, String>> tuples = mutableEntries();
-        tuples.sort((left, right) -> left.getKey().compareTo(right.getKey()));
-        return new WebURLSearchParams(tuples, true);
-    }
+    WebURLSearchParams sort();
 
     /// Runs an action for each tuple in insertion order.
     ///
     /// The first action argument is the value, and the second action argument is the name.
-    public void forEach(BiConsumer<String, String> action) {
-        for (Map.Entry<String, String> tuple : list) {
-            action.accept(tuple.getValue(), tuple.getKey());
-        }
-    }
+    void forEach(BiConsumer<String, String> action);
 
     /// Returns an iterable over name-value entries.
-    public List<Map.Entry<String, String>> entries() {
-        return list;
-    }
+    @Unmodifiable List<Map.Entry<String, String>> entries();
 
     /// Returns all names in tuple order.
-    public @Unmodifiable List<String> keys() {
-        List<String> output = new ArrayList<>();
-        for (Map.Entry<String, String> tuple : list) {
-            output.add(tuple.getKey());
-        }
-        return Collections.unmodifiableList(output);
-    }
+    @Unmodifiable List<String> keys();
 
     /// Returns all values in tuple order.
-    public @Unmodifiable List<String> values() {
-        List<String> output = new ArrayList<>();
-        for (Map.Entry<String, String> tuple : list) {
-            output.add(tuple.getValue());
-        }
-        return Collections.unmodifiableList(output);
-    }
+    @Unmodifiable List<String> values();
 
     /// Returns an iterator over immutable map entries.
     @Override
-    public Iterator<Map.Entry<String, String>> iterator() {
-        return list.iterator();
-    }
+    Iterator<Map.Entry<String, String>> iterator();
 
     /// Serializes the parameter list.
     @Override
-    public String toString() {
-        return UrlEncoded.serializeUrlencoded(list);
-    }
-
-    /// Creates immutable entry storage.
-    private static List<Map.Entry<String, String>> immutableEntries(Iterable<? extends Map.Entry<String, String>> entries) {
-        ArrayList<Map.Entry<String, String>> copy =
-                entries instanceof Collection<?> collection
-                        ? new ArrayList<>(collection.size())
-                        : new ArrayList<>();
-        for (Map.Entry<String, String> entry : entries) {
-            copy.add(Map.entry(entry.getKey(), entry.getValue()));
-        }
-        return List.copyOf(copy);
-    }
-
-    /// Creates mutable entry storage from this parameter list.
-    private ArrayList<Map.Entry<String, String>> mutableEntries() {
-        return new ArrayList<>(list);
-    }
-
-    /// Creates search parameters from entry storage.
-    private WebURLSearchParams(List<Map.Entry<String, String>> entries, boolean ignored) {
-        this.list = immutableEntries(entries);
-    }
+    String toString();
 }

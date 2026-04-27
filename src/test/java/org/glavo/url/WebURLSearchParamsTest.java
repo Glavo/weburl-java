@@ -33,7 +33,7 @@ public final class WebURLSearchParamsTest {
     /// Tests parsing and serialization.
     @Test
     public void parsesAndSerializes() {
-        WebURLSearchParams params = new WebURLSearchParams("?a=1&a=2&b=x+y&empty");
+        WebURLSearchParams params = WebURLSearchParams.of("?a=1&a=2&b=x+y&empty");
 
         assertEquals(4, params.size());
         assertEquals("1", params.get("a"));
@@ -45,7 +45,7 @@ public final class WebURLSearchParamsTest {
     /// Tests immutable update operations.
     @Test
     public void updatesTuplesImmutably() {
-        WebURLSearchParams params = new WebURLSearchParams("z=1&a=2&a=3");
+        WebURLSearchParams params = WebURLSearchParams.of("z=1&a=2&a=3");
 
         assertTrue(params.has("a"));
         assertTrue(params.has("a", "2"));
@@ -65,7 +65,7 @@ public final class WebURLSearchParamsTest {
     /// Tests iteration.
     @Test
     public void iteratesEntries() {
-        WebURLSearchParams params = new WebURLSearchParams("a=1&b=2");
+        WebURLSearchParams params = WebURLSearchParams.of("a=1&b=2");
         Iterator<Map.Entry<String, String>> iterator = params.iterator();
 
         Map.Entry<String, String> first = iterator.next();
@@ -81,7 +81,7 @@ public final class WebURLSearchParamsTest {
     /// Tests entry, key, value, and callback helpers.
     @Test
     public void exposesOrderedViews() {
-        WebURLSearchParams params = new WebURLSearchParams("a=1&b=2&a=3");
+        WebURLSearchParams params = WebURLSearchParams.of("a=1&b=2&a=3");
         StringBuilder callbacks = new StringBuilder();
 
         params.forEach((value, name) -> callbacks.append(name).append('=').append(value).append(';'));
@@ -99,7 +99,7 @@ public final class WebURLSearchParamsTest {
         input.put("b", "2");
         input.put("a", "1");
 
-        WebURLSearchParams params = new WebURLSearchParams(input);
+        WebURLSearchParams params = WebURLSearchParams.of(input);
 
         assertEquals("b=2&a=1", params.toString());
     }
@@ -108,7 +108,7 @@ public final class WebURLSearchParamsTest {
     @Test
     public void copiesUrlParamsAsDetachedParams() {
         WebURL url = WebURL.of("https://example.test/?a=1");
-        WebURLSearchParams copy = new WebURLSearchParams(url.searchParams());
+        WebURLSearchParams copy = WebURLSearchParams.of(url.searchParams());
 
         WebURLSearchParams updated = copy.set("a", "2");
 
