@@ -32,8 +32,8 @@ public final class UrlRecord {
     public String password = "";
     /// URL host, or `null` when absent.
     public @Nullable UrlHost host;
-    /// URL port, or `null` when absent or defaulted.
-    public @Nullable Integer port;
+    /// URL port, or `-1` when absent or defaulted.
+    public int port = -1;
     /// Non-opaque path segments.
     public List<String> path = new ArrayList<>();
     /// Opaque path, or `null` when the URL has a path segment list.

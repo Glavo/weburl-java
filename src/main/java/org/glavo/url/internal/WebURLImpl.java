@@ -171,7 +171,7 @@ public final class WebURLImpl implements WebURL {
             return "";
         }
         String host = UrlParser.serializeHost(url.host);
-        return url.port == null ? host : host + ":" + url.port;
+        return url.port == -1 ? host : host + ":" + url.port;
     }
 
     /// Returns a URL with the host updated when the URL has a non-opaque path.
@@ -201,7 +201,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the port as a string.
     @Override
     public String port() {
-        return url.port == null ? "" : Integer.toString(url.port);
+        return url.port == -1 ? "" : Integer.toString(url.port);
     }
 
     /// Returns a URL with the port updated when the URL can have a port.
@@ -212,7 +212,7 @@ public final class WebURLImpl implements WebURL {
         }
         UrlRecord copy = url.clone();
         if (value.isEmpty()) {
-            copy.port = null;
+            copy.port = -1;
             return new WebURLImpl(copy);
         } else {
             return withStateOverride(value, UrlParser.State.PORT);

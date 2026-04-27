@@ -111,7 +111,7 @@ public final class UrlParser {
                 output.append('@');
             }
             output.append(serializeHost(url.host));
-            if (url.port != null) {
+            if (url.port != -1) {
                 output.append(':').append(url.port);
             }
         }
@@ -203,7 +203,7 @@ public final class UrlParser {
     }
 
     /// Returns the default port for a special scheme.
-    static @Nullable Integer defaultPort(String scheme) {
+    static int defaultPort(String scheme) {
         switch (scheme) {
             case "ftp":
                 return 21;
@@ -214,15 +214,15 @@ public final class UrlParser {
             case "wss":
                 return 443;
             default:
-                return null;
+                return -1;
         }
     }
 
     /// Serializes a tuple origin.
-    private static String serializeTupleOrigin(String scheme, UrlHost host, @Nullable Integer port) {
+    private static String serializeTupleOrigin(String scheme, UrlHost host, int port) {
         StringBuilder output = new StringBuilder();
         output.append(scheme).append("://").append(serializeHost(host));
-        if (port != null) {
+        if (port != -1) {
             output.append(':').append(port);
         }
         return output.toString();
@@ -847,7 +847,7 @@ public final class UrlParser {
                     if (!isSpecial(url) && isSpecialScheme(buffer)) {
                         return Result.STOP;
                     }
-                    if ((includesCredentials(url) || url.port != null) && buffer.equals("file")) {
+                    if ((includesCredentials(url) || url.port != -1) && buffer.equals("file")) {
                         return Result.STOP;
                     }
                     if (url.scheme.equals("file") && url.host != null && url.host.isEmptyDomain()) {
@@ -856,9 +856,9 @@ public final class UrlParser {
                 }
                 url.scheme = buffer;
                 if (stateOverride != null) {
-                    Integer defaultPort = defaultPort(url.scheme);
-                    if (defaultPort != null && defaultPort.equals(url.port)) {
-                        url.port = null;
+                    int defaultPort = defaultPort(url.scheme);
+                    if (defaultPort == url.port) {
+                        url.port = -1;
                     }
                     return Result.STOP;
                 }
@@ -1076,7 +1076,7 @@ public final class UrlParser {
                 if (isSpecial(url) && buffer.isEmpty()) {
                     return failHostMissing();
                 } else if (stateOverride != null && buffer.isEmpty()
-                        && (includesCredentials(url) || url.port != null)) {
+                        && (includesCredentials(url) || url.port != -1)) {
                     return failApiValidation();
                 }
                 UrlHost host = parseHost(buffer, isNotSpecial(url));
@@ -1113,8 +1113,7 @@ public final class UrlParser {
                     if (port > 65535) {
                         return fail(new WebURLParseException.PortOutOfRange());
                     }
-                    Integer defaultPort = defaultPort(url.scheme);
-                    url.port = defaultPort != null && defaultPort == port ? null : port;
+                    url.port = defaultPort(url.scheme) == port ? -1 : port;
                     buffer = "";
                     if (stateOverride != null) {
                         return Result.STOP;
