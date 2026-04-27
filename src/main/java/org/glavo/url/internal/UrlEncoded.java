@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /// Parser and serializer for `application/x-www-form-urlencoded` data.
 @NotNullByDefault
@@ -28,30 +29,30 @@ public final class UrlEncoded {
     }
 
     /// Parses a form-urlencoded string into name-value tuples.
-    public static List<Tuple> parseUrlencodedString(String input) {
+    public static List<Map.Entry<String, String>> parseUrlencodedString(String input) {
         return parseUrlencoded(Encoding.utf8Encode(input));
     }
 
     /// Serializes name-value tuples as a form-urlencoded string.
-    public static String serializeUrlencoded(List<Tuple> tuples) {
+    public static String serializeUrlencoded(List<Map.Entry<String, String>> tuples) {
         StringBuilder output = new StringBuilder();
         for (int i = 0; i < tuples.size(); i++) {
-            Tuple tuple = tuples.get(i);
+            Map.Entry<String, String> tuple = tuples.get(i);
             if (i != 0) {
                 output.append('&');
             }
             output.append(PercentEncoding.utf8PercentEncodeString(
-                    tuple.name(), PercentEncoding::isUrlEncodedPercentEncode, true));
+                    tuple.getKey(), PercentEncoding::isUrlEncodedPercentEncode, true));
             output.append('=');
             output.append(PercentEncoding.utf8PercentEncodeString(
-                    tuple.value(), PercentEncoding::isUrlEncodedPercentEncode, true));
+                    tuple.getValue(), PercentEncoding::isUrlEncodedPercentEncode, true));
         }
         return output.toString();
     }
 
     /// Parses form-urlencoded bytes into name-value tuples.
-    private static List<Tuple> parseUrlencoded(byte[] input) {
-        List<Tuple> output = new ArrayList<>();
+    private static List<Map.Entry<String, String>> parseUrlencoded(byte[] input) {
+        List<Map.Entry<String, String>> output = new ArrayList<>();
         int start = 0;
         while (start <= input.length) {
             int end = indexOf(input, (byte) '&', start);
@@ -65,7 +66,7 @@ public final class UrlEncoded {
                 byte[] value = equals >= 0 ? slice(input, equals + 1, end) : new byte[0];
                 replace(name, (byte) '+', (byte) ' ');
                 replace(value, (byte) '+', (byte) ' ');
-                output.add(new Tuple(
+                output.add(Map.entry(
                         Encoding.utf8DecodeWithoutBom(PercentEncoding.percentDecodeBytes(name)),
                         Encoding.utf8DecodeWithoutBom(PercentEncoding.percentDecodeBytes(value))));
             }
@@ -106,31 +107,6 @@ public final class UrlEncoded {
             if (input[i] == from) {
                 input[i] = to;
             }
-        }
-    }
-
-    /// One form-urlencoded name-value tuple.
-    @NotNullByDefault
-    public static final class Tuple {
-        /// The tuple name.
-        private final String name;
-        /// The tuple value.
-        private final String value;
-
-        /// Creates a tuple.
-        public Tuple(String name, String value) {
-            this.name = name;
-            this.value = value;
-        }
-
-        /// Returns the tuple name.
-        public String name() {
-            return name;
-        }
-
-        /// Returns the tuple value.
-        public String value() {
-            return value;
         }
     }
 }
