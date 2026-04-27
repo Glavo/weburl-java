@@ -53,17 +53,19 @@ public final class UrlRecord {
     }
 
     /// Copies this record.
-    public UrlRecord copy() {
-        UrlRecord copy = new UrlRecord();
-        copy.scheme = scheme;
-        copy.username = username;
-        copy.password = password;
-        copy.host = host;
-        copy.port = port;
-        copy.path = new ArrayList<>(path);
-        copy.opaquePath = opaquePath;
-        copy.query = query;
-        copy.fragment = fragment;
-        return copy;
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    @Override
+    public UrlRecord clone() {
+        UrlRecord newRecord = new UrlRecord();
+        newRecord.scheme = scheme;
+        newRecord.username = username;
+        newRecord.password = password;
+        newRecord.host = host;
+        newRecord.port = port;
+        newRecord.path = new ArrayList<>(path);
+        newRecord.opaquePath = opaquePath;
+        newRecord.query = query;
+        newRecord.fragment = fragment;
+        return newRecord;
     }
 }

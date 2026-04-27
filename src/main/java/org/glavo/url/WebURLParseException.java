@@ -21,36 +21,7 @@ import java.io.Serial;
 
 /// A URL parse exception corresponding to a WHATWG URL validation error.
 @NotNullByDefault
-public abstract sealed class WebURLParseException extends IllegalArgumentException
-        permits WebURLParseException.DomainToASCII,
-                WebURLParseException.DomainInvalidCodePoint,
-                WebURLParseException.DomainToUnicode,
-                WebURLParseException.HostInvalidCodePoint,
-                WebURLParseException.IPv4EmptyPart,
-                WebURLParseException.IPv4TooManyParts,
-                WebURLParseException.IPv4NonNumericPart,
-                WebURLParseException.IPv4NonDecimalPart,
-                WebURLParseException.IPv4OutOfRangePart,
-                WebURLParseException.IPv6Unclosed,
-                WebURLParseException.IPv6InvalidCompression,
-                WebURLParseException.IPv6TooManyPieces,
-                WebURLParseException.IPv6MultipleCompression,
-                WebURLParseException.IPv6InvalidCodePoint,
-                WebURLParseException.IPv6TooFewPieces,
-                WebURLParseException.IPv4InIPv6TooManyPieces,
-                WebURLParseException.IPv4InIPv6InvalidCodePoint,
-                WebURLParseException.IPv4InIPv6OutOfRangePart,
-                WebURLParseException.IPv4InIPv6TooFewParts,
-                WebURLParseException.InvalidURLUnit,
-                WebURLParseException.SpecialSchemeMissingFollowingSolidus,
-                WebURLParseException.MissingSchemeNonRelativeURL,
-                WebURLParseException.InvalidReverseSolidus,
-                WebURLParseException.InvalidCredentials,
-                WebURLParseException.HostMissing,
-                WebURLParseException.PortOutOfRange,
-                WebURLParseException.PortInvalid,
-                WebURLParseException.FileInvalidWindowsDriveLetter,
-                WebURLParseException.FileInvalidWindowsDriveLetterHost {
+public abstract sealed class WebURLParseException extends IllegalArgumentException {
     /// Serialization identifier for this exception type.
     @Serial
     private static final long serialVersionUID = 1L;

@@ -142,7 +142,7 @@ public final class WebURLImpl implements WebURL {
         if (UrlParser.cannotHaveAUsernamePasswordPort(url)) {
             return this;
         }
-        UrlRecord copy = url.copy();
+        UrlRecord copy = url.clone();
         UrlParser.setTheUsername(copy, value);
         return new WebURLImpl(copy);
     }
@@ -159,7 +159,7 @@ public final class WebURLImpl implements WebURL {
         if (UrlParser.cannotHaveAUsernamePasswordPort(url)) {
             return this;
         }
-        UrlRecord copy = url.copy();
+        UrlRecord copy = url.clone();
         UrlParser.setThePassword(copy, value);
         return new WebURLImpl(copy);
     }
@@ -210,7 +210,7 @@ public final class WebURLImpl implements WebURL {
         if (UrlParser.cannotHaveAUsernamePasswordPort(url)) {
             return this;
         }
-        UrlRecord copy = url.copy();
+        UrlRecord copy = url.clone();
         if (value.isEmpty()) {
             copy.port = null;
             return new WebURLImpl(copy);
@@ -231,7 +231,7 @@ public final class WebURLImpl implements WebURL {
         if (url.hasOpaquePath()) {
             return this;
         }
-        UrlRecord copy = url.copy();
+        UrlRecord copy = url.clone();
         copy.path = new java.util.ArrayList<>();
         copy.opaquePath = null;
         return parseIntoCopyOrThis(value, copy, UrlParser.State.PATH_START);
@@ -246,7 +246,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns a URL with the search string updated.
     @Override
     public WebURL withSearch(String value) {
-        UrlRecord copy = url.copy();
+        UrlRecord copy = url.clone();
         if (value.isEmpty()) {
             copy.query = null;
             return new WebURLImpl(copy);
@@ -266,7 +266,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns a URL with the query replaced by serialized search parameters.
     @Override
     public WebURL withSearchParams(WebURLSearchParams value) {
-        UrlRecord copy = url.copy();
+        UrlRecord copy = url.clone();
         String query = value.toString();
         copy.query = query.isEmpty() ? null : query;
         return new WebURLImpl(copy);
@@ -281,7 +281,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns a URL with the hash string updated.
     @Override
     public WebURL withHash(String value) {
-        UrlRecord copy = url.copy();
+        UrlRecord copy = url.clone();
         if (value.isEmpty()) {
             copy.fragment = null;
             return new WebURLImpl(copy);
@@ -311,7 +311,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Runs a state override on a copy of this URL.
     private WebURL withStateOverride(String input, UrlParser.State state) {
-        UrlRecord copy = url.copy();
+        UrlRecord copy = url.clone();
         return parseIntoCopyOrThis(input, copy, state);
     }
 
