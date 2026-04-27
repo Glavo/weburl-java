@@ -196,7 +196,7 @@ public final class UrlParser {
             if (!input.endsWith("]")) {
                 return null;
             }
-            int[] address = parseIpv6(input.substring(1, input.length() - 1));
+            int @Nullable [] address = parseIpv6(input.substring(1, input.length() - 1));
             return address == null ? null : UrlHost.ipv6(address);
         }
 
@@ -287,7 +287,7 @@ public final class UrlParser {
             int c = value.charAt(i);
             boolean ok = radix == 10 ? Infra.isAsciiDigit(c)
                     : radix == 16 ? Infra.isAsciiHex(c)
-                    : c >= '0' && c <= '7';
+                      : c >= '0' && c <= '7';
             if (!ok) {
                 return null;
             }

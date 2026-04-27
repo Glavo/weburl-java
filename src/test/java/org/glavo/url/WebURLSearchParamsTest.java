@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -71,5 +72,19 @@ public final class WebURLSearchParamsTest {
         assertEquals("b", second.getKey());
         assertEquals("2", second.getValue());
         assertFalse(iterator.hasNext());
+    }
+
+    /// Tests entry, key, value, and callback helpers.
+    @Test
+    public void exposesOrderedViews() {
+        WebURLSearchParams params = new WebURLSearchParams("a=1&b=2&a=3");
+        StringBuilder callbacks = new StringBuilder();
+
+        params.forEach((value, name) -> callbacks.append(name).append('=').append(value).append(';'));
+
+        assertEquals(List.of("a", "b", "a"), params.keys());
+        assertEquals(List.of("1", "2", "3"), params.values());
+        assertEquals("a=1;b=2;a=3;", callbacks.toString());
+        assertEquals(params.iterator().next(), params.entries().iterator().next());
     }
 }

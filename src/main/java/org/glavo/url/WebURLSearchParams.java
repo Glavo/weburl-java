@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 /// A Java implementation of the WHATWG `URLSearchParams` interface.
 @NotNullByDefault
@@ -162,6 +163,38 @@ public final class WebURLSearchParams implements Iterable<Map.Entry<String, Stri
     public void sort() {
         list.sort((left, right) -> left.name().compareTo(right.name()));
         updateSteps();
+    }
+
+    /// Runs an action for each tuple in insertion order.
+    ///
+    /// The first action argument is the value, and the second action argument is the name.
+    public void forEach(BiConsumer<String, String> action) {
+        for (UrlEncoded.Tuple tuple : list) {
+            action.accept(tuple.value(), tuple.name());
+        }
+    }
+
+    /// Returns an iterable over name-value entries.
+    public Iterable<Map.Entry<String, String>> entries() {
+        return this;
+    }
+
+    /// Returns all names in tuple order.
+    public @Unmodifiable List<String> keys() {
+        List<String> output = new ArrayList<>();
+        for (UrlEncoded.Tuple tuple : list) {
+            output.add(tuple.name());
+        }
+        return Collections.unmodifiableList(output);
+    }
+
+    /// Returns all values in tuple order.
+    public @Unmodifiable List<String> values() {
+        List<String> output = new ArrayList<>();
+        for (UrlEncoded.Tuple tuple : list) {
+            output.add(tuple.value());
+        }
+        return Collections.unmodifiableList(output);
     }
 
     /// Returns an iterator over immutable map entries.

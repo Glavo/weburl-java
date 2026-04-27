@@ -114,4 +114,95 @@ public final class WebURLTest {
         WebURL url = new WebURL("file:///C:/demo");
         assertEquals("null", url.getOrigin());
     }
+
+    /// Tests path normalization and percent-encoded dot segments.
+    @Test
+    public void normalizesPathSegments() {
+        assertEquals("http://example.com/foo/baz",
+                new WebURL("http://example.com/foo/./bar/../baz").getHref());
+        assertEquals("http://example.com/a/c",
+                new WebURL("http://example.com/a/%2e/b/%2e%2e/c").getHref());
+    }
+
+    /// Tests file URL Windows drive-letter normalization.
+    @Test
+    public void normalizesFileUrls() {
+        assertEquals("file:///c:/demo", new WebURL("file:c|/demo").getHref());
+        assertEquals("file:///C:/demo", new WebURL("file:///C|/demo").getHref());
+        assertEquals("file:///C:/demo", new WebURL("file://localhost/C:/demo").getHref());
+    }
+
+    /// Tests percent encoding in path, query, and fragment.
+    @Test
+    public void encodesUrlComponents() {
+        assertEquals("data:text/plain,hi%20?x#%20y", new WebURL("data:text/plain,hi ?x# y").getHref());
+        assertEquals("http://example.com/%zz", new WebURL("http://example.com/%zz").getHref());
+        assertEquals("http://example.com/a%20b?x=1%202#h%20i",
+                new WebURL("http://example.com/a b?x=1 2#h i").getHref());
+    }
+
+    /// Tests port parsing and default-port elision.
+    @Test
+    public void handlesPorts() {
+        assertEquals("http://example.com/", new WebURL("http://example.com:80/").getHref());
+        assertThrows(IllegalArgumentException.class, () -> new WebURL("http://example.com:65536/"));
+    }
+
+    /// Tests setter no-op cases from the URL Standard.
+    @Test
+    public void ignoresSettersWhenUrlCannotAcceptComponent() {
+        WebURL file = new WebURL("file:///tmp/demo");
+        file.setUsername("user");
+        file.setPassword("pass");
+        file.setPort("123");
+        assertEquals("file:///tmp/demo", file.getHref());
+
+        WebURL opaque = new WebURL("data:text/plain,hello");
+        opaque.setHost("example.com");
+        opaque.setHostname("example.com");
+        opaque.setPathname("/ignored");
+        assertEquals("data:text/plain,hello", opaque.getHref());
+    }
+
+    /// Tests protocol setter constraints.
+    @Test
+    public void constrainsProtocolSetter() {
+        WebURL special = new WebURL("http://example.com:21/");
+        special.setProtocol("ftp");
+        assertEquals("ftp://example.com/", special.getHref());
+
+        WebURL cannotBecomeNonSpecial = new WebURL("http://example.com/");
+        cannotBecomeNonSpecial.setProtocol("foo");
+        assertEquals("http://example.com/", cannotBecomeNonSpecial.getHref());
+
+        WebURL nonSpecial = new WebURL("foo://example.com/path");
+        nonSpecial.setProtocol("https");
+        assertEquals("foo://example.com/path", nonSpecial.getHref());
+    }
+
+    /// Tests opaque base URL fragment-only parsing and blob origin serialization.
+    @Test
+    public void handlesOpaqueAndBlobUrls() {
+        assertEquals("data:text/plain,hello#frag", new WebURL("#frag", "data:text/plain,hello").getHref());
+        assertEquals("https://example.com", new WebURL("blob:https://example.com/id").getOrigin());
+        assertEquals("null", new WebURL("blob:ftp://example.com/id").getOrigin());
+    }
+
+    /// Tests non-special authority and credentials handling.
+    @Test
+    public void handlesAuthorityBoundaries() {
+        assertEquals("foo://", new WebURL("foo://").getHref());
+        assertEquals("foo://example.com/path", new WebURL("foo://example.com/path").getHref());
+        assertEquals("foo://user:pass@example.com/path", new WebURL("foo://user:pass@example.com/path").getHref());
+        assertEquals("http://user%40@example.com/", new WebURL("http://user@@example.com/").getHref());
+    }
+
+    /// Tests empty query and fragment preservation.
+    @Test
+    public void preservesEmptyQueryAndFragment() {
+        assertEquals("http://example.com/?x#y", new WebURL("http://example.com?x#y").getHref());
+        assertEquals("http://example.com/#y", new WebURL("http://example.com#y").getHref());
+        assertEquals("http://example.com/?", new WebURL("http://example.com/?").getHref());
+        assertEquals("http://example.com/#", new WebURL("http://example.com/#").getHref());
+    }
 }
