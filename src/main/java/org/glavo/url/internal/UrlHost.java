@@ -63,6 +63,11 @@ public final class UrlHost {
         return kind == Kind.DOMAIN && text != null && text.isEmpty();
     }
 
+    /// Returns whether this host serializes to an empty string.
+    public boolean isEmpty() {
+        return text != null && text.isEmpty();
+    }
+
     /// Serializes the host.
     public String serialize() {
         switch (kind) {

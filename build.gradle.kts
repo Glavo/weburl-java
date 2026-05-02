@@ -25,6 +25,7 @@ dependencies {
     compileOnly("org.jetbrains:annotations:26.1.0")
     compileOnly("com.ibm.icu:icu4j:78.3")
 
+    testImplementation("com.google.code.gson:gson:2.11.0")
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -43,6 +44,7 @@ val downloadDir = layout.buildDirectory.dir("downloads")
 
 val wptCommit = "ebf8e3069ec4ac6498826bf9066419e46b0f4ac5"
 val wptResources = listOf(
+    "setters_tests",
     "urltestdata"
 )
 
@@ -50,7 +52,18 @@ val wptDownloadTasks = wptResources.map {
     tasks.register<de.undercouch.gradle.tasks.download.Download>("downloadWpt-$it") {
         src("https://raw.githubusercontent.com/web-platform-tests/wpt/$wptCommit/url/resources/$it.json")
         dest(downloadDir.map { dir -> dir.file("wpt/$it.json") })
+        overwrite(false)
     }
+}
+
+tasks.register("downloadWptResources") {
+    dependsOn(wptDownloadTasks)
+}
+
+tasks.test {
+    dependsOn("downloadWptResources")
+    inputs.dir(downloadDir.map { it.dir("wpt") })
+    systemProperty("org.glavo.url.wpt.resources", downloadDir.map { it.dir("wpt") }.get().asFile.absolutePath)
 }
 
 

@@ -184,7 +184,7 @@ public final class UrlParser {
 
     /// Returns whether the URL cannot have credentials or a port.
     public static boolean cannotHaveAUsernamePasswordPort(UrlRecord url) {
-        return url.host == null || url.host.isEmptyDomain() || url.scheme.equals("file");
+        return url.host == null || url.host.isEmpty() || url.scheme.equals("file");
     }
 
     /// Returns whether the scheme is a special URL scheme.
@@ -263,6 +263,17 @@ public final class UrlParser {
 
     /// Converts a domain to ASCII.
     private static String domainToAscii(String domain, boolean strict) {
+        if (!strict && isAsciiOnly(domain) && !containsPunycodeLabel(domain)) {
+            String result = domain.toLowerCase(Locale.ROOT);
+            if (result.isEmpty()) {
+                throw new WebURLParseException.DomainToASCII();
+            }
+            if (containsForbiddenDomainCodePoint(result)) {
+                throw new WebURLParseException.DomainInvalidCodePoint();
+            }
+            return result;
+        }
+
         String result = IdnaProcessor.toAscii(domain, strict);
         if (result == null) {
             throw new WebURLParseException.DomainToASCII();
@@ -276,6 +287,26 @@ public final class UrlParser {
             }
         }
         return result;
+    }
+
+    /// Returns whether a domain contains only ASCII code points.
+    private static boolean isAsciiOnly(String domain) {
+        for (int i = 0; i < domain.length(); i++) {
+            if (domain.charAt(i) > 0x7f) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// Returns whether a domain contains a punycode label.
+    private static boolean containsPunycodeLabel(String domain) {
+        for (String label : domain.split("\\.", -1)) {
+            if (label.regionMatches(true, 0, "xn--", 0, 4)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// Returns whether the domain ends in a numeric label.
@@ -333,7 +364,7 @@ public final class UrlParser {
         try {
             return Long.parseLong(value, radix);
         } catch (NumberFormatException ignored) {
-            return null;
+            return Long.MAX_VALUE;
         }
     }
 
@@ -1108,9 +1139,17 @@ public final class UrlParser {
                     try {
                         port = Integer.parseInt(buffer);
                     } catch (NumberFormatException ignored) {
+                        if (stateOverride == State.HOST) {
+                            buffer = "";
+                            return Result.STOP;
+                        }
                         return fail(new WebURLParseException.PortOutOfRange());
                     }
                     if (port > 65535) {
+                        if (stateOverride == State.HOST) {
+                            buffer = "";
+                            return Result.STOP;
+                        }
                         return fail(new WebURLParseException.PortOutOfRange());
                     }
                     url.port = defaultPort(url.scheme) == port ? -1 : port;
@@ -1120,7 +1159,7 @@ public final class UrlParser {
                     }
                 }
                 if (stateOverride != null) {
-                    return failApiValidation();
+                    return stateOverride == State.HOST ? Result.STOP : failApiValidation();
                 }
                 state = State.PATH_START;
                 pointer--;
