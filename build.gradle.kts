@@ -43,12 +43,12 @@ val downloadDir = layout.buildDirectory.dir("downloads")
 
 val wptCommit = "ebf8e3069ec4ac6498826bf9066419e46b0f4ac5"
 val wptResources = listOf(
-    ""
+    "urltestdata"
 )
 
 val wptDownloadTasks = wptResources.map {
     tasks.register<de.undercouch.gradle.tasks.download.Download>("downloadWpt-$it") {
-        src("https://raw.githubusercontent.com/web-platform-tests/wpt/$wptCommit/url/resources/urltestdata-javascript-only.json")
+        src("https://raw.githubusercontent.com/web-platform-tests/wpt/$wptCommit/url/resources/$it.json")
         dest(downloadDir.map { dir -> dir.file("wpt/$it.json") })
     }
 }
