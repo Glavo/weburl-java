@@ -19,6 +19,10 @@ import org.glavo.url.internal.WebURLImpl;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+
 /// A WHATWG URL.
 @NotNullByDefault
 public sealed interface WebURL permits WebURLImpl {
@@ -138,6 +142,16 @@ public sealed interface WebURL permits WebURLImpl {
 
     /// Returns a URL with the hash string updated.
     WebURL withHash(String value);
+
+    /// Returns the serialized URL as a Java `URI`.
+    ///
+    /// Characters accepted by WHATWG URL serialization but rejected by Java URI syntax are percent-encoded.
+    URI toURI();
+
+    /// Returns the serialized URL as a Java `URL`.
+    ///
+    /// Throws `MalformedURLException` when Java has no URL handler for the scheme or rejects the URL.
+    URL toURL() throws MalformedURLException;
 
     /// Returns the JSON representation of this URL.
     String toJSON();

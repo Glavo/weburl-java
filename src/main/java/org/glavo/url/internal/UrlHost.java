@@ -68,6 +68,22 @@ public final class UrlHost {
         return text != null && text.isEmpty();
     }
 
+    /// Returns the host text for Java URI server-authority construction, or `null` for an opaque host.
+    public @Nullable String javaServerHost() {
+        switch (kind) {
+            case DOMAIN:
+                return text == null ? "" : text;
+            case IPV4:
+                return serializeIpv4(ipv4Address);
+            case IPV6:
+                return serializeIpv6(ipv6Address == null ? new int[8] : ipv6Address);
+            case OPAQUE:
+                return null;
+            default:
+                throw new AssertionError(kind);
+        }
+    }
+
     /// Serializes the host.
     public String serialize() {
         switch (kind) {

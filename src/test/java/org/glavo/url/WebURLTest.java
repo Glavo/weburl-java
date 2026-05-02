@@ -18,6 +18,9 @@ package org.glavo.url;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -220,5 +223,26 @@ public final class WebURLTest {
         assertEquals("http://example.com/#y", WebURL.of("http://example.com#y").href());
         assertEquals("http://example.com/?", WebURL.of("http://example.com/?").href());
         assertEquals("http://example.com/#", WebURL.of("http://example.com/#").href());
+    }
+
+    /// Tests conversion to Java networking types.
+    @Test
+    public void convertsToJavaNetTypes() throws Exception {
+        WebURL url = WebURL.of("https://example.com/a b?q=1#f");
+
+        assertEquals(new URI("https://example.com/a%20b?q=1#f"), url.toURI());
+        assertEquals("https://example.com/a%20b?q=1#f", url.toURL().toExternalForm());
+        assertThrows(MalformedURLException.class, () -> WebURL.of("non-special:opaque").toURL());
+    }
+
+    /// Tests Java URI conversion for URLs whose WHATWG serialization is not Java URI syntax.
+    @Test
+    public void convertsToJavaUriSyntax() {
+        assertEquals("http://!%22$&'()*+,-.;=_%60%7B%7D~/",
+                WebURL.of("http://!\"$&'()*+,-.;=_`{}~/").toURI().toASCIIString());
+        assertEquals("http://example.com/%25zz",
+                WebURL.of("http://example.com/%zz").toURI().toASCIIString());
+        assertEquals("data:text/plain,hi%20?x#%20y",
+                WebURL.of("data:text/plain,hi ?x# y").toURI().toASCIIString());
     }
 }

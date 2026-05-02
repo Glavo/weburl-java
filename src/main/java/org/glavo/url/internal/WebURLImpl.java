@@ -21,6 +21,12 @@ import org.glavo.url.WebURLSearchParams;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+
 /// Internal implementation of `WebURL`.
 @NotNullByDefault
 public final class WebURLImpl implements WebURL {
@@ -292,6 +298,30 @@ public final class WebURLImpl implements WebURL {
         return parseIntoCopyOrThis(input, copy, UrlParser.State.FRAGMENT);
     }
 
+    /// Returns the serialized URL as a Java `URI`.
+    @Override
+    public URI toURI() {
+        try {
+            if (url.hasOpaquePath()) {
+                return new URI(url.scheme, uriSchemeSpecificPart(), uriFragment());
+            }
+
+            URI serverUri = serverUri();
+            if (serverUri != null) {
+                return serverUri;
+            }
+            return new URI(url.scheme, uriAuthority(), uriPath(), uriQuery(), uriFragment());
+        } catch (URISyntaxException exception) {
+            throw new AssertionError("Failed to construct Java URI from parsed URL", exception);
+        }
+    }
+
+    /// Returns the serialized URL as a Java `URL`.
+    @Override
+    public URL toURL() throws MalformedURLException {
+        return toURI().toURL();
+    }
+
     /// Returns the JSON representation of this URL.
     @Override
     public String toJSON() {
@@ -302,6 +332,99 @@ public final class WebURLImpl implements WebURL {
     @Override
     public String toString() {
         return href();
+    }
+
+    /// Attempts to construct a Java URI with a server authority.
+    private @Nullable URI serverUri() {
+        if (url.host == null) {
+            return null;
+        }
+
+        String host = url.host.javaServerHost();
+        if (host == null) {
+            return null;
+        }
+
+        try {
+            return new URI(
+                    url.scheme,
+                    uriUserInfo(),
+                    host,
+                    url.port,
+                    uriPath(),
+                    uriQuery(),
+                    uriFragment());
+        } catch (URISyntaxException ignored) {
+            return null;
+        }
+    }
+
+    /// Returns the Java URI authority component.
+    private @Nullable String uriAuthority() {
+        if (url.host == null) {
+            return null;
+        }
+
+        StringBuilder authority = new StringBuilder();
+        if (!url.username.isEmpty() || !url.password.isEmpty()) {
+            authority.append(uriComponent(url.username));
+            if (!url.password.isEmpty()) {
+                authority.append(':').append(uriComponent(url.password));
+            }
+            authority.append('@');
+        }
+        authority.append(uriComponent(UrlParser.serializeHost(url.host)));
+        if (url.port != -1) {
+            authority.append(':').append(url.port);
+        }
+        return authority.toString();
+    }
+
+    /// Returns the Java URI user-info component.
+    private @Nullable String uriUserInfo() {
+        if (url.username.isEmpty() && url.password.isEmpty()) {
+            return null;
+        }
+
+        StringBuilder userInfo = new StringBuilder(uriComponent(url.username));
+        if (!url.password.isEmpty()) {
+            userInfo.append(':').append(uriComponent(url.password));
+        }
+        return userInfo.toString();
+    }
+
+    /// Returns the Java URI path component.
+    private String uriPath() {
+        String path = UrlParser.serializePath(url);
+        if (url.host == null && url.path.size() > 1 && url.path.get(0).isEmpty()) {
+            path = "/." + path;
+        }
+        return uriComponent(path);
+    }
+
+    /// Returns the Java URI query component.
+    private @Nullable String uriQuery() {
+        return url.query == null ? null : uriComponent(url.query);
+    }
+
+    /// Returns the Java URI fragment component.
+    private @Nullable String uriFragment() {
+        return url.fragment == null ? null : uriComponent(url.fragment);
+    }
+
+    /// Returns the Java URI scheme-specific part for an opaque URL.
+    private String uriSchemeSpecificPart() {
+        StringBuilder schemeSpecificPart =
+                new StringBuilder(uriComponent(url.opaquePath == null ? "" : url.opaquePath));
+        if (url.query != null) {
+            schemeSpecificPart.append('?').append(uriComponent(url.query));
+        }
+        return schemeSpecificPart.toString();
+    }
+
+    /// Returns a Java URI constructor component from a WHATWG percent-encoded component.
+    private static String uriComponent(String component) {
+        return new String(PercentEncoding.percentDecodeString(component), StandardCharsets.UTF_8);
     }
 
     /// Returns the internal URL record for a `WebURL`.
