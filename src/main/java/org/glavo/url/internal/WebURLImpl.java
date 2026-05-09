@@ -26,7 +26,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /// Internal immutable implementation of `WebURL`.
@@ -327,17 +326,9 @@ public final class WebURLImpl implements WebURL {
     @Override
     public URI toURI() {
         try {
-            if (hasOpaquePath()) {
-                return new URI(scheme, uriSchemeSpecificPart(), uriFragment());
-            }
-
-            URI serverUri = serverUri();
-            if (serverUri != null) {
-                return serverUri;
-            }
-            return new URI(scheme, uriAuthority(), uriPath(), uriQuery(), uriFragment());
+            return new URI(toRfc2396String());
         } catch (URISyntaxException exception) {
-            throw new AssertionError("Failed to construct Java URI from parsed URL", exception);
+            throw new IllegalStateException("This URL cannot be represented as an RFC 2396 URI", exception);
         }
     }
 
@@ -373,102 +364,120 @@ public final class WebURLImpl implements WebURL {
         return new WebURLImpl(scheme, username, password, host, port, path, opaquePath, query, fragment);
     }
 
-    /// Attempts to construct a Java URI with a server authority.
-    private @Nullable URI serverUri() {
-        if (host == null) {
-            return null;
-        }
-
-        String javaServerHost = host.javaServerHost();
-        if (javaServerHost == null) {
-            return null;
-        }
-
-        try {
-            return new URI(
-                    scheme,
-                    uriUserInfo(),
-                    javaServerHost,
-                    port,
-                    uriPath(),
-                    uriQuery(),
-                    uriFragment());
-        } catch (URISyntaxException ignored) {
-            return null;
-        }
-    }
-
-    /// Returns the Java URI authority component.
-    private @Nullable String uriAuthority() {
-        if (host == null) {
-            return null;
-        }
-
-        StringBuilder authority = new StringBuilder();
-        if (!username.isEmpty() || !password.isEmpty()) {
-            authority.append(uriComponent(username));
-            if (!password.isEmpty()) {
-                authority.append(':').append(uriComponent(password));
-            }
-            authority.append('@');
-        }
-        authority.append(uriComponent(UrlParser.serializeHost(host)));
-        if (port != -1) {
-            authority.append(':').append(port);
-        }
-        return authority.toString();
-    }
-
-    /// Returns the Java URI user-info component.
-    private @Nullable String uriUserInfo() {
-        if (username.isEmpty() && password.isEmpty()) {
-            return null;
-        }
-
-        StringBuilder userInfo = new StringBuilder(uriComponent(username));
-        if (!password.isEmpty()) {
-            userInfo.append(':').append(uriComponent(password));
-        }
-        return userInfo.toString();
-    }
-
-    /// Returns the Java URI path component.
-    private String uriPath() {
-        String serializedPath = UrlParser.serializePath(this);
-        if (host == null && path.size() > 1 && path.get(0).isEmpty()) {
-            serializedPath = "/." + serializedPath;
-        }
-        return uriComponent(serializedPath);
-    }
-
-    /// Returns the Java URI query component.
-    private @Nullable String uriQuery() {
-        return query == null ? null : uriComponent(query);
-    }
-
-    /// Returns the Java URI fragment component.
-    private @Nullable String uriFragment() {
-        return fragment == null ? null : uriComponent(fragment);
-    }
-
-    /// Returns the Java URI scheme-specific part for an opaque URL.
-    private String uriSchemeSpecificPart() {
-        StringBuilder schemeSpecificPart =
-                new StringBuilder(uriComponent(opaquePath == null ? "" : opaquePath));
-        if (query != null) {
-            schemeSpecificPart.append('?').append(uriComponent(query));
-        }
-        return schemeSpecificPart.toString();
-    }
-
-    /// Returns a Java URI constructor component from a WHATWG percent-encoded component.
-    private static String uriComponent(String component) {
-        return new String(PercentEncoding.percentDecodeString(component), StandardCharsets.UTF_8);
-    }
-
     /// Returns the implementation object for a `WebURL`.
     private static WebURLImpl implementation(WebURL url) {
         return (WebURLImpl) url;
+    }
+
+    /// Returns the serialized URL converted to Java's RFC 2396 URI syntax.
+    private String toRfc2396String() {
+        StringBuilder output = new StringBuilder();
+        output.append(scheme).append(':');
+
+        if (hasOpaquePath()) {
+            appendRfc2396Encoded(output, opaquePath == null ? "" : opaquePath, WebURLImpl::isRfc2396Uric);
+        } else {
+            if (host != null) {
+                output.append("//");
+                if (!username.isEmpty() || !password.isEmpty()) {
+                    appendRfc2396Encoded(output, username, WebURLImpl::isRfc2396UserInfo);
+                    if (!password.isEmpty()) {
+                        output.append(':');
+                        appendRfc2396Encoded(output, password, WebURLImpl::isRfc2396UserInfo);
+                    }
+                    output.append('@');
+                }
+                appendRfc2396Encoded(output, UrlParser.serializeHost(host), WebURLImpl::isRfc2396Host);
+                if (port != -1) {
+                    output.append(':').append(port);
+                }
+            } else if (path.size() > 1 && path.get(0).isEmpty()) {
+                output.append("/.");
+            }
+            appendRfc2396Encoded(output, UrlParser.serializePath(this), WebURLImpl::isRfc2396Path);
+        }
+
+        if (query != null) {
+            output.append('?');
+            appendRfc2396Encoded(output, query, WebURLImpl::isRfc2396Uric);
+        }
+        if (fragment != null) {
+            output.append('#');
+            appendRfc2396Encoded(output, fragment, WebURLImpl::isRfc2396Uric);
+        }
+        return output.toString();
+    }
+
+    /// Appends a component encoded for Java's RFC 2396 URI parser.
+    private static void appendRfc2396Encoded(
+            StringBuilder output,
+            String value,
+            Rfc2396CharPredicate allowed
+    ) {
+        for (int index = 0; index < value.length(); ) {
+            int c = value.codePointAt(index);
+            if (c == '%' && index + 2 < value.length()
+                    && Infra.isAsciiHex(value.charAt(index + 1))
+                    && Infra.isAsciiHex(value.charAt(index + 2))) {
+                output.append('%').append(value.charAt(index + 1)).append(value.charAt(index + 2));
+                index += 3;
+                continue;
+            }
+
+            if (c <= 0x7f && allowed.test(c)) {
+                output.append((char) c);
+            } else {
+                for (byte b : Encoding.utf8Encode(new String(Character.toChars(c)))) {
+                    appendRfc2396Escape(output, b & 0xff);
+                }
+            }
+            index += Character.charCount(c);
+        }
+    }
+
+    /// Appends one RFC 2396 percent escape.
+    private static void appendRfc2396Escape(StringBuilder output, int value) {
+        output.append('%');
+        output.append(Character.toUpperCase(Character.forDigit((value >>> 4) & 0xf, 16)));
+        output.append(Character.toUpperCase(Character.forDigit(value & 0xf, 16)));
+    }
+
+    /// Returns whether a character is an RFC 2396 path character.
+    private static boolean isRfc2396Path(int c) {
+        return isRfc2396Unreserved(c) || c == '/' || c == ';' || c == ':' || c == '@'
+                || c == '&' || c == '=' || c == '+' || c == '$' || c == ',';
+    }
+
+    /// Returns whether a character is an RFC 2396 URI character.
+    private static boolean isRfc2396Uric(int c) {
+        return isRfc2396Unreserved(c) || c == ';' || c == '/' || c == '?' || c == ':'
+                || c == '@' || c == '&' || c == '=' || c == '+' || c == '$' || c == ',';
+    }
+
+    /// Returns whether a character is allowed in an RFC 2396 user-info component.
+    private static boolean isRfc2396UserInfo(int c) {
+        return isRfc2396Unreserved(c) || c == ';' || c == ':' || c == '&' || c == '='
+                || c == '+' || c == '$' || c == ',';
+    }
+
+    /// Returns whether a character is allowed in an RFC 2396 host component.
+    private static boolean isRfc2396Host(int c) {
+        return isRfc2396Unreserved(c) || c == '[' || c == ']' || c == ':' || c == ';'
+                || c == '&' || c == '=' || c == '+' || c == '$' || c == ',';
+    }
+
+    /// Returns whether a character is unreserved under RFC 2396.
+    private static boolean isRfc2396Unreserved(int c) {
+        return Infra.isAsciiAlpha(c) || Infra.isAsciiDigit(c) || c == '-' || c == '_'
+                || c == '.' || c == '!' || c == '~' || c == '*' || c == '\'' || c == '(' || c == ')';
+    }
+
+    /// Predicate over RFC 2396 ASCII characters.
+    @FunctionalInterface
+    @NotNullByDefault
+    private interface Rfc2396CharPredicate {
+        /// Returns whether the character may appear without escaping.
+        boolean test(int c);
     }
 
     /// Runs a state override on a copy of this URL.

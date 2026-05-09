@@ -245,4 +245,38 @@ public final class WebURLTest {
         assertEquals("data:text/plain,hi%20?x#%20y",
                 WebURL.of("data:text/plain,hi ?x# y").toURI().toASCIIString());
     }
+
+    /// Tests Java URI conversion preserves existing percent escapes.
+    @Test
+    public void preservesPercentEscapesInJavaUriConversion() {
+        WebURL url = WebURL.of("https://user%40name:pa%3Ass@example.com/a%2Fb?x=a%26b#frag%23ment");
+        URI uri = url.toURI();
+
+        assertEquals("https://user%40name:pa%3Ass@example.com/a%2Fb?x=a%26b#frag%23ment",
+                uri.toASCIIString());
+        assertEquals("/a%2Fb", uri.getRawPath());
+        assertEquals("x=a%26b", uri.getRawQuery());
+        assertEquals("frag%23ment", uri.getRawFragment());
+    }
+
+    /// Tests Java URI conversion escapes bare percent signs in every raw component.
+    @Test
+    public void escapesBarePercentInJavaUriConversion() {
+        assertEquals("http://example.com/%25zz?x=%25zz#%25zz",
+                WebURL.of("http://example.com/%zz?x=%zz#%zz").toURI().toASCIIString());
+    }
+
+    /// Tests Java URI conversion escapes characters outside RFC 2396.
+    @Test
+    public void escapesNonRfc2396CharactersInJavaUriConversion() {
+        assertEquals("http://example.com/%5B%5D?x=%5B%5D%7B%7D%7C%60#a%5B%5D%7B%7D%7C%60%23b",
+                WebURL.of("http://example.com/[]?x=[]{}|`#a[]{}|`#b").toURI().toASCIIString());
+    }
+
+    /// Tests Java URI conversion rejects WHATWG URLs that have no RFC 2396 representation.
+    @Test
+    public void rejectsUrlsWithoutRfc2396Representation() {
+        assertThrows(IllegalStateException.class, () -> WebURL.of("non-special:").toURI());
+        assertThrows(IllegalStateException.class, () -> WebURL.of("non-special:#fragment").toURI());
+    }
 }
