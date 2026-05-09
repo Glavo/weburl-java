@@ -19,25 +19,54 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.Serial;
 
-/// A URL parse exception corresponding to a WHATWG URL validation error.
+/// A URL parse exception corresponding to a WHATWG URL validation error or parse failure.
 @NotNullByDefault
 public abstract sealed class WebURLParseException extends IllegalArgumentException {
     /// Serialization identifier for this exception type.
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /// The WHATWG URL validation error name.
+    /// The URL parse error name.
     private final String errorName;
 
-    /// Creates a URL parse exception with a WHATWG URL validation error name and description.
+    /// Creates a URL parse exception with a parse error name and description.
     protected WebURLParseException(String errorName, String description) {
         super(errorName + ": " + description);
         this.errorName = errorName;
     }
 
-    /// Returns the WHATWG URL validation error name.
+    /// Creates a URL parse exception with a parse error name, description, and cause.
+    protected WebURLParseException(String errorName, String description, Throwable cause) {
+        super(errorName + ": " + description, cause);
+        this.errorName = errorName;
+    }
+
+    /// Returns the URL parse error name.
     public final String errorName() {
         return errorName;
+    }
+
+    /// The generic `invalid-URL` parse failure.
+    @NotNullByDefault
+    public static final class InvalidURL extends WebURLParseException {
+        /// Serialization identifier for this exception type.
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        /// Creates an `invalid-URL` parse exception.
+        public InvalidURL() {
+            super("invalid-URL", "The input is not a valid URL.");
+        }
+
+        /// Creates an `invalid-URL` parse exception with a description.
+        public InvalidURL(String description) {
+            super("invalid-URL", description);
+        }
+
+        /// Creates an `invalid-URL` parse exception with a description and cause.
+        public InvalidURL(String description, Throwable cause) {
+            super("invalid-URL", description, cause);
+        }
     }
 
     /// The `domain-to-ASCII` validation error.

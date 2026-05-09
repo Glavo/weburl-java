@@ -128,8 +128,7 @@ public final class WebURLFactory {
     ///
     /// @param input the URL input string
     /// @return the parsed URL
-    /// @throws WebURLParseException when parsing fails with a known URL validation error
-    /// @throws IllegalArgumentException when parsing fails without a specific public validation error
+    /// @throws WebURLParseException when parsing fails
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
     public WebURL parseURL(String input) {
         return parseRequired(input, null, "Invalid URL: " + input);
@@ -143,8 +142,7 @@ public final class WebURLFactory {
     /// @param input the URL input string
     /// @param base the base URL string
     /// @return the parsed URL
-    /// @throws WebURLParseException when either input fails with a known URL validation error
-    /// @throws IllegalArgumentException when either input fails without a specific public validation error
+    /// @throws WebURLParseException when either input fails
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
     public WebURL parseURL(String input, String base) {
         return parseRequired(input, parseBaseRequired(base), "Invalid URL: " + input);
@@ -157,8 +155,7 @@ public final class WebURLFactory {
     /// @param input the URL input string
     /// @param base the base URL
     /// @return the parsed URL
-    /// @throws WebURLParseException when parsing fails with a known URL validation error
-    /// @throws IllegalArgumentException when parsing fails without a specific public validation error
+    /// @throws WebURLParseException when parsing fails
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
     public WebURL parseURL(String input, WebURL base) {
         return parseRequired(input, implementation(base), "Invalid URL: " + input);
@@ -250,8 +247,7 @@ public final class WebURLFactory {
     ///
     /// @param input the browser address input string
     /// @return the parsed URL
-    /// @throws WebURLParseException when parsing fails with a known URL validation error
-    /// @throws IllegalArgumentException when parsing fails without a specific public validation error
+    /// @throws WebURLParseException when parsing fails
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
     public WebURL parseAddress(String input) {
         Objects.requireNonNull(input, "input");
@@ -295,7 +291,7 @@ public final class WebURLFactory {
         } catch (WebURLParseException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException(message, exception);
+            throw new WebURLParseException.InvalidURL(message, exception);
         }
     }
 
@@ -307,7 +303,7 @@ public final class WebURLFactory {
         } catch (WebURLParseException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("Invalid base URL: " + base, exception);
+            throw new WebURLParseException.InvalidURL("Invalid base URL: " + base, exception);
         }
     }
 

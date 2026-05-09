@@ -824,9 +824,9 @@ public final class UrlParser {
             throw error;
         }
 
-        /// Throws a parser failure without a corresponding public validation error.
+        /// Throws a generic parser failure.
         private Result failApiValidation() {
-            throw new IllegalArgumentException("Invalid URL");
+            throw new WebURLParseException.InvalidURL();
         }
 
         /// Returns a parser failure for `host-missing`.

@@ -95,6 +95,7 @@ public final class WebURLFactoryTest {
         assertFalse(factory.canParseURL("www.glavo.site"));
         assertTrue(factory.canParseAddress("www.glavo.site"));
         assertNull(factory.tryParseAddress("not a url"));
+        assertThrows(WebURLParseException.class, () -> factory.parseAddress("not a url"));
         assertThrows(WebURLParseException.PortInvalid.class,
                 () -> factory.parseAddress("www.glavo.site:abc"));
     }

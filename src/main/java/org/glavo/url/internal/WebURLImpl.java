@@ -16,7 +16,6 @@
 package org.glavo.url.internal;
 
 import org.glavo.url.WebURL;
-import org.glavo.url.WebURLParseException;
 import org.glavo.url.WebURLSearchParams;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -432,16 +431,5 @@ public final class WebURLImpl implements WebURL {
     private WebURL parseIntoCopyOrThis(String input, WebURLImpl copy, UrlParser.State state) {
         WebURLImpl parsed = UrlParser.basicParse(input, null, copy, state);
         return parsed == null ? this : parsed;
-    }
-
-    /// Parses an input string and throws when parsing fails.
-    private static WebURLImpl parseRequired(String input, @Nullable WebURLImpl base, String message) {
-        try {
-            return UrlParser.basicParseRequired(input, base, null, null);
-        } catch (WebURLParseException exception) {
-            throw exception;
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException(message, exception);
-        }
     }
 }

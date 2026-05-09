@@ -52,8 +52,8 @@ public final class WebURLTest {
     /// Tests parseURL and canParseURL failure handling.
     @Test
     public void reportsParseFailures() {
-        assertThrows(IllegalArgumentException.class, () -> WebURL.parseURL("/en-US/docs"));
-        assertThrows(IllegalArgumentException.class, () -> WebURL.parseURL("/en-US/docs", ""));
+        assertThrows(WebURLParseException.class, () -> WebURL.parseURL("/en-US/docs"));
+        assertThrows(WebURLParseException.class, () -> WebURL.parseURL("/en-US/docs", ""));
         assertNull(WebURL.tryParseURL("/en-US/docs"));
         assertFalse(WebURL.canParseURL("/en-US/docs"));
         assertTrue(WebURL.canParseURL("/en-US/docs", "https://developer.mozilla.org"));
@@ -173,7 +173,8 @@ public final class WebURLTest {
     @Test
     public void handlesPorts() {
         assertEquals("http://example.com/", WebURL.parseURL("http://example.com:80/").href());
-        assertThrows(IllegalArgumentException.class, () -> WebURL.parseURL("http://example.com:65536/"));
+        assertThrows(WebURLParseException.PortOutOfRange.class,
+                () -> WebURL.parseURL("http://example.com:65536/"));
     }
 
     /// Tests setter no-op cases from the URL Standard.

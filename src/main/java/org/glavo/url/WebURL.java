@@ -48,8 +48,7 @@ public sealed interface WebURL permits WebURLImpl {
     ///
     /// @param input the URL input string
     /// @return the parsed URL
-    /// @throws WebURLParseException when parsing fails with a known URL validation error
-    /// @throws IllegalArgumentException when parsing fails without a specific public validation error
+    /// @throws WebURLParseException when parsing fails
     static WebURL parseURL(String input) {
         return WebURLFactory.defaultFactory().parseURL(input);
     }
@@ -61,8 +60,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @param input the URL input string
     /// @param base the base URL string
     /// @return the parsed URL
-    /// @throws WebURLParseException when either input fails with a known URL validation error
-    /// @throws IllegalArgumentException when either input fails without a specific public validation error
+    /// @throws WebURLParseException when either input fails
     static WebURL parseURL(String input, String base) {
         return WebURLFactory.defaultFactory().parseURL(input, base);
     }
@@ -74,8 +72,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @param input the URL input string
     /// @param base the base URL
     /// @return the parsed URL
-    /// @throws WebURLParseException when parsing fails with a known URL validation error
-    /// @throws IllegalArgumentException when parsing fails without a specific public validation error
+    /// @throws WebURLParseException when parsing fails
     static WebURL parseURL(String input, WebURL base) {
         return WebURLFactory.defaultFactory().parseURL(input, base);
     }
@@ -153,8 +150,7 @@ public sealed interface WebURL permits WebURLImpl {
     ///
     /// @param input the browser address input string
     /// @return the parsed URL
-    /// @throws WebURLParseException when parsing fails with a known URL validation error
-    /// @throws IllegalArgumentException when parsing fails without a specific public validation error
+    /// @throws WebURLParseException when parsing fails
     static WebURL parseAddress(String input) {
         return WebURLFactory.defaultFactory().parseAddress(input);
     }
