@@ -54,6 +54,12 @@ final class PercentEncoding {
 
     /// Percent-encodes one Unicode code point with the given byte predicate.
     static String utf8PercentEncodeCodePoint(int codePoint, BytePredicate percentEncodePredicate) {
+        if (codePoint >= 0 && codePoint <= 0x7f) {
+            int value = codePoint;
+            return percentEncodePredicate.test(value)
+                    ? percentEncoded(value)
+                    : Character.toString((char) value);
+        }
         return utf8PercentEncodeString(new String(Character.toChars(codePoint)), percentEncodePredicate, false);
     }
 
@@ -64,23 +70,51 @@ final class PercentEncoding {
 
     /// Percent-encodes a string with the given byte predicate and optional space-to-plus conversion.
     static String utf8PercentEncodeString(String input, BytePredicate percentEncodePredicate, boolean spaceAsPlus) {
+        for (int index = 0; index < input.length(); ) {
+            int codePoint = input.codePointAt(index);
+            if (codePoint == ' ' && spaceAsPlus) {
+                return utf8PercentEncodeString(input, percentEncodePredicate, spaceAsPlus, index);
+            }
+            if (codePoint > 0x7f || percentEncodePredicate.test(codePoint)) {
+                return utf8PercentEncodeString(input, percentEncodePredicate, spaceAsPlus, index);
+            }
+            index += Character.charCount(codePoint);
+        }
+        return input;
+    }
+
+    /// Percent-encodes a string starting at the first known changed code point.
+    private static String utf8PercentEncodeString(
+            String input,
+            BytePredicate percentEncodePredicate,
+            boolean spaceAsPlus,
+            int start
+    ) {
         StringBuilder output = new StringBuilder(input.length());
-        input.codePoints().forEach(codePoint -> {
+        output.append(input, 0, start);
+        for (int index = start; index < input.length(); ) {
+            int codePoint = input.codePointAt(index);
             if (spaceAsPlus && codePoint == ' ') {
                 output.append('+');
-                return;
-            }
-
-            byte[] bytes = Encoding.utf8Encode(new String(Character.toChars(codePoint)));
-            for (byte b : bytes) {
-                int value = b & 0xff;
-                if (percentEncodePredicate.test(value)) {
-                    appendPercentEncoded(output, value);
+            } else if (codePoint <= 0x7f) {
+                if (percentEncodePredicate.test(codePoint)) {
+                    appendPercentEncoded(output, codePoint);
                 } else {
-                    output.append((char) value);
+                    output.append((char) codePoint);
+                }
+            } else {
+                byte[] bytes = Encoding.utf8Encode(new String(Character.toChars(codePoint)));
+                for (byte b : bytes) {
+                    int value = b & 0xff;
+                    if (percentEncodePredicate.test(value)) {
+                        appendPercentEncoded(output, value);
+                    } else {
+                        output.append((char) value);
+                    }
                 }
             }
-        });
+            index += Character.charCount(codePoint);
+        }
         return output.toString();
     }
 
@@ -161,6 +195,11 @@ final class PercentEncoding {
         output.append('%');
         output.append(HEX[(value >>> 4) & 0xf]);
         output.append(HEX[value & 0xf]);
+    }
+
+    /// Returns one percent-encoded byte as a string.
+    private static String percentEncoded(int value) {
+        return new String(new char[]{'%', HEX[(value >>> 4) & 0xf], HEX[value & 0xf]});
     }
 
     /// Predicate over unsigned byte values.

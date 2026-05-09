@@ -448,8 +448,21 @@ public final class WebURLFactory {
 
     /// Removes ASCII tabs and newlines.
     private static String removeTabsAndNewlines(String value) {
-        StringBuilder output = new StringBuilder(value.length());
+        int firstSkipped = -1;
         for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '\t' || c == '\n' || c == '\r') {
+                firstSkipped = i;
+                break;
+            }
+        }
+        if (firstSkipped < 0) {
+            return value;
+        }
+
+        StringBuilder output = new StringBuilder(value.length() - 1);
+        output.append(value, 0, firstSkipped);
+        for (int i = firstSkipped + 1; i < value.length(); i++) {
             char c = value.charAt(i);
             if (c != '\t' && c != '\n' && c != '\r') {
                 output.append(c);

@@ -24,6 +24,7 @@ import java.net.URI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -77,6 +78,16 @@ public final class WebURLTest {
                 () -> WebURL.parseURL("https://[::1"));
         assertThrows(WebURLParseException.IPv4TooManyParts.class,
                 () -> WebURL.parseURL("https://1.2.3.4.5/"));
+    }
+
+    /// Tests that already canonical input strings are adopted as the URL serialization.
+    @Test
+    public void reusesCanonicalInputSerialization() {
+        String basic = "https://user:pass@example.com:8080/a/b?x=1#f";
+        assertSame(basic, WebURL.parseURL(basic).href());
+
+        String ipv6 = "http://[2001:db8::1]/";
+        assertSame(ipv6, WebURL.parseURL(ipv6).href());
     }
 
     /// Tests URL getters and setters.
