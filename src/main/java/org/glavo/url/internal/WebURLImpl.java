@@ -85,7 +85,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the serialized URL without its fragment.
     String hrefWithoutFragment() {
-        String href = hrefValue();
+        String href = href();
         return record.fragmentStart < 0 ? href : href.substring(0, record.fragmentStart - 1);
     }
 
@@ -132,7 +132,9 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized URL.
     @Override
     public String href() {
-        return hrefValue();
+        String href = record.href;
+        assert href != null;
+        return href;
     }
 
     /// Returns the serialized origin.
@@ -190,7 +192,7 @@ public final class WebURLImpl implements WebURL {
     public String protocol() {
         @Nullable String value = protocol;
         if (value == null) {
-            value = hrefValue().substring(0, record.schemeEnd + 1);
+            value = href().substring(0, record.schemeEnd + 1);
             protocol = value;
         }
         return value;
@@ -207,7 +209,7 @@ public final class WebURLImpl implements WebURL {
     public String username() {
         @Nullable String value = username;
         if (value == null) {
-            String href = hrefValue();
+            String href = href();
             value = record.usernameStart < 0 ? "" : href.substring(record.usernameStart, record.usernameEnd);
             username = value;
         }
@@ -230,7 +232,7 @@ public final class WebURLImpl implements WebURL {
     public String password() {
         @Nullable String value = password;
         if (value == null) {
-            String href = hrefValue();
+            String href = href();
             value = record.passwordStart < 0 ? "" : href.substring(record.passwordStart, record.passwordEnd);
             password = value;
         }
@@ -253,7 +255,7 @@ public final class WebURLImpl implements WebURL {
     public String host() {
         @Nullable String value = host;
         if (value == null) {
-            String href = hrefValue();
+            String href = href();
             if (record.hostStart < 0) {
                 value = "";
             } else {
@@ -280,7 +282,7 @@ public final class WebURLImpl implements WebURL {
     public String hostname() {
         @Nullable String value = hostname;
         if (value == null) {
-            String href = hrefValue();
+            String href = href();
             value = record.hostStart < 0 ? "" : href.substring(record.hostStart, record.hostEnd);
             hostname = value;
         }
@@ -301,7 +303,7 @@ public final class WebURLImpl implements WebURL {
     public String port() {
         @Nullable String value = port;
         if (value == null) {
-            String href = hrefValue();
+            String href = href();
             value = record.portStart < 0 ? "" : href.substring(record.portStart, record.portEnd);
             port = value;
         }
@@ -327,7 +329,7 @@ public final class WebURLImpl implements WebURL {
     public String pathname() {
         @Nullable String value = pathname;
         if (value == null) {
-            value = hrefValue().substring(record.pathStart, record.pathEnd);
+            value = href().substring(record.pathStart, record.pathEnd);
             pathname = value;
         }
         return value;
@@ -350,7 +352,7 @@ public final class WebURLImpl implements WebURL {
     public String search() {
         @Nullable String value = search;
         if (value == null) {
-            String href = hrefValue();
+            String href = href();
             value = record.queryStart < 0 || record.queryStart == record.queryEnd
                     ? ""
                     : href.substring(record.queryStart - 1, record.queryEnd);
@@ -378,7 +380,7 @@ public final class WebURLImpl implements WebURL {
     public WebURLSearchParams searchParams() {
         @Nullable WebURLSearchParams params = searchParams;
         if (params == null) {
-            String href = hrefValue();
+            String href = href();
             int queryStart = record.queryStart;
             int queryEnd = record.queryEnd;
             params = WebURLSearchParamsImpl.fromQueryInternal(
@@ -402,7 +404,7 @@ public final class WebURLImpl implements WebURL {
     public String hash() {
         @Nullable String value = hash;
         if (value == null) {
-            String href = hrefValue();
+            String href = href();
             value = record.fragmentStart < 0 || record.fragmentStart == href.length()
                     ? ""
                     : href.substring(record.fragmentStart - 1);
@@ -444,34 +446,25 @@ public final class WebURLImpl implements WebURL {
     /// Compares this URL with another URL by serialized URL string.
     @Override
     public int compareTo(WebURL other) {
-        return hrefValue().compareTo(other.href());
+        return href().compareTo(other.href());
     }
 
     /// Compares this URL with another object for serialized URL equality.
     @Override
     public boolean equals(@Nullable Object obj) {
-        return obj instanceof WebURL other && hrefValue().equals(other.href());
+        return obj instanceof WebURL other && href().equals(other.href());
     }
 
     /// Returns the serialized URL hash code.
     @Override
     public int hashCode() {
-        return hrefValue().hashCode();
+        return href().hashCode();
     }
 
     /// Returns the serialized URL.
     @Override
     public String toString() {
         return href();
-    }
-
-    /// Returns the serialized URL from the frozen record.
-    private String hrefValue() {
-        @Nullable String href = record.href;
-        if (href == null) {
-            throw new AssertionError("URL record is not serialized");
-        }
-        return href;
     }
 
     /// Returns the serialized URL converted to Java's RFC 2396 URI syntax.
@@ -482,7 +475,7 @@ public final class WebURLImpl implements WebURL {
             return cached;
         }
 
-        String href = hrefValue();
+        String href = href();
         StringBuilder output = new StringBuilder();
         output.append(href, 0, record.schemeEnd + 1);
 
