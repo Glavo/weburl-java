@@ -176,6 +176,7 @@ tasks.named<ProcessResources>("processTestResources") {
 
 val wptCommit = "ebf8e3069ec4ac6498826bf9066419e46b0f4ac5"
 val wptResources = listOf(
+    "toascii",
     "urltestdata"
 )
 
@@ -184,6 +185,9 @@ val wptDownloadTasks = wptResources.map {
         src("https://raw.githubusercontent.com/web-platform-tests/wpt/$wptCommit/url/resources/$it.json")
         dest(downloadDir.map { dir -> dir.file("wpt/$it.json") })
         overwrite(false)
+        connectTimeout(30_000)
+        readTimeout(180_000)
+        retries(3)
     }
 }
 

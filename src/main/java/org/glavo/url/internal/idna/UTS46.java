@@ -60,6 +60,7 @@ public final class UTS46 {
                 checkJoiners,
                 useStd3AsciiRules,
                 transitionalProcessing,
+                false,
                 false
         );
         return new Result(joinLabels(labels.labels), error);
@@ -87,7 +88,8 @@ public final class UTS46 {
                 checkJoiners,
                 useStd3AsciiRules,
                 transitionalProcessing,
-                true
+                true,
+                verifyDnsLength
         );
 
         StringBuilder ascii = new StringBuilder(mapped.value().length() + labels.labels.length * ACE_PREFIX.length());
@@ -200,14 +202,15 @@ public final class UTS46 {
             boolean checkJoiners,
             boolean useStd3AsciiRules,
             boolean transitionalProcessing,
-            boolean toAscii
+            boolean toAscii,
+            boolean verifyDnsLength
     ) {
         boolean error = false;
         boolean bidiDomain = checkBidi && isBidiDomain(labels);
         for (int i = 0; i < labels.length; i++) {
             boolean finalEmptyRootLabel = i == labels.length - 1 && i > 0 && labels[i].isEmpty();
             if (labels[i].isEmpty()) {
-                if (toAscii || !finalEmptyRootLabel) {
+                if ((toAscii && verifyDnsLength) || (!toAscii && !finalEmptyRootLabel)) {
                     error = true;
                 }
                 continue;
