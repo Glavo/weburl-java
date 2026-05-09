@@ -15,6 +15,7 @@
  */
 package org.glavo.url.internal;
 
+import org.glavo.url.WebURLParser;
 import org.glavo.url.WebURLParseException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,18 @@ public final class UrlParser {
             @Nullable WebURLImpl url,
             @Nullable State stateOverride
     ) {
-        return basicParseResult(input, baseUrl, url, stateOverride).url();
+        return basicParseResult(input, baseUrl, url, stateOverride, WebURLParser.IdnaProvider.AUTOMATIC).url();
+    }
+
+    /// Runs the basic URL parser with a configured IDNA provider.
+    public static @Nullable WebURLImpl basicParse(
+            String input,
+            @Nullable WebURLImpl baseUrl,
+            @Nullable WebURLImpl url,
+            @Nullable State stateOverride,
+            WebURLParser.IdnaProvider idnaProvider
+    ) {
+        return basicParseResult(input, baseUrl, url, stateOverride, idnaProvider).url();
     }
 
     /// Runs the basic URL parser and returns the parse error when parsing fails.
@@ -61,10 +73,26 @@ public final class UrlParser {
             @Nullable WebURLImpl url,
             @Nullable State stateOverride
     ) {
-        StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride);
+        return basicParseResult(input, baseUrl, url, stateOverride, WebURLParser.IdnaProvider.AUTOMATIC);
+    }
+
+    /// Runs the basic URL parser with a configured IDNA provider and returns the parse error when parsing fails.
+    public static ParseResult basicParseResult(
+            String input,
+            @Nullable WebURLImpl baseUrl,
+            @Nullable WebURLImpl url,
+            @Nullable State stateOverride,
+            WebURLParser.IdnaProvider idnaProvider
+    ) {
+        StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride, idnaProvider);
         return new ParseResult(
                 stateMachine.failure ? null : stateMachine.toUrl(),
                 stateMachine.failure ? stateMachine.validationError : null);
+    }
+
+    /// Returns whether a configured IDNA provider is available.
+    public static boolean isIdnaProviderAvailable(WebURLParser.IdnaProvider provider) {
+        return IdnaProcessor.isAvailable(provider);
     }
 
     /// The result of a basic URL parser run.
@@ -224,7 +252,7 @@ public final class UrlParser {
     }
 
     /// Parses a host string.
-    private static UrlHost parseHost(String input, boolean opaque) {
+    private static UrlHost parseHost(String input, boolean opaque, WebURLParser.IdnaProvider idnaProvider) {
         if (input.startsWith("[")) {
             if (!input.endsWith("]")) {
                 throw new WebURLParseException.IPv6Unclosed();
@@ -238,7 +266,7 @@ public final class UrlParser {
         }
 
         String domain = Encoding.utf8DecodeWithoutBom(PercentEncoding.percentDecodeString(input));
-        String asciiDomain = domainToAscii(domain, false);
+        String asciiDomain = domainToAscii(domain, false, idnaProvider);
 
         if (endsInANumber(asciiDomain)) {
             return UrlHost.ipv4(parseIpv4(asciiDomain));
@@ -257,7 +285,11 @@ public final class UrlParser {
     }
 
     /// Converts a domain to ASCII.
-    private static String domainToAscii(String domain, boolean strict) {
+    private static String domainToAscii(
+            String domain,
+            boolean strict,
+            WebURLParser.IdnaProvider idnaProvider
+    ) {
         if (!strict && isAsciiOnly(domain) && !containsPunycodeLabel(domain)) {
             String result = domain.toLowerCase(Locale.ROOT);
             if (result.isEmpty()) {
@@ -269,7 +301,7 @@ public final class UrlParser {
             return result;
         }
 
-        String result = IdnaProcessor.toAscii(domain, strict);
+        String result = IdnaProcessor.toAscii(domain, strict, idnaProvider);
         if (result == null) {
             throw new WebURLParseException.DomainToASCII();
         }
@@ -687,6 +719,8 @@ public final class UrlParser {
         private final @Nullable WebURLImpl base;
         /// State override.
         private final @Nullable State stateOverride;
+        /// IDNA provider used by host parsing in this parser run.
+        private final WebURLParser.IdnaProvider idnaProvider;
         /// URL scheme without the trailing colon.
         private String scheme = "";
         /// Percent-encoded username.
@@ -721,10 +755,17 @@ public final class UrlParser {
         private boolean passwordTokenSeen;
 
         /// Creates and runs the state machine.
-        StateMachine(String inputText, @Nullable WebURLImpl base, @Nullable WebURLImpl url, @Nullable State stateOverride) {
+        StateMachine(
+                String inputText,
+                @Nullable WebURLImpl base,
+                @Nullable WebURLImpl url,
+                @Nullable State stateOverride,
+                WebURLParser.IdnaProvider idnaProvider
+        ) {
             this.pointer = 0;
             this.base = base;
             this.stateOverride = stateOverride;
+            this.idnaProvider = idnaProvider;
             if (url != null) {
                 scheme = url.scheme;
                 username = url.username;
@@ -1124,7 +1165,7 @@ public final class UrlParser {
                 if (stateOverride == State.HOSTNAME) {
                     return failApiValidation();
                 }
-                host = parseHost(buffer, isNotSpecial());
+                host = parseHost(buffer, isNotSpecial(), idnaProvider);
                 buffer = "";
                 state = State.PORT;
             } else if (c == EOF || c == '/' || c == '?' || c == '#' || (isSpecial() && c == '\\')) {
@@ -1135,7 +1176,7 @@ public final class UrlParser {
                         && (includesCredentials() || port != -1)) {
                     return failApiValidation();
                 }
-                host = parseHost(buffer, isNotSpecial());
+                host = parseHost(buffer, isNotSpecial(), idnaProvider);
                 buffer = "";
                 state = State.PATH_START;
                 if (stateOverride != null) {
@@ -1267,7 +1308,7 @@ public final class UrlParser {
                     }
                     state = State.PATH_START;
                 } else {
-                    UrlHost parsedHost = parseHost(buffer, isNotSpecial());
+                    UrlHost parsedHost = parseHost(buffer, isNotSpecial(), idnaProvider);
                     if (serializeHost(parsedHost).equals("localhost")) {
                         parsedHost = UrlHost.domain("");
                     }

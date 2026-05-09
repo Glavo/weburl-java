@@ -37,6 +37,9 @@ import java.net.URL;
 ///
 /// The serialized form returned by `href()`, `toString()`, and `toJSON()` is the WHATWG URL serialization.
 /// It is not identical to Java `URI` syntax for all inputs; use `toURI()` to obtain a Java `URI` value.
+///
+/// Use `WebURLParser` when parsing should be configured with a reusable base URL or an explicit IDNA
+/// provider. The static methods on this interface use `WebURLParser.standard()`.
 @NotNullByDefault
 public sealed interface WebURL permits WebURLImpl {
     /// Creates a URL by parsing an absolute input string.
@@ -48,7 +51,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
     static WebURL of(String input) {
-        return WebURLImpl.of(input);
+        return WebURLParser.standard().of(input);
     }
 
     /// Creates a URL by parsing an input string against a base URL string.
@@ -61,7 +64,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @throws WebURLParseException when either input fails with a known URL validation error
     /// @throws IllegalArgumentException when either input fails without a specific public validation error
     static WebURL of(String input, String base) {
-        return WebURLImpl.of(input, base);
+        return WebURLParser.standard().of(input, base);
     }
 
     /// Creates a URL by parsing an input string against a base URL.
@@ -74,7 +77,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
     static WebURL of(String input, WebURL base) {
-        return WebURLImpl.of(input, base);
+        return WebURLParser.standard().of(input, base);
     }
 
     /// Parses an absolute input string and returns `null` on failure.
@@ -85,7 +88,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if parsing fails
     static @Nullable WebURL parse(String input) {
-        return WebURLImpl.parse(input);
+        return WebURLParser.standard().parse(input);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
@@ -97,7 +100,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @param base the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
     static @Nullable WebURL parse(String input, String base) {
-        return WebURLImpl.parse(input, base);
+        return WebURLParser.standard().parse(input, base);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
@@ -109,7 +112,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @param base the base URL
     /// @return the parsed URL, or `null` if the input cannot be parsed against the base
     static @Nullable WebURL parse(String input, WebURL base) {
-        return WebURLImpl.parse(input, base);
+        return WebURLParser.standard().parse(input, base);
     }
 
     /// Returns whether an input string can be parsed as an absolute URL.
@@ -117,7 +120,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @param input the URL input string
     /// @return `true` if parsing succeeds, otherwise `false`
     static boolean canParse(String input) {
-        return WebURLImpl.canParse(input);
+        return WebURLParser.standard().canParse(input);
     }
 
     /// Returns whether an input string can be parsed against a base URL string.
@@ -126,7 +129,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @param base the base URL string
     /// @return `true` if the base parses and the input parses against it, otherwise `false`
     static boolean canParse(String input, String base) {
-        return WebURLImpl.canParse(input, base);
+        return WebURLParser.standard().canParse(input, base);
     }
 
     /// Returns whether an input string can be parsed against a base URL.
@@ -135,7 +138,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @param base the base URL
     /// @return `true` if the input parses against the base, otherwise `false`
     static boolean canParse(String input, WebURL base) {
-        return WebURLImpl.canParse(input, base);
+        return WebURLParser.standard().canParse(input, base);
     }
 
     /// Returns the complete serialized URL.

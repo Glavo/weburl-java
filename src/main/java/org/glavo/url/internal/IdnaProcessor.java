@@ -15,6 +15,7 @@
  */
 package org.glavo.url.internal;
 
+import org.glavo.url.WebURLParser;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,22 +28,36 @@ import java.util.Locale;
 /// Converts Unicode domain names to ASCII using ICU when present and JDK IDN otherwise.
 @NotNullByDefault
 final class IdnaProcessor {
-    /// The selected processor.
-    private static final Processor PROCESSOR = selectProcessor();
+    /// The JDK `java.net.IDN` processor.
+    private static final Processor JDK_PROCESSOR = new JdkProcessor();
+    /// The ICU4J processor, or `null` when ICU4J is not available.
+    private static final @Nullable Processor ICU_PROCESSOR = IcuProcessor.tryCreate();
 
     /// Creates no instances.
     private IdnaProcessor() {
     }
 
     /// Converts a domain name to ASCII, returning `null` on failure.
-    static @Nullable String toAscii(String domain, boolean strict) {
-        return PROCESSOR.toAscii(domain, strict);
+    static @Nullable String toAscii(String domain, boolean strict, WebURLParser.IdnaProvider provider) {
+        Processor processor = processor(provider);
+        return processor == null ? null : processor.toAscii(domain, strict);
     }
 
-    /// Selects the best available processor.
-    private static Processor selectProcessor() {
-        Processor icu = IcuProcessor.tryCreate();
-        return icu != null ? icu : new JdkProcessor();
+    /// Returns whether a configured IDNA provider is available.
+    static boolean isAvailable(WebURLParser.IdnaProvider provider) {
+        return switch (provider) {
+            case AUTOMATIC, JDK -> true;
+            case ICU4J -> ICU_PROCESSOR != null;
+        };
+    }
+
+    /// Selects the processor for a configured provider.
+    private static @Nullable Processor processor(WebURLParser.IdnaProvider provider) {
+        return switch (provider) {
+            case AUTOMATIC -> ICU_PROCESSOR != null ? ICU_PROCESSOR : JDK_PROCESSOR;
+            case ICU4J -> ICU_PROCESSOR;
+            case JDK -> JDK_PROCESSOR;
+        };
     }
 
     /// Domain-to-ASCII processor.
