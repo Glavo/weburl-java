@@ -137,12 +137,12 @@ final class PercentEncoding {
                 special ? PercentEncoding::isSpecialQueryPercentEncode : PercentEncoding::isQueryPercentEncode);
     }
 
-    /// Returns whether the code point starts an invalid percent triplet at the given position.
-    static boolean startsInvalidPercentTriplet(int[] input, int pointer) {
-        return input[pointer] == '%'
-                && (pointer + 2 >= input.length
-                || !Infra.isAsciiHex(input[pointer + 1])
-                || !Infra.isAsciiHex(input[pointer + 2]));
+    /// Returns whether the character starts an invalid percent triplet at the given UTF-16 index.
+    static boolean startsInvalidPercentTriplet(String input, int pointer) {
+        return input.charAt(pointer) == '%'
+                && (pointer + 2 >= input.length()
+                || !Infra.isAsciiHex(input.charAt(pointer + 1))
+                || !Infra.isAsciiHex(input.charAt(pointer + 2)));
     }
 
     /// Converts an ASCII hexadecimal digit to its numeric value.

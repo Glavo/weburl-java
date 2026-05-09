@@ -417,7 +417,7 @@ public final class UrlParser {
         int pieceIndex = 0;
         int compress = -1;
         int pointer = 0;
-        int[] input = inputString.codePoints().toArray();
+        String input = inputString;
 
         if (codePoint(input, pointer) == ':') {
             if (codePoint(input, pointer + 1) != ':') {
@@ -428,7 +428,7 @@ public final class UrlParser {
             compress = pieceIndex;
         }
 
-        while (pointer < input.length) {
+        while (pointer < input.length()) {
             if (pieceIndex == 8) {
                 throw new WebURLParseException.IPv6TooManyPieces();
             }
@@ -606,25 +606,39 @@ public final class UrlParser {
         return output.toString();
     }
 
-    /// Returns the code point at an index or EOF.
-    private static int codePoint(int[] input, int index) {
-        return index >= 0 && index < input.length ? input[index] : EOF;
+    /// Returns the code point at a UTF-16 index, or EOF.
+    private static int codePoint(String input, int index) {
+        return index >= 0 && index < input.length() ? input.codePointAt(index) : EOF;
     }
 
-    /// Returns the number of code points in a string.
-    private static int countSymbols(String string) {
-        return string.codePointCount(0, string.length());
+    /// Returns the UTF-16 index of the next code point.
+    private static int nextPointer(String input, int index) {
+        if (index < 0) {
+            return 0;
+        }
+        if (index >= input.length()) {
+            return input.length() + 1;
+        }
+        return index + Character.charCount(input.codePointAt(index));
+    }
+
+    /// Returns the UTF-16 index of the previous code point.
+    private static int previousPointer(String input, int index) {
+        return index <= 0 ? -1 : input.offsetByCodePoints(index, -1);
     }
 
     /// Returns whether input starts with a Windows drive letter at the pointer.
-    private static boolean startsWithWindowsDriveLetter(int[] input, int pointer) {
-        int length = input.length - pointer;
-        return length >= 2
-                && isWindowsDriveLetterCodePoints(codePoint(input, pointer), codePoint(input, pointer + 1))
-                && (length == 2 || codePoint(input, pointer + 2) == '/'
-                || codePoint(input, pointer + 2) == '\\'
-                || codePoint(input, pointer + 2) == '?'
-                || codePoint(input, pointer + 2) == '#');
+    private static boolean startsWithWindowsDriveLetter(String input, int pointer) {
+        int first = codePoint(input, pointer);
+        int secondPointer = nextPointer(input, pointer);
+        int second = codePoint(input, secondPointer);
+        if (!isWindowsDriveLetterCodePoints(first, second)) {
+            return false;
+        }
+
+        int thirdPointer = nextPointer(input, secondPointer);
+        int third = codePoint(input, thirdPointer);
+        return third == EOF || third == '/' || third == '\\' || third == '?' || third == '#';
     }
 
     /// Parser states that can also be used as state overrides.
@@ -688,8 +702,8 @@ public final class UrlParser {
     private static final class StateMachine {
         /// Input pointer.
         private int pointer;
-        /// Parsed input code points.
-        private int[] input;
+        /// Parsed input string.
+        private String input;
         /// Base URL.
         private final @Nullable WebURLImpl base;
         /// State override.
@@ -763,7 +777,7 @@ public final class UrlParser {
             if (!withoutTabsAndNewlines.equals(text)) {
                 recordValidationError(new WebURLParseException.InvalidURLUnit());
             }
-            this.input = withoutTabsAndNewlines.codePoints().toArray();
+            this.input = withoutTabsAndNewlines;
 
             run();
         }
@@ -775,14 +789,40 @@ public final class UrlParser {
 
         /// Runs the parser loop.
         private void run() {
-            for (; pointer <= input.length; pointer++) {
-                int c = pointer == input.length ? EOF : input[pointer];
-                String cStr = c == EOF ? "" : new String(Character.toChars(c));
+            while (pointer <= input.length()) {
+                int c = codePoint(input, pointer);
+                String cStr = c == EOF ? "" : input.substring(pointer, pointer + Character.charCount(c));
                 Result result = execute(c, cStr);
                 if (result == Result.STOP) {
                     break;
                 }
+                pointer = nextPointer(input, pointer);
             }
+        }
+
+        /// Returns the code point at an offset from the current input pointer.
+        private int codePointAtOffset(int offset) {
+            int index = pointer;
+            for (int i = 0; i < offset; i++) {
+                index = nextPointer(input, index);
+            }
+            return codePoint(input, index);
+        }
+
+        /// Advances the input pointer by one code point.
+        private void advancePointer() {
+            pointer = nextPointer(input, pointer);
+        }
+
+        /// Rewinds the input pointer by one code point.
+        private void rewindPointer() {
+            pointer = previousPointer(input, pointer);
+        }
+
+        /// Rewinds the input pointer so the authority buffer is reprocessed as a host.
+        private void rewindAuthorityBuffer(String authorityBuffer) {
+            int hostStart = pointer - authorityBuffer.length();
+            pointer = previousPointer(input, hostStart);
         }
 
         /// Records a validation error without forcing parser failure.
@@ -886,7 +926,7 @@ public final class UrlParser {
                 state = State.SCHEME;
             } else if (stateOverride == null) {
                 state = State.NO_SCHEME;
-                pointer--;
+                rewindPointer();
             } else {
                 return failApiValidation();
             }
@@ -922,7 +962,7 @@ public final class UrlParser {
                 }
                 buffer = "";
                 if (scheme.equals("file")) {
-                    if (codePoint(input, pointer + 1) != '/' || codePoint(input, pointer + 2) != '/') {
+                    if (codePointAtOffset(1) != '/' || codePointAtOffset(2) != '/') {
                         recordValidationError(new WebURLParseException.SpecialSchemeMissingFollowingSolidus());
                     }
                     state = State.FILE;
@@ -930,9 +970,9 @@ public final class UrlParser {
                     state = State.SPECIAL_RELATIVE_OR_AUTHORITY;
                 } else if (isSpecial()) {
                     state = State.SPECIAL_AUTHORITY_SLASHES;
-                } else if (codePoint(input, pointer + 1) == '/') {
+                } else if (codePointAtOffset(1) == '/') {
                     state = State.PATH_OR_AUTHORITY;
-                    pointer++;
+                    advancePointer();
                 } else {
                     opaquePath = "";
                     path.clear();
@@ -961,23 +1001,23 @@ public final class UrlParser {
                 state = State.FRAGMENT;
             } else if (base.scheme.equals("file")) {
                 state = State.FILE;
-                pointer--;
+                rewindPointer();
             } else {
                 state = State.RELATIVE;
-                pointer--;
+                rewindPointer();
             }
             return Result.CONTINUE;
         }
 
         /// Parses the special-relative-or-authority state.
         private Result parseSpecialRelativeOrAuthority(int c) {
-            if (c == '/' && codePoint(input, pointer + 1) == '/') {
+            if (c == '/' && codePointAtOffset(1) == '/') {
                 state = State.SPECIAL_AUTHORITY_IGNORE_SLASHES;
-                pointer++;
+                advancePointer();
             } else {
                 recordValidationError(new WebURLParseException.SpecialSchemeMissingFollowingSolidus());
                 state = State.RELATIVE;
-                pointer--;
+                rewindPointer();
             }
             return Result.CONTINUE;
         }
@@ -988,7 +1028,7 @@ public final class UrlParser {
                 state = State.AUTHORITY;
             } else {
                 state = State.PATH;
-                pointer--;
+                rewindPointer();
             }
             return Result.CONTINUE;
         }
@@ -1024,7 +1064,7 @@ public final class UrlParser {
                         path.remove(path.size() - 1);
                     }
                     state = State.PATH;
-                    pointer--;
+                    rewindPointer();
                 }
             }
             return Result.CONTINUE;
@@ -1048,20 +1088,20 @@ public final class UrlParser {
                 host = base.host;
                 port = base.port;
                 state = State.PATH;
-                pointer--;
+                rewindPointer();
             }
             return Result.CONTINUE;
         }
 
         /// Parses the special-authority-slashes state.
         private Result parseSpecialAuthoritySlashes(int c) {
-            if (c == '/' && codePoint(input, pointer + 1) == '/') {
+            if (c == '/' && codePointAtOffset(1) == '/') {
                 state = State.SPECIAL_AUTHORITY_IGNORE_SLASHES;
-                pointer++;
+                advancePointer();
             } else {
                 recordValidationError(new WebURLParseException.SpecialSchemeMissingFollowingSolidus());
                 state = State.SPECIAL_AUTHORITY_IGNORE_SLASHES;
-                pointer--;
+                rewindPointer();
             }
             return Result.CONTINUE;
         }
@@ -1070,7 +1110,7 @@ public final class UrlParser {
         private Result parseSpecialAuthorityIgnoreSlashes(int c) {
             if (c != '/' && c != '\\') {
                 state = State.AUTHORITY;
-                pointer--;
+                rewindPointer();
             } else {
                 recordValidationError(new WebURLParseException.SpecialSchemeMissingFollowingSolidus());
             }
@@ -1104,7 +1144,7 @@ public final class UrlParser {
                 if (atSignSeen && buffer.isEmpty()) {
                     return failHostMissing();
                 }
-                pointer -= countSymbols(buffer) + 1;
+                rewindAuthorityBuffer(buffer);
                 buffer = "";
                 state = State.HOST;
             } else {
@@ -1116,7 +1156,7 @@ public final class UrlParser {
         /// Parses the host or hostname state.
         private Result parseHostName(int c, String cStr) {
             if (stateOverride != null && scheme.equals("file")) {
-                pointer--;
+                rewindPointer();
                 state = State.FILE_HOST;
             } else if (c == ':' && !insideBrackets) {
                 if (buffer.isEmpty()) {
@@ -1129,7 +1169,7 @@ public final class UrlParser {
                 buffer = "";
                 state = State.PORT;
             } else if (c == EOF || c == '/' || c == '?' || c == '#' || (isSpecial() && c == '\\')) {
-                pointer--;
+                rewindPointer();
                 if (isSpecial() && buffer.isEmpty()) {
                     return failHostMissing();
                 } else if (stateOverride != null && buffer.isEmpty()
@@ -1187,7 +1227,7 @@ public final class UrlParser {
                     return stateOverride == State.HOST ? Result.STOP : failApiValidation();
                 }
                 state = State.PATH_START;
-                pointer--;
+                rewindPointer();
             } else {
                 return fail(new WebURLParseException.PortInvalid());
             }
@@ -1223,11 +1263,11 @@ public final class UrlParser {
                         path = new ArrayList<>();
                     }
                     state = State.PATH;
-                    pointer--;
+                    rewindPointer();
                 }
             } else {
                 state = State.PATH;
-                pointer--;
+                rewindPointer();
             }
             return Result.CONTINUE;
         }
@@ -1249,7 +1289,7 @@ public final class UrlParser {
                     host = base.host;
                 }
                 state = State.PATH;
-                pointer--;
+                rewindPointer();
             }
             return Result.CONTINUE;
         }
@@ -1257,7 +1297,7 @@ public final class UrlParser {
         /// Parses the file-host state.
         private Result parseFileHost(int c, String cStr) {
             if (c == EOF || c == '/' || c == '\\' || c == '?' || c == '#') {
-                pointer--;
+                rewindPointer();
                 if (stateOverride == null && isWindowsDriveLetterString(buffer)) {
                     recordValidationError(new WebURLParseException.FileInvalidWindowsDriveLetterHost());
                     state = State.PATH;
@@ -1293,7 +1333,7 @@ public final class UrlParser {
                 }
                 state = State.PATH;
                 if (c != '/' && c != '\\') {
-                    pointer--;
+                    rewindPointer();
                 }
             } else if (stateOverride == null && c == '?') {
                 query = "";
@@ -1304,7 +1344,7 @@ public final class UrlParser {
             } else if (c != EOF) {
                 state = State.PATH;
                 if (c != '/') {
-                    pointer--;
+                    rewindPointer();
                 }
             } else if (stateOverride != null && host == null) {
                 path.add("");
@@ -1360,7 +1400,7 @@ public final class UrlParser {
                 fragment = "";
                 state = State.FRAGMENT;
             } else if (c == ' ') {
-                int remaining = codePoint(input, pointer + 1);
+                int remaining = codePointAtOffset(1);
                 opaquePath = (opaquePath == null ? "" : opaquePath)
                         + (remaining == '?' || remaining == '#' ? "%20" : " ");
             } else {
