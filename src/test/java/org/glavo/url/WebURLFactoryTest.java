@@ -100,13 +100,13 @@ public final class WebURLFactoryTest {
     /// Tests UTS #46 availability handling.
     @Test
     public void handlesUts46Availability() {
-        WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.UTS_46);
-
         if (IDNAProfile.UTS_46.isAvailable()) {
+            WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.UTS_46);
+
             assertEquals("https://xn--bcher-kva.example/", factory.parse("https://bücher.example/").href());
         } else {
-            assertEquals("https://example.com/", factory.parse("https://example.com/").href());
-            assertThrows(IllegalStateException.class, () -> factory.parse("https://bücher.example/"));
+            assertThrows(IllegalStateException.class,
+                    () -> WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.UTS_46));
         }
     }
 
@@ -115,12 +115,15 @@ public final class WebURLFactoryTest {
     public void derivesFactoryConfiguration() {
         WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.IDNA_2003);
         WebURLFactory copied = factory.withIDNAProfile(IDNAProfile.IDNA_2003);
-        WebURLFactory changed = factory.withIDNAProfile(IDNAProfile.UTS_46);
 
         assertSame(factory, copied);
-        assertNotSame(factory, changed);
         assertEquals(IDNAProfile.IDNA_2003, copied.idnaProfile());
-        assertEquals(IDNAProfile.UTS_46, changed.idnaProfile());
+        if (IDNAProfile.UTS_46.isAvailable()) {
+            WebURLFactory changed = factory.withIDNAProfile(IDNAProfile.UTS_46);
+
+            assertNotSame(factory, changed);
+            assertEquals(IDNAProfile.UTS_46, changed.idnaProfile());
+        }
         assertFalse(copied.canParse("../c"));
         assertEquals("https://example.net/d",
                 copied.parse("../d", WebURL.of("https://example.net/base/")).href());

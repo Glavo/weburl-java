@@ -75,8 +75,12 @@ public final class WebURLFactory {
     ///
     /// @param idnaProfile the IDNA profile
     /// @return a factory configured with the supplied IDNA profile
+    /// @throws UnsupportedOperationException when the supplied IDNA profile is not available in the current runtime
     public WebURLFactory withIDNAProfile(IDNAProfile idnaProfile) {
         IDNAProfile newProfile = Objects.requireNonNull(idnaProfile, "idnaProfile");
+        if (!newProfile.isAvailable()) {
+            throw new UnsupportedOperationException("IDNA profile is not available: " + newProfile);
+        }
         return this.idnaProfile == newProfile ? this : new WebURLFactory(newProfile);
     }
 
