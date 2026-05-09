@@ -90,6 +90,24 @@ tasks.register<JavaExec>("benchmark") {
 
 val downloadDir = layout.buildDirectory.dir("downloads")
 
+val unicodeVersion = "17.0.0"
+val idnaResources = listOf(
+    "IdnaMappingTable",
+    "IdnaTestV2"
+)
+
+val idnaDownloadTasks = idnaResources.map {
+    tasks.register<de.undercouch.gradle.tasks.download.Download>("downloadIdna-$it") {
+        src("https://www.unicode.org/Public/$unicodeVersion/idna/$it.txt")
+        dest(downloadDir.map { dir -> dir.file("idna/$it.txt") })
+        overwrite(false)
+    }
+}
+
+tasks.register("downloadIdnaResources") {
+    dependsOn(idnaDownloadTasks)
+}
+
 val wptCommit = "ebf8e3069ec4ac6498826bf9066419e46b0f4ac5"
 val wptResources = listOf(
     "urltestdata"
