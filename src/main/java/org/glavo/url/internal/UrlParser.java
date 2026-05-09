@@ -52,7 +52,7 @@ public final class UrlParser {
             @Nullable WebURLImpl url,
             @Nullable State stateOverride
     ) {
-        return basicParseResult(input, baseUrl, url, stateOverride, WebURLFactory.IdnaProvider.AUTOMATIC).url();
+        return basicParse(input, baseUrl, url, stateOverride, WebURLFactory.IdnaProvider.AUTOMATIC);
     }
 
     /// Runs the basic URL parser with a configured IDNA provider.
@@ -63,21 +63,25 @@ public final class UrlParser {
             @Nullable State stateOverride,
             WebURLFactory.IdnaProvider idnaProvider
     ) {
-        return basicParseResult(input, baseUrl, url, stateOverride, idnaProvider).url();
+        try {
+            return basicParseRequired(input, baseUrl, url, stateOverride, idnaProvider);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
-    /// Runs the basic URL parser and returns the parse error when parsing fails.
-    public static ParseResult basicParseResult(
+    /// Runs the basic URL parser and throws when parsing fails.
+    public static WebURLImpl basicParseRequired(
             String input,
             @Nullable WebURLImpl baseUrl,
             @Nullable WebURLImpl url,
             @Nullable State stateOverride
     ) {
-        return basicParseResult(input, baseUrl, url, stateOverride, WebURLFactory.IdnaProvider.AUTOMATIC);
+        return basicParseRequired(input, baseUrl, url, stateOverride, WebURLFactory.IdnaProvider.AUTOMATIC);
     }
 
-    /// Runs the basic URL parser with a configured IDNA provider and returns the parse error when parsing fails.
-    public static ParseResult basicParseResult(
+    /// Runs the basic URL parser with a configured IDNA provider and throws when parsing fails.
+    public static WebURLImpl basicParseRequired(
             String input,
             @Nullable WebURLImpl baseUrl,
             @Nullable WebURLImpl url,
@@ -85,39 +89,12 @@ public final class UrlParser {
             WebURLFactory.IdnaProvider idnaProvider
     ) {
         StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride, idnaProvider);
-        return new ParseResult(
-                stateMachine.failure ? null : stateMachine.toUrl(),
-                stateMachine.failure ? stateMachine.validationError : null);
+        return stateMachine.toUrl();
     }
 
     /// Returns whether a configured IDNA provider is available.
     public static boolean isIdnaProviderAvailable(WebURLFactory.IdnaProvider provider) {
         return IdnaProcessor.isAvailable(provider);
-    }
-
-    /// The result of a basic URL parser run.
-    @NotNullByDefault
-    public static final class ParseResult {
-        /// The parsed URL, or `null` when parsing failed.
-        private final @Nullable WebURLImpl url;
-        /// The validation error that caused failure, or `null` when unavailable.
-        private final @Nullable WebURLParseException error;
-
-        /// Creates a parser result.
-        private ParseResult(@Nullable WebURLImpl url, @Nullable WebURLParseException error) {
-            this.url = url;
-            this.error = error;
-        }
-
-        /// Returns the parsed URL, or `null` when parsing failed.
-        public @Nullable WebURLImpl url() {
-            return url;
-        }
-
-        /// Returns the validation error that caused failure, or `null` when unavailable.
-        public @Nullable WebURLParseException error() {
-            return error;
-        }
     }
 
     /// Serializes a URL.
@@ -703,9 +680,7 @@ public final class UrlParser {
         /// Continue parsing.
         CONTINUE,
         /// Stop successfully.
-        STOP,
-        /// Stop with failure.
-        FAILURE
+        STOP
     }
 
     /// One run of the URL state machine.
@@ -739,10 +714,6 @@ public final class UrlParser {
         private @Nullable String query;
         /// Percent-encoded fragment, or `null` when absent.
         private @Nullable String fragment;
-        /// Whether parsing failed.
-        private boolean failure;
-        /// The most recent validation error recorded by this parser run.
-        private @Nullable WebURLParseException validationError;
         /// Current parser state.
         private State state;
         /// Temporary parser buffer.
@@ -804,39 +775,28 @@ public final class UrlParser {
 
         /// Runs the parser loop.
         private void run() {
-            try {
-                for (; pointer <= input.length; pointer++) {
-                    int c = pointer == input.length ? EOF : input[pointer];
-                    String cStr = c == EOF ? "" : new String(Character.toChars(c));
-                    Result result = execute(c, cStr);
-                    if (result == Result.STOP) {
-                        break;
-                    }
-                    if (result == Result.FAILURE) {
-                        failure = true;
-                        break;
-                    }
+            for (; pointer <= input.length; pointer++) {
+                int c = pointer == input.length ? EOF : input[pointer];
+                String cStr = c == EOF ? "" : new String(Character.toChars(c));
+                Result result = execute(c, cStr);
+                if (result == Result.STOP) {
+                    break;
                 }
-            } catch (WebURLParseException exception) {
-                validationError = exception;
-                failure = true;
             }
         }
 
         /// Records a validation error without forcing parser failure.
         private void recordValidationError(WebURLParseException error) {
-            validationError = error;
         }
 
-        /// Records a validation error and returns a parser failure result.
+        /// Throws a parser failure with a corresponding public validation error.
         private Result fail(WebURLParseException error) {
-            validationError = error;
-            return Result.FAILURE;
+            throw error;
         }
 
-        /// Returns a parser failure result without a corresponding public validation error.
+        /// Throws a parser failure without a corresponding public validation error.
         private Result failApiValidation() {
-            return Result.FAILURE;
+            throw new IllegalArgumentException("Invalid URL");
         }
 
         /// Returns a parser failure for `host-missing`.

@@ -249,39 +249,40 @@ public final class WebURLFactory {
 
     /// Parses an input string and throws when parsing fails.
     private WebURL parseRequired(String input, @Nullable WebURLImpl base, String message) {
-        UrlParser.ParseResult result = parseResult(input, base);
-        WebURLImpl parsed = result.url();
-        if (parsed == null) {
-            throw parseExceptionOrIllegalArgument(result.error(), message);
+        Objects.requireNonNull(input, "input");
+        ensureIdnaProviderAvailable(idnaProvider);
+        try {
+            return UrlParser.basicParseRequired(input, base, null, null, idnaProvider);
+        } catch (WebURLParseException exception) {
+            throw exception;
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException(message, exception);
         }
-        return parsed;
     }
 
     /// Parses a base URL string and throws when parsing fails.
     private WebURLImpl parseBaseRequired(String base) {
-        UrlParser.ParseResult result = parseResult(base, null);
-        WebURLImpl parsed = result.url();
-        if (parsed == null) {
-            throw parseExceptionOrIllegalArgument(result.error(), "Invalid base URL: " + base);
+        Objects.requireNonNull(base, "base");
+        ensureIdnaProviderAvailable(idnaProvider);
+        try {
+            return UrlParser.basicParseRequired(base, null, null, null, idnaProvider);
+        } catch (WebURLParseException exception) {
+            throw exception;
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Invalid base URL: " + base, exception);
         }
-        return parsed;
     }
 
     /// Parses an input string and returns `null` when parsing fails.
     private @Nullable WebURLImpl parseNullable(String input, @Nullable WebURLImpl base) {
-        return parseResult(input, base).url();
+        Objects.requireNonNull(input, "input");
+        ensureIdnaProviderAvailable(idnaProvider);
+        return UrlParser.basicParse(input, base, null, null, idnaProvider);
     }
 
     /// Parses a base URL string and returns `null` when parsing fails.
     private @Nullable WebURLImpl parseBaseNullable(String base) {
         return parseNullable(base, null);
-    }
-
-    /// Runs the internal parser using this factory's configuration.
-    private UrlParser.ParseResult parseResult(String input, @Nullable WebURLImpl base) {
-        Objects.requireNonNull(input, "input");
-        ensureIdnaProviderAvailable(idnaProvider);
-        return UrlParser.basicParseResult(input, base, null, null, idnaProvider);
     }
 
     /// Returns the implementation object for a `WebURL`.
@@ -294,14 +295,6 @@ public final class WebURLFactory {
         if (idnaProvider == IdnaProvider.ICU4J && !idnaProvider.isAvailable()) {
             throw new IllegalStateException("ICU4J IDNA provider is not available");
         }
-    }
-
-    /// Returns the parse exception, or a generic argument exception when none is available.
-    private static IllegalArgumentException parseExceptionOrIllegalArgument(
-            @Nullable WebURLParseException exception,
-            String message
-    ) {
-        return exception == null ? new IllegalArgumentException(message) : exception;
     }
 
     /// IDNA provider selection for domain host parsing.
@@ -353,7 +346,7 @@ public final class WebURLFactory {
         /// The configured IDNA provider for the factory being built.
         private IdnaProvider idnaProvider;
 
-        /// Creates a builder initialized from parser settings.
+        /// Creates a builder initialized from factory settings.
         private Builder(@Nullable WebURLImpl base, IdnaProvider idnaProvider) {
             this.base = base;
             this.idnaProvider = idnaProvider;

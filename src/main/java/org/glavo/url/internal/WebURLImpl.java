@@ -108,11 +108,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Creates a URL from an input string and an optional base URL.
     private WebURLImpl(String input, @Nullable WebURLImpl base) {
-        UrlParser.ParseResult result = UrlParser.basicParseResult(input, base, null, null);
-        WebURLImpl parsed = result.url();
-        if (parsed == null) {
-            throw parseExceptionOrIllegalArgument(result.error(), "Invalid URL: " + input);
-        }
+        WebURLImpl parsed = parseRequired(input, base, "Invalid URL: " + input);
 
         this.scheme = parsed.scheme;
         this.username = parsed.username;
@@ -488,19 +484,17 @@ public final class WebURLImpl implements WebURL {
 
     /// Parses a base URL string.
     private static WebURLImpl parseBase(String base) {
-        UrlParser.ParseResult result = UrlParser.basicParseResult(base, null, null, null);
-        WebURLImpl parsedBase = result.url();
-        if (parsedBase == null) {
-            throw parseExceptionOrIllegalArgument(result.error(), "Invalid base URL: " + base);
-        }
-        return parsedBase;
+        return parseRequired(base, null, "Invalid base URL: " + base);
     }
 
-    /// Returns the parser exception, or a generic argument exception when none is available.
-    private static IllegalArgumentException parseExceptionOrIllegalArgument(
-            @Nullable WebURLParseException exception,
-            String message
-    ) {
-        return exception == null ? new IllegalArgumentException(message) : exception;
+    /// Parses an input string and throws when parsing fails.
+    private static WebURLImpl parseRequired(String input, @Nullable WebURLImpl base, String message) {
+        try {
+            return UrlParser.basicParseRequired(input, base, null, null);
+        } catch (WebURLParseException exception) {
+            throw exception;
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException(message, exception);
+        }
     }
 }
