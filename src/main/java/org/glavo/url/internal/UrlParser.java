@@ -104,7 +104,7 @@ public final class UrlParser {
 
     /// Serializes a URL path.
     public static String serializePath(WebURLImpl url) {
-        return url.getRawPathOrEmpty();
+        return url.getRawPath();
     }
 
     /// Serializes a URL origin.

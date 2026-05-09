@@ -134,7 +134,7 @@ public final class WebURLImpl implements WebURL {
         String value;
         switch (record.scheme) {
             case "blob":
-                @Nullable WebURLImpl pathUrl = UrlParser.parseUrl(getRawPathOrEmpty());
+                @Nullable WebURLImpl pathUrl = UrlParser.parseUrl(getRawPath());
                 if (pathUrl == null || (!pathUrl.schemeEquals("http") && !pathUrl.schemeEquals("https"))) {
                     value = "null";
                 } else {
@@ -214,19 +214,8 @@ public final class WebURLImpl implements WebURL {
     public String getPath() {
         @Nullable String value = path;
         if (value == null) {
-            value = PercentEncoding.percentDecodeUtf8(getRawPathOrEmpty());
+            value = PercentEncoding.percentDecodeUtf8(getRawPath());
             path = value;
-        }
-        return value;
-    }
-
-    /// Returns the raw path, or the empty string when absent.
-    @Override
-    public String getRawPathOrEmpty() {
-        @Nullable String value = rawPath;
-        if (value == null) {
-            value = href().substring(record.pathStart, record.pathEnd);
-            rawPath = value;
         }
         return value;
     }
@@ -234,7 +223,12 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw path.
     @Override
     public String getRawPath() {
-        return getRawPathOrEmpty();
+        @Nullable String value = rawPath;
+        if (value == null) {
+            value = href().substring(record.pathStart, record.pathEnd);
+            rawPath = value;
+        }
+        return value;
     }
 
     /// Returns the decoded query, or `null` when absent.

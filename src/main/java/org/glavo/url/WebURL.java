@@ -273,14 +273,6 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the raw path component
     String getRawPath();
 
-    /// Returns the raw path component or the empty string when absent.
-    ///
-    /// `WebURL` currently always has a raw path string, so this method returns the same value as
-    /// {@link #getRawPath()}. It is provided for consistency with other null-free raw component views.
-    ///
-    /// @return the raw path component, or the empty string when absent
-    String getRawPathOrEmpty();
-
     /// Returns the decoded query component.
     ///
     /// This method is the Java `URI`-style getter for the decoded URL query. It is equivalent to

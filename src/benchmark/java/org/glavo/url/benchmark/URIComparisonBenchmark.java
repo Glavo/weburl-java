@@ -143,7 +143,6 @@ public class URIComparisonBenchmark {
         blackhole.consume(webURL.getPort());
         blackhole.consume(webURL.getPath());
         blackhole.consume(webURL.getRawPath());
-        blackhole.consume(webURL.getRawPathOrEmpty());
         blackhole.consume(webURL.getQuery());
         blackhole.consume(webURL.getRawQuery());
         blackhole.consume(webURL.getRawQueryOrEmpty());

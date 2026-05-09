@@ -134,7 +134,7 @@ public final class WebURLWptTest {
             case "port":
                 return port(url);
             case "pathname":
-                return url.getRawPathOrEmpty();
+                return url.getRawPath();
             case "search":
                 return search(url);
             case "hash":

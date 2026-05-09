@@ -108,7 +108,6 @@ public final class WebURLTest {
         assertSame(url.getPasswordOrEmpty(), url.getPasswordOrEmpty());
         assertSame(url.getPath(), url.getPath());
         assertSame(url.getRawPath(), url.getRawPath());
-        assertSame(url.getRawPathOrEmpty(), url.getRawPathOrEmpty());
         assertSame(url.getQuery(), url.getQuery());
         assertSame(url.getRawQuery(), url.getRawQuery());
         assertSame(url.getRawQueryOrEmpty(), url.getRawQueryOrEmpty());
@@ -130,7 +129,6 @@ public final class WebURLTest {
         assertEquals("pass", url.getPasswordOrEmpty());
         assertEquals(8080, url.getPort());
         assertEquals("/a%2Fb", url.getRawPath());
-        assertEquals("/a%2Fb", url.getRawPathOrEmpty());
         assertEquals("x=a%26b", url.getRawQuery());
         assertEquals("x=a%26b", url.getRawQueryOrEmpty());
         assertEquals("frag%23ment", url.getRawFragment());
@@ -143,7 +141,6 @@ public final class WebURLTest {
         assertEquals("", absentComponents.getPasswordOrEmpty());
         assertEquals(-1, absentComponents.getPort());
         assertEquals("/path", absentComponents.getRawPath());
-        assertEquals("/path", absentComponents.getRawPathOrEmpty());
         assertNull(absentComponents.getRawQuery());
         assertEquals("", absentComponents.getRawQueryOrEmpty());
         assertNull(absentComponents.getRawFragment());
