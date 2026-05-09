@@ -713,7 +713,7 @@ public final class UrlParser {
 
         /// Creates an immutable URL from the parser state.
         private WebURLImpl toUrl() {
-            return new WebURLImpl(record, input);
+            return UrlSerializer.toUrl(record, input);
         }
 
         /// Runs the parser loop.
