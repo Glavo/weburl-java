@@ -40,11 +40,6 @@ public final class UrlParser {
         return basicParse(input, null, null, null);
     }
 
-    /// Parses a URL with an optional base URL.
-    public static @Nullable WebURLImpl parseUrl(String input, @Nullable WebURLImpl baseUrl) {
-        return basicParse(input, baseUrl, null, null);
-    }
-
     /// Runs the basic URL parser.
     public static @Nullable WebURLImpl basicParse(
             String input,
