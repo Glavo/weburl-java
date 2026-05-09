@@ -33,29 +33,29 @@ public final class WebURLImpl implements WebURL {
     /// Frozen URL record owned by this immutable URL.
     private final UrlRecord record;
     /// Cached origin string, or `null` until requested.
-    private volatile @Nullable String origin;
+    private @Nullable String origin;
     /// Cached protocol string, or `null` until requested.
-    private volatile @Nullable String protocol;
+    private @Nullable String protocol;
     /// Cached username string, or `null` until requested.
-    private volatile @Nullable String username;
+    private @Nullable String username;
     /// Cached password string, or `null` until requested.
-    private volatile @Nullable String password;
+    private @Nullable String password;
     /// Cached host string, or `null` until requested.
-    private volatile @Nullable String host;
+    private @Nullable String host;
     /// Cached hostname string, or `null` until requested.
-    private volatile @Nullable String hostname;
+    private @Nullable String hostname;
     /// Cached port string, or `null` until requested.
-    private volatile @Nullable String port;
+    private @Nullable String port;
     /// Cached pathname string, or `null` until requested.
-    private volatile @Nullable String pathname;
+    private @Nullable String pathname;
     /// Cached search string, or `null` until requested.
-    private volatile @Nullable String search;
+    private @Nullable String search;
     /// Cached hash string, or `null` until requested.
-    private volatile @Nullable String hash;
+    private @Nullable String hash;
     /// Cached RFC 2396 URI string, or `null` until requested.
-    private volatile @Nullable String rfc2396String;
+    private @Nullable String rfc2396String;
     /// Cached immutable query parameter object, or `null` until requested.
-    private volatile @Nullable WebURLSearchParams searchParams;
+    private @Nullable WebURLSearchParams searchParams;
 
     /// Creates an immutable URL from a completed URL record.
     WebURLImpl(UrlRecord record) {
