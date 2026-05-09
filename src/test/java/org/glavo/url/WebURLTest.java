@@ -102,10 +102,10 @@ public final class WebURLTest {
         assertSame(url.href(), url.href());
         assertSame(url.origin(), url.origin());
         assertSame(url.getScheme(), url.getScheme());
-        assertSame(url.getUsername(), url.getUsername());
-        assertSame(url.getUsernameOrEmpty(), url.getUsernameOrEmpty());
-        assertSame(url.getPassword(), url.getPassword());
-        assertSame(url.getPasswordOrEmpty(), url.getPasswordOrEmpty());
+        assertSame(url.getRawUsername(), url.getRawUsername());
+        assertSame(url.getRawUsernameOrEmpty(), url.getRawUsernameOrEmpty());
+        assertSame(url.getRawPassword(), url.getRawPassword());
+        assertSame(url.getRawPasswordOrEmpty(), url.getRawPasswordOrEmpty());
         assertSame(url.getPath(), url.getPath());
         assertSame(url.getRawPath(), url.getRawPath());
         assertSame(url.getQuery(), url.getQuery());
@@ -123,10 +123,10 @@ public final class WebURLTest {
         WebURL url = WebURL.parseURL("https://user:pass@example.com:8080/a%2Fb?x=a%26b#frag%23ment");
 
         assertEquals("https", url.getScheme());
-        assertEquals("user", url.getUsername());
-        assertEquals("user", url.getUsernameOrEmpty());
-        assertEquals("pass", url.getPassword());
-        assertEquals("pass", url.getPasswordOrEmpty());
+        assertEquals("user", url.getRawUsername());
+        assertEquals("user", url.getRawUsernameOrEmpty());
+        assertEquals("pass", url.getRawPassword());
+        assertEquals("pass", url.getRawPasswordOrEmpty());
         assertEquals(8080, url.getPort());
         assertEquals("/a%2Fb", url.getRawPath());
         assertEquals("x=a%26b", url.getRawQuery());
@@ -135,10 +135,10 @@ public final class WebURLTest {
         assertEquals("frag%23ment", url.getRawFragmentOrEmpty());
 
         WebURL absentComponents = WebURL.parseURL("https://example.com/path");
-        assertNull(absentComponents.getUsername());
-        assertEquals("", absentComponents.getUsernameOrEmpty());
-        assertNull(absentComponents.getPassword());
-        assertEquals("", absentComponents.getPasswordOrEmpty());
+        assertNull(absentComponents.getRawUsername());
+        assertEquals("", absentComponents.getRawUsernameOrEmpty());
+        assertNull(absentComponents.getRawPassword());
+        assertEquals("", absentComponents.getRawPasswordOrEmpty());
         assertEquals(-1, absentComponents.getPort());
         assertEquals("/path", absentComponents.getRawPath());
         assertNull(absentComponents.getRawQuery());
@@ -151,8 +151,8 @@ public final class WebURLTest {
         assertEquals("", WebURL.parseURL("https://example.com/path#").getRawFragment());
 
         WebURL emptyUsername = WebURL.parseURL("https://:pass@example.com/");
-        assertEquals("", emptyUsername.getUsername());
-        assertEquals("pass", emptyUsername.getPassword());
+        assertEquals("", emptyUsername.getRawUsername());
+        assertEquals("pass", emptyUsername.getRawPassword());
     }
 
     /// Tests Java-style decoded component getters.

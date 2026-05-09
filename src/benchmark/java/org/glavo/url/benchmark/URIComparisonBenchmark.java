@@ -136,10 +136,10 @@ public class URIComparisonBenchmark {
         blackhole.consume(webURL.origin());
         blackhole.consume(webURL.getScheme());
         blackhole.consume(webURL.getScheme());
-        blackhole.consume(webURL.getUsername());
-        blackhole.consume(webURL.getUsernameOrEmpty());
-        blackhole.consume(webURL.getPassword());
-        blackhole.consume(webURL.getPasswordOrEmpty());
+        blackhole.consume(webURL.getRawUsername());
+        blackhole.consume(webURL.getRawUsernameOrEmpty());
+        blackhole.consume(webURL.getRawPassword());
+        blackhole.consume(webURL.getRawPasswordOrEmpty());
         blackhole.consume(webURL.getPort());
         blackhole.consume(webURL.getPath());
         blackhole.consume(webURL.getRawPath());

@@ -65,10 +65,10 @@ public final class WebURLImpl implements WebURL {
     private final boolean pathPrefix;
     /// Cached origin string, or `null` until requested.
     private @Nullable String origin;
-    /// Cached username string, or `null` until requested.
-    private @Nullable String username;
-    /// Cached password string, or `null` until requested.
-    private @Nullable String password;
+    /// Cached raw username string, or `null` until requested.
+    private @Nullable String rawUsername;
+    /// Cached raw password string, or `null` until requested.
+    private @Nullable String rawPassword;
     /// Cached decoded path string, or `null` until requested.
     private @Nullable String path;
     /// Cached raw path string, or `null` until requested.
@@ -232,38 +232,38 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the raw username, or the empty string when absent.
     @Override
-    public String getUsernameOrEmpty() {
-        @Nullable String value = username;
+    public String getRawUsernameOrEmpty() {
+        @Nullable String value = rawUsername;
         if (value == null) {
             String href = href();
             value = usernameStart < 0 ? "" : href.substring(usernameStart, usernameEnd);
-            username = value;
+            rawUsername = value;
         }
         return value;
     }
 
     /// Returns the raw username, or `null` when absent.
     @Override
-    public @Nullable String getUsername() {
-        return usernameStart < 0 ? null : getUsernameOrEmpty();
+    public @Nullable String getRawUsername() {
+        return usernameStart < 0 ? null : getRawUsernameOrEmpty();
     }
 
     /// Returns the raw password, or the empty string when absent.
     @Override
-    public String getPasswordOrEmpty() {
-        @Nullable String value = password;
+    public String getRawPasswordOrEmpty() {
+        @Nullable String value = rawPassword;
         if (value == null) {
             String href = href();
             value = passwordStart < 0 ? "" : href.substring(passwordStart, passwordEnd);
-            password = value;
+            rawPassword = value;
         }
         return value;
     }
 
     /// Returns the raw password, or `null` when absent.
     @Override
-    public @Nullable String getPassword() {
-        return passwordStart < 0 ? null : getPasswordOrEmpty();
+    public @Nullable String getRawPassword() {
+        return passwordStart < 0 ? null : getRawPasswordOrEmpty();
     }
 
     /// Returns the port value, or `-1` when absent.

@@ -124,9 +124,9 @@ public final class WebURLWptTest {
             case "protocol":
                 return url.getScheme() + ":";
             case "username":
-                return url.getUsernameOrEmpty();
+                return url.getRawUsernameOrEmpty();
             case "password":
-                return url.getPasswordOrEmpty();
+                return url.getRawPasswordOrEmpty();
             case "host":
                 return host(url);
             case "hostname":

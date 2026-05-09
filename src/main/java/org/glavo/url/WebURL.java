@@ -217,32 +217,40 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// percent-decode the value. The result is `null` when the URL has no serialized credentials. When the URL
     /// has credentials with an empty username, the result is the empty string.
     ///
+    /// The word "raw" has the same meaning as in Java `URI` raw component getters: the returned string is the
+    /// serialized component with percent-encoding preserved. It is not necessarily a substring of the original
+    /// input because URL parsing may normalize, percent-encode, or otherwise rewrite credentials.
+    ///
     /// @return the raw username component, or `null` when absent
-    @Nullable String getUsername();
+    @Nullable String getRawUsername();
 
     /// Returns the raw username component or the empty string when absent.
     ///
-    /// This method is a null-free convenience view over {@link #getUsername()}. It does not percent-decode the
-    /// returned value.
+    /// This method is a null-free convenience view over {@link #getRawUsername()}. It does not percent-decode
+    /// the returned value.
     ///
     /// @return the raw username component, or the empty string when absent
-    String getUsernameOrEmpty();
+    String getRawUsernameOrEmpty();
 
     /// Returns the raw password component.
     ///
     /// This method exposes the normalized, percent-encoded password stored in the URL record. It does not
     /// percent-decode the value. The result is `null` when the URL has no password component.
     ///
+    /// The word "raw" has the same meaning as in Java `URI` raw component getters: the returned string is the
+    /// serialized component with percent-encoding preserved. It is not necessarily a substring of the original
+    /// input because URL parsing may normalize, percent-encode, or otherwise rewrite credentials.
+    ///
     /// @return the raw password component, or `null` when absent
-    @Nullable String getPassword();
+    @Nullable String getRawPassword();
 
     /// Returns the raw password component or the empty string when absent.
     ///
-    /// This method is a null-free convenience view over {@link #getPassword()}. It does not percent-decode the
-    /// returned value.
+    /// This method is a null-free convenience view over {@link #getRawPassword()}. It does not percent-decode
+    /// the returned value.
     ///
     /// @return the raw password component, or the empty string when absent
-    String getPasswordOrEmpty();
+    String getRawPasswordOrEmpty();
 
     /// Returns the port component as an integer.
     ///
