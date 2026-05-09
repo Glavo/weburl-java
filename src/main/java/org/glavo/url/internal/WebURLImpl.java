@@ -161,12 +161,6 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the scheme.
     @Override
-    public String scheme() {
-        return record.scheme;
-    }
-
-    /// Returns the scheme.
-    @Override
     public String getScheme() {
         return record.scheme;
     }

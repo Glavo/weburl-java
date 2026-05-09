@@ -209,14 +209,6 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// component.
     ///
     /// @return the scheme component without the trailing colon
-    String scheme();
-
-    /// Returns the scheme component without its delimiter.
-    ///
-    /// This method is the Java-style getter form of {@link #scheme()}. The returned value does not include the
-    /// trailing colon used by the WHATWG `URL.protocol` attribute.
-    ///
-    /// @return the scheme component without the trailing colon
     String getScheme();
 
     /// Returns the raw username component.

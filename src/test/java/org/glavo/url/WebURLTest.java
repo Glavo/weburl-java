@@ -101,7 +101,6 @@ public final class WebURLTest {
 
         assertSame(url.href(), url.href());
         assertSame(url.origin(), url.origin());
-        assertSame(url.scheme(), url.scheme());
         assertSame(url.getScheme(), url.getScheme());
         assertSame(url.getUsername(), url.getUsername());
         assertSame(url.getUsernameOrEmpty(), url.getUsernameOrEmpty());

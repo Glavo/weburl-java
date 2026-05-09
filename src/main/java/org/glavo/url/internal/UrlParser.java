@@ -925,7 +925,7 @@ public final class UrlParser {
             if (base == null || (base.hasOpaquePath() && c != '#')) {
                 return fail(new WebURLParseException.MissingSchemeNonRelativeURL());
             } else if (base.hasOpaquePath() && c == '#') {
-                record.scheme = base.scheme();
+                record.scheme = base.getScheme();
                 record.opaquePath = base.opaquePathValue();
                 record.path = base.pathSegments();
                 record.query = base.queryValue();
@@ -970,7 +970,7 @@ public final class UrlParser {
             if (base == null) {
                 return failApiValidation();
             }
-            record.scheme = base.scheme();
+            record.scheme = base.getScheme();
             if (c == '/') {
                 state = State.RELATIVE_SLASH;
             } else if (isSpecial() && c == '\\') {
