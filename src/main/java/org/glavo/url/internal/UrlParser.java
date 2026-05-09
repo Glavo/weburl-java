@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 
 /// WHATWG URL parser, serializer, and related internal algorithms.
@@ -167,7 +165,9 @@ public final class UrlParser {
             return parseOpaqueHost(input);
         }
 
-        String domain = Encoding.utf8DecodeWithoutBom(PercentEncoding.percentDecodeString(input));
+        String domain = containsPercent(input)
+                ? Encoding.utf8DecodeWithoutBom(PercentEncoding.percentDecodeString(input))
+                : input;
         String asciiDomain = domainToAscii(domain, false, idnaProfile);
 
         if (endsInANumber(asciiDomain)) {
@@ -210,7 +210,7 @@ public final class UrlParser {
             IDNAProfile idnaProfile
     ) {
         if (!strict && isAsciiOnly(domain) && !containsPunycodeLabel(domain)) {
-            String result = domain.toLowerCase(Locale.ROOT);
+            String result = containsAsciiUppercase(domain) ? domain.toLowerCase(Locale.ROOT) : domain;
             if (result.isEmpty()) {
                 throw new WebURLParseException.DomainToASCII();
             }
@@ -235,6 +235,16 @@ public final class UrlParser {
         return result;
     }
 
+    /// Returns whether a string contains a percent sign.
+    private static boolean containsPercent(String input) {
+        for (int i = 0; i < input.length(); i++) {
+            if (input.charAt(i) == '%') {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// Returns whether a domain contains only ASCII code points.
     private static boolean isAsciiOnly(String domain) {
         for (int i = 0; i < domain.length(); i++) {
@@ -245,110 +255,139 @@ public final class UrlParser {
         return true;
     }
 
-    /// Returns whether a domain contains a punycode label.
-    private static boolean containsPunycodeLabel(String domain) {
-        for (String label : domain.split("\\.", -1)) {
-            if (label.regionMatches(true, 0, "xn--", 0, 4)) {
+    /// Returns whether a string contains an ASCII upper-case letter.
+    private static boolean containsAsciiUppercase(String input) {
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
                 return true;
             }
         }
         return false;
     }
 
-    /// Returns whether the domain ends in a numeric label.
-    private static boolean endsInANumber(String input) {
-        List<String> parts = new ArrayList<>(Arrays.asList(input.split("\\.", -1)));
-        if (parts.get(parts.size() - 1).isEmpty()) {
-            if (parts.size() == 1) {
+    /// Returns whether a domain contains a punycode label.
+    private static boolean containsPunycodeLabel(String domain) {
+        int labelStart = 0;
+        while (labelStart <= domain.length()) {
+            if (labelStart + 4 <= domain.length()
+                    && domain.regionMatches(true, labelStart, "xn--", 0, 4)) {
+                return true;
+            }
+            int dot = domain.indexOf('.', labelStart);
+            if (dot < 0) {
                 return false;
             }
-            parts.remove(parts.size() - 1);
+            labelStart = dot + 1;
         }
-
-        String last = parts.get(parts.size() - 1);
-        if (parseIpv4Number(last) != null) {
-            return true;
-        }
-        for (int i = 0; i < last.length(); i++) {
-            if (!Infra.isAsciiDigit(last.charAt(i))) {
-                return false;
-            }
-        }
-        return !last.isEmpty();
+        return false;
     }
 
-    /// Parses an IPv4 number.
-    private static @Nullable Long parseIpv4Number(String input) {
-        if (input.isEmpty()) {
+    /// Returns whether the domain ends in a numeric label.
+    private static boolean endsInANumber(String input) {
+        int end = input.length();
+        if (end > 1 && input.charAt(end - 1) == '.') {
+            end--;
+        }
+        int start = input.lastIndexOf('.', end - 1) + 1;
+        if (parseIpv4Number(input, start, end) != null) {
+            return true;
+        }
+        for (int i = start; i < end; i++) {
+            if (!Infra.isAsciiDigit(input.charAt(i))) {
+                return false;
+            }
+        }
+        return start < end;
+    }
+
+    /// Parses an IPv4 number from a string slice.
+    private static @Nullable Long parseIpv4Number(String input, int start, int end) {
+        if (start == end) {
             return null;
         }
 
         int radix = 10;
-        String value = input;
-        if (value.length() >= 2 && value.charAt(0) == '0' && (value.charAt(1) == 'x' || value.charAt(1) == 'X')) {
-            value = value.substring(2);
+        int valueStart = start;
+        if (end - valueStart >= 2
+                && input.charAt(valueStart) == '0'
+                && (input.charAt(valueStart + 1) == 'x' || input.charAt(valueStart + 1) == 'X')) {
+            valueStart += 2;
             radix = 16;
-        } else if (value.length() >= 2 && value.charAt(0) == '0') {
-            value = value.substring(1);
+        } else if (end - valueStart >= 2 && input.charAt(valueStart) == '0') {
+            valueStart++;
             radix = 8;
         }
 
-        if (value.isEmpty()) {
+        if (valueStart == end) {
             return 0L;
         }
 
-        for (int i = 0; i < value.length(); i++) {
-            int c = value.charAt(i);
+        long value = 0;
+        for (int i = valueStart; i < end; i++) {
+            int c = input.charAt(i);
             boolean ok = radix == 10 ? Infra.isAsciiDigit(c)
                     : radix == 16 ? Infra.isAsciiHex(c)
                       : c >= '0' && c <= '7';
             if (!ok) {
                 return null;
             }
+            int digit = Character.digit(c, radix);
+            if (value > (Long.MAX_VALUE - digit) / radix) {
+                return Long.MAX_VALUE;
+            }
+            value = value * radix + digit;
         }
-
-        try {
-            return Long.parseLong(value, radix);
-        } catch (NumberFormatException ignored) {
-            return Long.MAX_VALUE;
-        }
+        return value;
     }
 
     /// Parses an IPv4 address.
     private static long parseIpv4(String input) {
-        List<String> parts = new ArrayList<>(Arrays.asList(input.split("\\.", -1)));
-        if (parts.get(parts.size() - 1).isEmpty() && parts.size() > 1) {
-            parts.remove(parts.size() - 1);
-        }
-        if (parts.size() > 4) {
-            throw new WebURLParseException.IPv4TooManyParts();
+        int end = input.length();
+        if (end > 1 && input.charAt(end - 1) == '.') {
+            end--;
         }
 
-        List<Long> numbers = new ArrayList<>();
-        for (String part : parts) {
-            Long number = parseIpv4Number(part);
+        long[] numbers = new long[4];
+        int numbersCount = 0;
+        int partStart = 0;
+        while (partStart <= end) {
+            if (numbersCount == numbers.length) {
+                throw new WebURLParseException.IPv4TooManyParts();
+            }
+
+            int partEnd = input.indexOf('.', partStart);
+            if (partEnd < 0 || partEnd > end) {
+                partEnd = end;
+            }
+
+            Long number = parseIpv4Number(input, partStart, partEnd);
             if (number == null) {
                 throw new WebURLParseException.IPv4NonNumericPart();
             }
-            numbers.add(number);
+            numbers[numbersCount] = number;
+            numbersCount++;
+
+            if (partEnd == end) {
+                break;
+            }
+            partStart = partEnd + 1;
         }
 
-        for (int i = 0; i < numbers.size() - 1; i++) {
-            if (numbers.get(i) > 255) {
+        for (int i = 0; i < numbersCount - 1; i++) {
+            if (numbers[i] > 255) {
                 throw new WebURLParseException.IPv4OutOfRangePart();
             }
         }
 
-        long lastLimit = 1L << (8 * (5 - numbers.size()));
-        if (numbers.get(numbers.size() - 1) >= lastLimit) {
+        long lastLimit = 1L << (8 * (5 - numbersCount));
+        if (numbers[numbersCount - 1] >= lastLimit) {
             throw new WebURLParseException.IPv4OutOfRangePart();
         }
 
-        long ipv4 = numbers.remove(numbers.size() - 1);
-        int counter = 0;
-        for (long number : numbers) {
-            ipv4 += number << (8 * (3 - counter));
-            counter++;
+        long ipv4 = numbers[numbersCount - 1];
+        for (int i = 0; i < numbersCount - 1; i++) {
+            ipv4 += numbers[i] << (8 * (3 - i));
         }
         return ipv4;
     }
@@ -652,6 +691,199 @@ public final class UrlParser {
         STOP
     }
 
+    /// Mutable text buffer that can keep unchanged input as a source slice.
+    @NotNullByDefault
+    private static final class Buffer {
+        /// Source string for an unchanged slice, or `null` when the buffer is empty or materialized.
+        private @Nullable String source;
+        /// Start index of the source slice.
+        private int start;
+        /// End index of the source slice.
+        private int end;
+        /// Materialized builder used after the buffer diverges from a single source slice.
+        private @Nullable StringBuilder builder;
+
+        /// Returns whether the buffer is empty.
+        boolean isEmpty() {
+            @Nullable StringBuilder builderValue = builder;
+            return builderValue == null ? start == end : builderValue.length() == 0;
+        }
+
+        /// Returns the UTF-16 length of the buffer.
+        int length() {
+            @Nullable StringBuilder builderValue = builder;
+            return builderValue == null ? end - start : builderValue.length();
+        }
+
+        /// Clears the buffer.
+        void clear() {
+            source = null;
+            start = 0;
+            end = 0;
+            builder = null;
+        }
+
+        /// Appends an unchanged source slice.
+        void append(String value, int sliceStart, int sliceEnd) {
+            if (sliceStart == sliceEnd) {
+                return;
+            }
+
+            @Nullable StringBuilder builderValue = builder;
+            if (builderValue != null) {
+                builderValue.append(value, sliceStart, sliceEnd);
+                return;
+            }
+
+            @Nullable String sourceValue = source;
+            if (sourceValue == null) {
+                source = value;
+                start = sliceStart;
+                end = sliceEnd;
+            } else if (sourceValue.equals(value) && end == sliceStart) {
+                end = sliceEnd;
+            } else {
+                StringBuilder materialized = new StringBuilder(length() + sliceEnd - sliceStart);
+                appendTo(materialized);
+                materialized.append(value, sliceStart, sliceEnd);
+                source = null;
+                start = 0;
+                end = 0;
+                builder = materialized;
+            }
+        }
+
+        /// Appends a string value.
+        void append(String value) {
+            if (value.isEmpty()) {
+                return;
+            }
+
+            StringBuilder builderValue = materializeBuilder(value.length());
+            builderValue.append(value);
+        }
+
+        /// Appends one ASCII character.
+        void appendAscii(int c) {
+            StringBuilder builderValue = materializeBuilder(1);
+            builderValue.append((char) c);
+        }
+
+        /// Prepends a percent-encoded at-sign.
+        void prependPercentEncodedAtSign() {
+            StringBuilder builderValue = new StringBuilder(3 + length());
+            builderValue.append("%40");
+            appendTo(builderValue);
+            source = null;
+            start = 0;
+            end = 0;
+            builder = builderValue;
+        }
+
+        /// Returns whether this buffer equals the supplied string.
+        boolean equals(String value) {
+            if (value.length() != length()) {
+                return false;
+            }
+
+            @Nullable StringBuilder builderValue = builder;
+            if (builderValue != null) {
+                for (int i = 0; i < value.length(); i++) {
+                    if (builderValue.charAt(i) != value.charAt(i)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            @Nullable String sourceValue = source;
+            return sourceValue != null && sourceValue.regionMatches(start, value, 0, value.length());
+        }
+
+        /// Returns whether this buffer is a special URL scheme.
+        boolean isSpecialScheme() {
+            return equals("ftp")
+                    || equals("file")
+                    || equals("http")
+                    || equals("https")
+                    || equals("ws")
+                    || equals("wss");
+        }
+
+        /// Parses a URL port number.
+        int parsePort() {
+            int value = 0;
+            int length = length();
+            for (int i = 0; i < length; i++) {
+                int c = charAt(i);
+                if (!Infra.isAsciiDigit(c)) {
+                    throw new NumberFormatException();
+                }
+                value = value * 10 + (c - '0');
+                if (value > 65535) {
+                    throw new NumberFormatException();
+                }
+            }
+            return value;
+        }
+
+        /// Returns the buffer as a string.
+        @Override
+        public String toString() {
+            @Nullable StringBuilder builderValue = builder;
+            if (builderValue != null) {
+                return builderValue.toString();
+            }
+
+            @Nullable String sourceValue = source;
+            return sourceValue == null ? "" : sourceValue.substring(start, end);
+        }
+
+        /// Returns a character at the buffer index.
+        private char charAt(int index) {
+            @Nullable StringBuilder builderValue = builder;
+            if (builderValue != null) {
+                return builderValue.charAt(index);
+            }
+
+            @Nullable String sourceValue = source;
+            if (sourceValue == null) {
+                throw new IndexOutOfBoundsException(index);
+            }
+            return sourceValue.charAt(start + index);
+        }
+
+        /// Materializes this buffer into a builder with room for additional characters.
+        private StringBuilder materializeBuilder(int additionalLength) {
+            @Nullable StringBuilder builderValue = builder;
+            if (builderValue != null) {
+                return builderValue;
+            }
+
+            StringBuilder materialized = new StringBuilder(length() + additionalLength);
+            appendTo(materialized);
+            source = null;
+            start = 0;
+            end = 0;
+            builder = materialized;
+            return materialized;
+        }
+
+        /// Appends the current content into another builder.
+        private void appendTo(StringBuilder output) {
+            @Nullable StringBuilder builderValue = builder;
+            if (builderValue != null) {
+                output.append(builderValue);
+                return;
+            }
+
+            @Nullable String sourceValue = source;
+            if (sourceValue != null) {
+                output.append(sourceValue, start, end);
+            }
+        }
+    }
+
     /// One run of the URL state machine.
     @NotNullByDefault
     private static final class StateMachine {
@@ -670,7 +902,7 @@ public final class UrlParser {
         /// Current parser state.
         private State state;
         /// Temporary parser buffer.
-        private String buffer = "";
+        private final Buffer buffer = new Buffer();
         /// Whether an at-sign was seen in authority.
         private boolean atSignSeen;
         /// Whether the host parser is inside IPv6 brackets.
@@ -720,8 +952,7 @@ public final class UrlParser {
         private void run() {
             while (pointer <= input.length()) {
                 int c = codePoint(input, pointer);
-                String cStr = c == EOF ? "" : input.substring(pointer, pointer + Character.charCount(c));
-                Result result = execute(c, cStr);
+                Result result = execute(c);
                 if (result == Result.STOP) {
                     break;
                 }
@@ -749,8 +980,8 @@ public final class UrlParser {
         }
 
         /// Rewinds the input pointer so the authority buffer is reprocessed as a host.
-        private void rewindAuthorityBuffer(String authorityBuffer) {
-            int hostStart = pointer - authorityBuffer.length();
+        private void rewindAuthorityBuffer(int authorityBufferLength) {
+            int hostStart = pointer - authorityBufferLength;
             pointer = previousPointer(input, hostStart);
         }
 
@@ -802,12 +1033,12 @@ public final class UrlParser {
         }
 
         /// Executes the current parser state.
-        private Result execute(int c, String cStr) {
+        private Result execute(int c) {
             switch (state) {
                 case SCHEME_START:
-                    return parseSchemeStart(c, cStr);
+                    return parseSchemeStart(c);
                 case SCHEME:
-                    return parseScheme(c, cStr);
+                    return parseScheme(c);
                 case NO_SCHEME:
                     return parseNoScheme(c);
                 case SPECIAL_RELATIVE_OR_AUTHORITY:
@@ -823,18 +1054,18 @@ public final class UrlParser {
                 case SPECIAL_AUTHORITY_IGNORE_SLASHES:
                     return parseSpecialAuthorityIgnoreSlashes(c);
                 case AUTHORITY:
-                    return parseAuthority(c, cStr);
+                    return parseAuthority(c);
                 case HOST:
                 case HOSTNAME:
-                    return parseHostName(c, cStr);
+                    return parseHostName(c);
                 case PORT:
-                    return parsePort(c, cStr);
+                    return parsePort(c);
                 case FILE:
                     return parseFile(c);
                 case FILE_SLASH:
                     return parseFileSlash(c);
                 case FILE_HOST:
-                    return parseFileHost(c, cStr);
+                    return parseFileHost(c);
                 case PATH_START:
                     return parsePathStart(c);
                 case PATH:
@@ -842,7 +1073,7 @@ public final class UrlParser {
                 case OPAQUE_PATH:
                     return parseOpaquePath(c);
                 case QUERY:
-                    return parseQuery(c, cStr);
+                    return parseQuery(c);
                 case FRAGMENT:
                     return parseFragment(c);
                 default:
@@ -850,10 +1081,45 @@ public final class UrlParser {
             }
         }
 
+        /// Appends the current input code point to the temporary buffer unchanged.
+        private void appendCurrentCodePoint() {
+            if (pointer >= 0 && pointer < input.length()) {
+                buffer.append(input, pointer, pointer + Character.charCount(input.codePointAt(pointer)));
+            }
+        }
+
+        /// Appends the current ASCII code point to the temporary buffer in lower case.
+        private void appendLowercaseAscii(int c) {
+            if (c >= 'A' && c <= 'Z') {
+                buffer.appendAscii(c + 0x20);
+            } else {
+                appendCurrentCodePoint();
+            }
+        }
+
+        /// Appends the current code point with the URL percent-encode set.
+        private void appendPercentEncoded(int c, PercentEncoding.BytePredicate predicate) {
+            if (c <= 0x7f && !predicate.test(c)) {
+                appendCurrentCodePoint();
+            } else {
+                buffer.append(PercentEncoding.utf8PercentEncodeCodePoint(c, predicate));
+            }
+        }
+
+        /// Appends the buffered component text to an existing component string.
+        private String appendBufferedComponent(@Nullable String current) {
+            String value = buffer.toString();
+            buffer.clear();
+            if (current == null || current.isEmpty()) {
+                return value;
+            }
+            return value.isEmpty() ? current : current + value;
+        }
+
         /// Parses the scheme start state.
-        private Result parseSchemeStart(int c, String cStr) {
+        private Result parseSchemeStart(int c) {
             if (Infra.isAsciiAlpha(c)) {
-                buffer += cStr.toLowerCase(Locale.ROOT);
+                appendLowercaseAscii(c);
                 state = State.SCHEME;
             } else if (stateOverride == null) {
                 state = State.NO_SCHEME;
@@ -865,15 +1131,15 @@ public final class UrlParser {
         }
 
         /// Parses the scheme state.
-        private Result parseScheme(int c, String cStr) {
+        private Result parseScheme(int c) {
             if (Infra.isAsciiAlphanumeric(c) || c == '+' || c == '-' || c == '.') {
-                buffer += cStr.toLowerCase(Locale.ROOT);
+                appendLowercaseAscii(c);
             } else if (c == ':') {
                 if (stateOverride != null) {
-                    if (isSpecial() && !isSpecialScheme(buffer)) {
+                    if (isSpecial() && !buffer.isSpecialScheme()) {
                         return Result.STOP;
                     }
-                    if (!isSpecial() && isSpecialScheme(buffer)) {
+                    if (!isSpecial() && buffer.isSpecialScheme()) {
                         return Result.STOP;
                     }
                     if ((includesCredentials() || record.port != -1) && buffer.equals("file")) {
@@ -883,7 +1149,7 @@ public final class UrlParser {
                         return Result.STOP;
                     }
                 }
-                record.scheme = buffer;
+                record.scheme = buffer.toString();
                 if (stateOverride != null) {
                     int defaultPort = defaultPort(record.scheme);
                     if (defaultPort == record.port) {
@@ -891,7 +1157,7 @@ public final class UrlParser {
                     }
                     return Result.STOP;
                 }
-                buffer = "";
+                buffer.clear();
                 if (record.scheme.equals("file")) {
                     if (codePointAtOffset(1) != '/' || codePointAtOffset(2) != '/') {
                         recordValidationError(new WebURLParseException.SpecialSchemeMissingFollowingSolidus());
@@ -910,7 +1176,7 @@ public final class UrlParser {
                     state = State.OPAQUE_PATH;
                 }
             } else if (stateOverride == null) {
-                buffer = "";
+                buffer.clear();
                 state = State.NO_SCHEME;
                 pointer = -1;
             } else {
@@ -1049,15 +1315,16 @@ public final class UrlParser {
         }
 
         /// Parses the authority state.
-        private Result parseAuthority(int c, String cStr) {
+        private Result parseAuthority(int c) {
             if (c == '@') {
                 recordValidationError(new WebURLParseException.InvalidCredentials());
                 if (atSignSeen) {
-                    buffer = "%40" + buffer;
+                    buffer.prependPercentEncodedAtSign();
                 }
                 atSignSeen = true;
 
-                buffer.codePoints().forEach(codePoint -> {
+                String authorityBuffer = buffer.toString();
+                authorityBuffer.codePoints().forEach(codePoint -> {
                     if (codePoint == ':' && !passwordTokenSeen) {
                         passwordTokenSeen = true;
                     } else {
@@ -1070,22 +1337,22 @@ public final class UrlParser {
                         }
                     }
                 });
-                buffer = "";
+                buffer.clear();
             } else if (c == EOF || c == '/' || c == '?' || c == '#' || (isSpecial() && c == '\\')) {
                 if (atSignSeen && buffer.isEmpty()) {
                     return failHostMissing();
                 }
-                rewindAuthorityBuffer(buffer);
-                buffer = "";
+                rewindAuthorityBuffer(buffer.length());
+                buffer.clear();
                 state = State.HOST;
             } else {
-                buffer += cStr;
+                appendCurrentCodePoint();
             }
             return Result.CONTINUE;
         }
 
         /// Parses the host or hostname state.
-        private Result parseHostName(int c, String cStr) {
+        private Result parseHostName(int c) {
             if (stateOverride != null && record.scheme.equals("file")) {
                 rewindPointer();
                 state = State.FILE_HOST;
@@ -1096,8 +1363,8 @@ public final class UrlParser {
                 if (stateOverride == State.HOSTNAME) {
                     return failApiValidation();
                 }
-                record.host = parseHost(buffer, isNotSpecial(), idnaProfile);
-                buffer = "";
+                record.host = parseHost(buffer.toString(), isNotSpecial(), idnaProfile);
+                buffer.clear();
                 state = State.PORT;
             } else if (c == EOF || c == '/' || c == '?' || c == '#' || (isSpecial() && c == '\\')) {
                 rewindPointer();
@@ -1107,8 +1374,8 @@ public final class UrlParser {
                         && (includesCredentials() || record.port != -1)) {
                     return failApiValidation();
                 }
-                record.host = parseHost(buffer, isNotSpecial(), idnaProfile);
-                buffer = "";
+                record.host = parseHost(buffer.toString(), isNotSpecial(), idnaProfile);
+                buffer.clear();
                 state = State.PATH_START;
                 if (stateOverride != null) {
                     return Result.STOP;
@@ -1119,37 +1386,30 @@ public final class UrlParser {
                 } else if (c == ']') {
                     insideBrackets = false;
                 }
-                buffer += cStr;
+                appendCurrentCodePoint();
             }
             return Result.CONTINUE;
         }
 
         /// Parses the port state.
-        private Result parsePort(int c, String cStr) {
+        private Result parsePort(int c) {
             if (Infra.isAsciiDigit(c)) {
-                buffer += cStr;
+                appendCurrentCodePoint();
             } else if (c == EOF || c == '/' || c == '?' || c == '#' || (isSpecial() && c == '\\')
                     || stateOverride != null) {
                 if (!buffer.isEmpty()) {
                     int parsedPort;
                     try {
-                        parsedPort = Integer.parseInt(buffer);
+                        parsedPort = buffer.parsePort();
                     } catch (NumberFormatException ignored) {
                         if (stateOverride == State.HOST) {
-                            buffer = "";
-                            return Result.STOP;
-                        }
-                        return fail(new WebURLParseException.PortOutOfRange());
-                    }
-                    if (parsedPort > 65535) {
-                        if (stateOverride == State.HOST) {
-                            buffer = "";
+                            buffer.clear();
                             return Result.STOP;
                         }
                         return fail(new WebURLParseException.PortOutOfRange());
                     }
                     record.port = defaultPort(record.scheme) == parsedPort ? -1 : parsedPort;
-                    buffer = "";
+                    buffer.clear();
                     if (stateOverride != null) {
                         return Result.STOP;
                     }
@@ -1226,20 +1486,21 @@ public final class UrlParser {
         }
 
         /// Parses the file-host state.
-        private Result parseFileHost(int c, String cStr) {
+        private Result parseFileHost(int c) {
             if (c == EOF || c == '/' || c == '\\' || c == '?' || c == '#') {
                 rewindPointer();
-                if (stateOverride == null && isWindowsDriveLetterString(buffer)) {
+                String fileHost = buffer.toString();
+                if (stateOverride == null && isWindowsDriveLetterString(fileHost)) {
                     recordValidationError(new WebURLParseException.FileInvalidWindowsDriveLetterHost());
                     state = State.PATH;
-                } else if (buffer.isEmpty()) {
+                } else if (fileHost.isEmpty()) {
                     record.host = UrlHost.domain("");
                     if (stateOverride != null) {
                         return Result.STOP;
                     }
                     state = State.PATH_START;
                 } else {
-                    UrlHost parsedHost = parseHost(buffer, isNotSpecial(), idnaProfile);
+                    UrlHost parsedHost = parseHost(fileHost, isNotSpecial(), idnaProfile);
                     if (serializeHost(parsedHost).equals("localhost")) {
                         parsedHost = UrlHost.domain("");
                     }
@@ -1247,11 +1508,11 @@ public final class UrlParser {
                     if (stateOverride != null) {
                         return Result.STOP;
                     }
-                    buffer = "";
+                    buffer.clear();
                     state = State.PATH_START;
                 }
             } else {
-                buffer += cStr;
+                appendCurrentCodePoint();
             }
             return Result.CONTINUE;
         }
@@ -1291,20 +1552,21 @@ public final class UrlParser {
                     recordValidationError(new WebURLParseException.InvalidReverseSolidus());
                 }
 
-                if (isDoubleDot(buffer)) {
+                String segment = buffer.toString();
+                if (isDoubleDot(segment)) {
                     shortenPath();
                     if (c != '/' && !(isSpecial() && c == '\\')) {
                         record.path.add("");
                     }
-                } else if (isSingleDot(buffer) && c != '/' && !(isSpecial() && c == '\\')) {
+                } else if (isSingleDot(segment) && c != '/' && !(isSpecial() && c == '\\')) {
                     record.path.add("");
-                } else if (!isSingleDot(buffer)) {
-                    if (record.scheme.equals("file") && record.path.isEmpty() && isWindowsDriveLetterString(buffer)) {
-                        buffer = buffer.charAt(0) + ":";
+                } else if (!isSingleDot(segment)) {
+                    if (record.scheme.equals("file") && record.path.isEmpty() && isWindowsDriveLetterString(segment)) {
+                        segment = segment.charAt(0) + ":";
                     }
-                    record.path.add(buffer);
+                    record.path.add(segment);
                 }
-                buffer = "";
+                buffer.clear();
                 if (c == '?') {
                     record.query = "";
                     state = State.QUERY;
@@ -1317,7 +1579,7 @@ public final class UrlParser {
                 if (PercentEncoding.startsInvalidPercentTriplet(input, pointer)) {
                     recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
-                buffer += PercentEncoding.utf8PercentEncodeCodePoint(c, PercentEncoding::isPathPercentEncode);
+                appendPercentEncoded(c, PercentEncoding::isPathPercentEncode);
             }
             return Result.CONTINUE;
         }
@@ -1325,40 +1587,42 @@ public final class UrlParser {
         /// Parses the opaque-path state.
         private Result parseOpaquePath(int c) {
             if (c == '?') {
+                record.opaquePath = appendBufferedComponent(record.opaquePath);
                 record.query = "";
                 state = State.QUERY;
             } else if (c == '#') {
+                record.opaquePath = appendBufferedComponent(record.opaquePath);
                 record.fragment = "";
                 state = State.FRAGMENT;
             } else if (c == ' ') {
                 int remaining = codePointAtOffset(1);
-                record.opaquePath = (record.opaquePath == null ? "" : record.opaquePath)
-                        + (remaining == '?' || remaining == '#' ? "%20" : " ");
+                if (remaining == '?' || remaining == '#') {
+                    buffer.append("%20");
+                } else {
+                    appendCurrentCodePoint();
+                }
+            } else if (c == EOF) {
+                record.opaquePath = appendBufferedComponent(record.opaquePath);
             } else {
-                if (c != EOF && c != '%') {
+                if (c != '%') {
                     recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
-                if (c != EOF && PercentEncoding.startsInvalidPercentTriplet(input, pointer)) {
+                if (PercentEncoding.startsInvalidPercentTriplet(input, pointer)) {
                     recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
-                if (c != EOF) {
-                    record.opaquePath = (record.opaquePath == null ? "" : record.opaquePath)
-                            + PercentEncoding.utf8PercentEncodeCodePoint(c, PercentEncoding::isC0ControlPercentEncode);
-                }
+                appendPercentEncoded(c, PercentEncoding::isC0ControlPercentEncode);
             }
             return Result.CONTINUE;
         }
 
         /// Parses the query state.
-        private Result parseQuery(int c, String cStr) {
+        private Result parseQuery(int c) {
             if (!isSpecial() || record.scheme.equals("ws") || record.scheme.equals("wss")) {
                 // Only UTF-8 is currently supported by this Java port.
             }
 
             if ((stateOverride == null && c == '#') || c == EOF) {
-                String encoded = PercentEncoding.percentEncodeQuery(buffer, isSpecial());
-                record.query = (record.query == null ? "" : record.query) + encoded;
-                buffer = "";
+                record.query = appendBufferedComponent(record.query);
                 if (c == '#') {
                     record.fragment = "";
                     state = State.FRAGMENT;
@@ -1367,19 +1631,22 @@ public final class UrlParser {
                 if (PercentEncoding.startsInvalidPercentTriplet(input, pointer)) {
                     recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
-                buffer += cStr;
+                appendPercentEncoded(c, isSpecial()
+                        ? PercentEncoding::isSpecialQueryPercentEncode
+                        : PercentEncoding::isQueryPercentEncode);
             }
             return Result.CONTINUE;
         }
 
         /// Parses the fragment state.
         private Result parseFragment(int c) {
-            if (c != EOF) {
+            if (c == EOF) {
+                record.fragment = appendBufferedComponent(record.fragment);
+            } else {
                 if (PercentEncoding.startsInvalidPercentTriplet(input, pointer)) {
                     recordValidationError(new WebURLParseException.InvalidURLUnit());
                 }
-                record.fragment = (record.fragment == null ? "" : record.fragment)
-                        + PercentEncoding.utf8PercentEncodeCodePoint(c, PercentEncoding::isFragmentPercentEncode);
+                appendPercentEncoded(c, PercentEncoding::isFragmentPercentEncode);
             }
             return Result.CONTINUE;
         }
