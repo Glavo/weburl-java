@@ -28,7 +28,7 @@ import java.util.Objects;
 /// settings. The standard factory returned by `standard()` has no base URL and uses the automatic IDNA
 /// provider; it is the factory used by the static parsing methods on `WebURL`.
 ///
-/// A factory may have a configured base URL. When present, `of(String)`, `parse(String)`, and
+/// A factory may have a configured base URL. When present, `create(String)`, `parse(String)`, and
 /// `canParse(String)` parse their input relative to that base. Overloads that accept a base URL use the
 /// supplied base for that call and do not read the factory's configured base.
 ///
@@ -72,8 +72,8 @@ public final class WebURLFactory {
 
     /// Returns the configured base URL.
     ///
-    /// The base URL is used only by `of(String)`, `parse(String)`, and `canParse(String)`. It is not used by
-    /// overloads that receive an explicit base URL argument.
+    /// The base URL is used only by `create(String)`, `parse(String)`, and `canParse(String)`. It is not used
+    /// by overloads that receive an explicit base URL argument.
     ///
     /// @return the configured base URL, or `null` when this factory has no base URL
     public @Nullable WebURL base() {
@@ -100,7 +100,7 @@ public final class WebURLFactory {
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
     /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
-    public WebURL of(String input) {
+    public WebURL create(String input) {
         return parseRequired(input, base, "Invalid URL: " + input);
     }
 
@@ -116,7 +116,7 @@ public final class WebURLFactory {
     /// @throws WebURLParseException when either input fails with a known URL validation error
     /// @throws IllegalArgumentException when either input fails without a specific public validation error
     /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
-    public WebURL of(String input, String base) {
+    public WebURL create(String input, String base) {
         return parseRequired(input, parseBaseRequired(base), "Invalid URL: " + input);
     }
 
@@ -130,14 +130,14 @@ public final class WebURLFactory {
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
     /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
-    public WebURL of(String input, WebURL base) {
+    public WebURL create(String input, WebURL base) {
         return parseRequired(input, implementation(base), "Invalid URL: " + input);
     }
 
     /// Parses an input string and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `of(String)`, except URL parse failures are represented by
-    /// `null` instead of an exception.
+    /// This method has the same parser behavior as `create(String)`, except URL parse failures are represented
+    /// by `null` instead of an exception.
     ///
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if parsing fails

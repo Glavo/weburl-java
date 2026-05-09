@@ -51,7 +51,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
     static WebURL of(String input) {
-        return WebURLFactory.standard().of(input);
+        return WebURLFactory.standard().create(input);
     }
 
     /// Creates a URL by parsing an input string against a base URL string.
@@ -64,7 +64,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @throws WebURLParseException when either input fails with a known URL validation error
     /// @throws IllegalArgumentException when either input fails without a specific public validation error
     static WebURL of(String input, String base) {
-        return WebURLFactory.standard().of(input, base);
+        return WebURLFactory.standard().create(input, base);
     }
 
     /// Creates a URL by parsing an input string against a base URL.
@@ -77,7 +77,7 @@ public sealed interface WebURL permits WebURLImpl {
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
     static WebURL of(String input, WebURL base) {
-        return WebURLFactory.standard().of(input, base);
+        return WebURLFactory.standard().create(input, base);
     }
 
     /// Parses an absolute input string and returns `null` on failure.

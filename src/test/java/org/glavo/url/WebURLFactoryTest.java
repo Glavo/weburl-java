@@ -36,7 +36,7 @@ public final class WebURLFactoryTest {
         assertSame(factory, WebURLFactory.standard());
         assertNull(factory.base());
         assertEquals(WebURLFactory.IdnaProvider.AUTOMATIC, factory.idnaProvider());
-        assertEquals(WebURL.of("https://example.com/a").href(), factory.of("https://example.com/a").href());
+        assertEquals(WebURL.of("https://example.com/a").href(), factory.create("https://example.com/a").href());
         assertFalse(factory.canParse("../relative"));
     }
 
@@ -47,7 +47,7 @@ public final class WebURLFactoryTest {
                 .base("https://example.com/a/b/")
                 .build();
 
-        assertEquals("https://example.com/a/c", factory.of("../c").href());
+        assertEquals("https://example.com/a/c", factory.create("../c").href());
         assertEquals("https://example.com/a/b/d", factory.parse("d").href());
         assertTrue(factory.canParse("?q=1"));
         assertEquals("https://example.com/a/b/", factory.base().href());
@@ -61,8 +61,8 @@ public final class WebURLFactoryTest {
                 .build();
         WebURL base = WebURL.of("https://example.org/x/y/");
 
-        assertEquals("https://example.org/x/z", factory.of("../z", base).href());
-        assertEquals("https://example.net/z", factory.of("/z", "https://example.net/base").href());
+        assertEquals("https://example.org/x/z", factory.create("../z", base).href());
+        assertEquals("https://example.net/z", factory.create("/z", "https://example.net/base").href());
     }
 
     /// Tests parse and canParse failure handling through a factory.
@@ -74,7 +74,7 @@ public final class WebURLFactoryTest {
         assertFalse(factory.canParse("https://example.com:999999/"));
         assertNull(factory.parse("/relative", "not a url"));
         assertThrows(WebURLParseException.PortOutOfRange.class,
-                () -> factory.of("https://example.com:999999/"));
+                () -> factory.create("https://example.com:999999/"));
     }
 
     /// Tests provider selection with the dependency-free JDK provider.
@@ -85,7 +85,7 @@ public final class WebURLFactoryTest {
                 .build();
 
         assertEquals(WebURLFactory.IdnaProvider.JDK, factory.idnaProvider());
-        assertEquals("https://xn--bcher-kva.example/", factory.of("https://bücher.example/").href());
+        assertEquals("https://xn--bcher-kva.example/", factory.create("https://bücher.example/").href());
         assertTrue(WebURLFactory.IdnaProvider.JDK.isAvailable());
         assertTrue(WebURLFactory.IdnaProvider.AUTOMATIC.isAvailable());
     }
@@ -97,7 +97,7 @@ public final class WebURLFactoryTest {
             WebURLFactory factory = WebURLFactory.builder()
                     .idnaProvider(WebURLFactory.IdnaProvider.ICU4J)
                     .build();
-            assertEquals("https://xn--bcher-kva.example/", factory.of("https://bücher.example/").href());
+            assertEquals("https://xn--bcher-kva.example/", factory.create("https://bücher.example/").href());
         } else {
             assertThrows(IllegalStateException.class, () -> WebURLFactory.builder()
                     .idnaProvider(WebURLFactory.IdnaProvider.ICU4J)
@@ -116,10 +116,10 @@ public final class WebURLFactoryTest {
         WebURLFactory copied = factory.toBuilder().base("https://example.org/b/").build();
         WebURLFactory withoutBase = copied.withoutBase();
 
-        assertEquals("https://example.org/c", copied.of("../c").href());
+        assertEquals("https://example.org/c", copied.create("../c").href());
         assertEquals(WebURLFactory.IdnaProvider.JDK, copied.idnaProvider());
         assertNull(withoutBase.base());
         assertFalse(withoutBase.canParse("../c"));
-        assertEquals("https://example.net/d", withoutBase.withBase(WebURL.of("https://example.net/base/")).of("../d").href());
+        assertEquals("https://example.net/d", withoutBase.withBase(WebURL.of("https://example.net/base/")).create("../d").href());
     }
 }
