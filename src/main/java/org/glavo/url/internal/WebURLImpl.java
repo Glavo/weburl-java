@@ -106,6 +106,7 @@ public final class WebURLImpl implements WebURL {
     private @Nullable String fragment;
     /// Cached RFC 2396 URI string, or `null` until requested.
     private @Nullable String rfc2396String;
+
     /// Creates an immutable URL from a completed URL record and serialized URL indexes.
     WebURLImpl(
             UrlRecord record,
