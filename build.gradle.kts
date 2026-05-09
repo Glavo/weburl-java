@@ -92,7 +92,6 @@ val downloadDir = layout.buildDirectory.dir("downloads")
 
 val wptCommit = "ebf8e3069ec4ac6498826bf9066419e46b0f4ac5"
 val wptResources = listOf(
-    "setters_tests",
     "urltestdata"
 )
 

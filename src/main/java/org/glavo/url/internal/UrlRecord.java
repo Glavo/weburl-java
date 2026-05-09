@@ -84,40 +84,6 @@ final class UrlRecord {
     UrlRecord() {
     }
 
-    /// Creates a mutable URL record from parsed components.
-    UrlRecord(
-            String scheme,
-            String username,
-            String password,
-            @Nullable UrlHost host,
-            int port,
-            List<String> path,
-            @Nullable String opaquePath,
-            @Nullable String query,
-            @Nullable String fragment
-    ) {
-        this.scheme = scheme;
-        this.username = username;
-        this.password = password;
-        this.host = host;
-        this.port = port;
-        this.path = new ArrayList<>(path);
-        this.opaquePath = opaquePath;
-        this.query = query;
-        this.fragment = fragment;
-    }
-
-    /// Creates a component-only mutable copy of another record.
-    UrlRecord(UrlRecord source) {
-        this(source.scheme, source.username, source.password, source.host, source.port,
-                source.path, source.opaquePath, source.query, source.fragment);
-    }
-
-    /// Returns a component-only mutable copy of this record.
-    UrlRecord copy() {
-        return new UrlRecord(this);
-    }
-
     /// Attempts to adopt an input string that is already the exact URL serialization.
     boolean tryAdoptHref(String input) {
         int index = 0;

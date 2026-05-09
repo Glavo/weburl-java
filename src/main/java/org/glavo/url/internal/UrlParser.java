@@ -112,16 +112,6 @@ public final class UrlParser {
         return url.origin();
     }
 
-    /// Percent-encodes a userinfo component.
-    public static String percentEncodeUserInfo(String value) {
-        return PercentEncoding.utf8PercentEncodeString(value, PercentEncoding::isUserinfoPercentEncode);
-    }
-
-    /// Returns whether the URL cannot have credentials or a port.
-    public static boolean cannotHaveAUsernamePasswordPort(WebURLImpl url) {
-        return !url.hasHost() || url.hasEmptyHost() || url.schemeEquals("file");
-    }
-
     /// Returns whether the scheme is a special URL scheme.
     public static boolean isSpecialScheme(String scheme) {
         switch (scheme) {

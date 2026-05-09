@@ -51,11 +51,6 @@ public final class WebURLImpl implements WebURL {
         this.record = record;
     }
 
-    /// Returns a component-only mutable copy of the owned URL record.
-    UrlRecord mutableRecord() {
-        return record.copy();
-    }
-
     /// Returns whether this URL has an opaque path.
     boolean hasOpaquePath() {
         return record.opaquePath != null;
@@ -64,11 +59,6 @@ public final class WebURLImpl implements WebURL {
     /// Returns whether this URL has a host.
     boolean hasHost() {
         return record.host != null;
-    }
-
-    /// Returns whether this URL has a host that serializes to an empty string.
-    boolean hasEmptyHost() {
-        return record.host != null && record.host.isEmpty();
     }
 
     /// Returns the serialized host plus port when a port is present.
@@ -121,11 +111,6 @@ public final class WebURLImpl implements WebURL {
     /// Returns the query value, or `null` when absent.
     @Nullable String queryValue() {
         return record.query;
-    }
-
-    /// Returns the fragment value, or `null` when absent.
-    @Nullable String fragmentValue() {
-        return record.fragment;
     }
 
     /// Returns the serialized URL.
@@ -186,18 +171,6 @@ public final class WebURLImpl implements WebURL {
         return record.scheme;
     }
 
-    /// Returns a URL with the scheme updated when the URL Standard permits the change.
-    @Override
-    public WebURL withScheme(String value) {
-        return withSchemeOverride(value);
-    }
-
-    /// Returns a URL with the protocol updated when the URL Standard permits the change.
-    @Override
-    public WebURL withProtocol(String value) {
-        return withSchemeOverride(value);
-    }
-
     /// Returns the raw username, or the empty string when absent.
     @Override
     public String getUsernameOrEmpty() {
@@ -214,17 +187,6 @@ public final class WebURLImpl implements WebURL {
     @Override
     public @Nullable String getUsername() {
         return record.usernameStart < 0 ? null : getUsernameOrEmpty();
-    }
-
-    /// Returns a URL with the username updated when the URL can have credentials.
-    @Override
-    public WebURL withUsername(String value) {
-        if (UrlParser.cannotHaveAUsernamePasswordPort(this)) {
-            return this;
-        }
-        UrlRecord copy = mutableRecord();
-        copy.username = UrlParser.percentEncodeUserInfo(value);
-        return new WebURLImpl(copy);
     }
 
     /// Returns the raw password, or the empty string when absent.
@@ -245,53 +207,10 @@ public final class WebURLImpl implements WebURL {
         return record.passwordStart < 0 ? null : getPasswordOrEmpty();
     }
 
-    /// Returns a URL with the password updated when the URL can have credentials.
-    @Override
-    public WebURL withPassword(String value) {
-        if (UrlParser.cannotHaveAUsernamePasswordPort(this)) {
-            return this;
-        }
-        UrlRecord copy = mutableRecord();
-        copy.password = UrlParser.percentEncodeUserInfo(value);
-        return new WebURLImpl(copy);
-    }
-
-    /// Returns a URL with the host updated when the URL has a non-opaque path.
-    @Override
-    public WebURL withHost(String value) {
-        if (hasOpaquePath()) {
-            return this;
-        }
-        return withStateOverride(value, UrlParser.State.HOST);
-    }
-
-    /// Returns a URL with the hostname updated when the URL has a non-opaque path.
-    @Override
-    public WebURL withHostname(String value) {
-        if (hasOpaquePath()) {
-            return this;
-        }
-        return withStateOverride(value, UrlParser.State.HOSTNAME);
-    }
-
     /// Returns the port value, or `-1` when absent.
     @Override
     public int getPort() {
         return record.port;
-    }
-
-    /// Returns a URL with the port updated when the URL can have a port.
-    @Override
-    public WebURL withPort(String value) {
-        if (UrlParser.cannotHaveAUsernamePasswordPort(this)) {
-            return this;
-        }
-        if (value.isEmpty()) {
-            UrlRecord copy = mutableRecord();
-            copy.port = -1;
-            return new WebURLImpl(copy);
-        }
-        return withStateOverride(value, UrlParser.State.PORT);
     }
 
     /// Returns the raw path, or the empty string when absent.
@@ -311,18 +230,6 @@ public final class WebURLImpl implements WebURL {
         return getRawPathOrEmpty();
     }
 
-    /// Returns a URL with the pathname updated when the URL has a non-opaque path.
-    @Override
-    public WebURL withPathname(String value) {
-        if (hasOpaquePath()) {
-            return this;
-        }
-        UrlRecord copy = mutableRecord();
-        copy.path = new ArrayList<>();
-        copy.opaquePath = null;
-        return parseIntoCopyOrThis(value, copy, UrlParser.State.PATH_START);
-    }
-
     /// Returns the raw query, or `null` when absent.
     @Override
     public @Nullable String getRawQuery() {
@@ -334,20 +241,6 @@ public final class WebURLImpl implements WebURL {
     public String getRawQueryOrEmpty() {
         @Nullable String query = record.query;
         return query == null ? "" : query;
-    }
-
-    /// Returns a URL with the search string updated.
-    @Override
-    public WebURL withSearch(String value) {
-        UrlRecord copy = mutableRecord();
-        if (value.isEmpty()) {
-            copy.query = null;
-            return new WebURLImpl(copy);
-        }
-
-        String input = value.charAt(0) == '?' ? value.substring(1) : value;
-        copy.query = "";
-        return parseIntoCopyOrThis(input, copy, UrlParser.State.QUERY);
     }
 
     /// Returns immutable search parameters parsed from the current query.
@@ -365,15 +258,6 @@ public final class WebURLImpl implements WebURL {
         return params;
     }
 
-    /// Returns a URL with the query replaced by serialized search parameters.
-    @Override
-    public WebURL withSearchParams(WebURLSearchParams value) {
-        UrlRecord copy = mutableRecord();
-        String serializedQuery = value.toString();
-        copy.query = serializedQuery.isEmpty() ? null : serializedQuery;
-        return new WebURLImpl(copy);
-    }
-
     /// Returns the raw fragment, or `null` when absent.
     @Override
     public @Nullable String getRawFragment() {
@@ -385,20 +269,6 @@ public final class WebURLImpl implements WebURL {
     public String getRawFragmentOrEmpty() {
         @Nullable String fragment = record.fragment;
         return fragment == null ? "" : fragment;
-    }
-
-    /// Returns a URL with the hash string updated.
-    @Override
-    public WebURL withHash(String value) {
-        UrlRecord copy = mutableRecord();
-        if (value.isEmpty()) {
-            copy.fragment = null;
-            return new WebURLImpl(copy);
-        }
-
-        String input = value.charAt(0) == '#' ? value.substring(1) : value;
-        copy.fragment = "";
-        return parseIntoCopyOrThis(input, copy, UrlParser.State.FRAGMENT);
     }
 
     /// Returns the serialized URL as a Java `URI`.
@@ -565,19 +435,4 @@ public final class WebURLImpl implements WebURL {
         boolean test(int c);
     }
 
-    /// Runs a state override on a copy of this URL.
-    private WebURL withStateOverride(String input, UrlParser.State state) {
-        return parseIntoCopyOrThis(input, mutableRecord(), state);
-    }
-
-    /// Runs the scheme-state override with an input that has the colon delimiter required by the parser.
-    private WebURL withSchemeOverride(String value) {
-        return withStateOverride(value.endsWith(":") ? value : value + ":", UrlParser.State.SCHEME_START);
-    }
-
-    /// Parses into a copied URL record and returns a new URL, or this URL on parser failure.
-    private WebURL parseIntoCopyOrThis(String input, UrlRecord copy, UrlParser.State state) {
-        @Nullable WebURLImpl parsed = UrlParser.basicParse(input, null, copy, state);
-        return parsed == null ? this : parsed;
-    }
 }

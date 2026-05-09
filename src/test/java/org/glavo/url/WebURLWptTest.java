@@ -67,30 +67,6 @@ public final class WebURLWptTest {
         return tests;
     }
 
-    /// Tests URL setters against WPT `setters_tests.json`.
-    @TestFactory
-    public List<DynamicTest> appliesWptSetterTests() throws IOException {
-        JsonObject root = readObject("setters_tests.json");
-        List<DynamicTest> tests = new ArrayList<>();
-
-        for (Map.Entry<String, JsonElement> section : root.entrySet()) {
-            String attribute = section.getKey();
-            if (attribute.equals("comment") || attribute.equals("href")) {
-                continue;
-            }
-
-            JsonArray cases = section.getValue().getAsJsonArray();
-            for (int i = 0; i < cases.size(); i++) {
-                JsonObject testCase = cases.get(i).getAsJsonObject();
-                String displayName = "setters_tests.json " + attribute + "[" + i + "] "
-                        + displayString(testCase.get("href").getAsString());
-                tests.add(DynamicTest.dynamicTest(displayName, () -> assertSetterTest(attribute, testCase)));
-            }
-        }
-
-        return tests;
-    }
-
     /// Asserts one WPT URL parsing test case.
     private static void assertUrlTestData(JsonObject testCase) {
         String input = testCase.get("input").getAsString();
@@ -120,39 +96,6 @@ public final class WebURLWptTest {
             assertNotNull(WebURL.tryParseURL(input, NON_OPAQUE_PATH_BASE));
         } else {
             throw new AssertionError("Unknown relativeTo value: " + relativeTo);
-        }
-    }
-
-    /// Asserts one WPT URL setter test case.
-    private static void assertSetterTest(String attribute, JsonObject testCase) {
-        WebURL original = WebURL.parseURL(testCase.get("href").getAsString());
-        WebURL updated = applySetter(original, attribute, testCase.get("new_value").getAsString());
-        assertExpectedUrlFields(updated, testCase.get("expected").getAsJsonObject());
-    }
-
-    /// Applies a `WebURL` immutable setter.
-    private static WebURL applySetter(WebURL url, String attribute, String value) {
-        switch (attribute) {
-            case "protocol":
-                return url.withProtocol(value);
-            case "username":
-                return url.withUsername(value);
-            case "password":
-                return url.withPassword(value);
-            case "host":
-                return url.withHost(value);
-            case "hostname":
-                return url.withHostname(value);
-            case "port":
-                return url.withPort(value);
-            case "pathname":
-                return url.withPathname(value);
-            case "search":
-                return url.withSearch(value);
-            case "hash":
-                return url.withHash(value);
-            default:
-                throw new AssertionError("Unsupported setter attribute: " + attribute);
         }
     }
 
@@ -278,13 +221,6 @@ public final class WebURLWptTest {
     private static JsonArray readArray(String resourceName) throws IOException {
         try (Reader reader = Files.newBufferedReader(resourcePath(resourceName), StandardCharsets.UTF_8)) {
             return JsonParser.parseReader(reader).getAsJsonArray();
-        }
-    }
-
-    /// Reads a WPT JSON file as an object.
-    private static JsonObject readObject(String resourceName) throws IOException {
-        try (Reader reader = Files.newBufferedReader(resourcePath(resourceName), StandardCharsets.UTF_8)) {
-            return JsonParser.parseReader(reader).getAsJsonObject();
         }
     }
 

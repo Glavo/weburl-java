@@ -188,35 +188,9 @@ public final class WebURLTest {
         ), urls);
     }
 
-    /// Tests URL getters and setters.
+    /// Tests immutable search parameter operations.
     @Test
-    public void updatesComponentsWithSetters() {
-        WebURL url = WebURL.parseURL("https://user:pass@example.com:443/a/b?x=1#f");
-        assertEquals("https://example.com", url.origin());
-        assertEquals("https", url.getScheme());
-        assertEquals(-1, url.getPort());
-        assertEquals("user", url.getUsername());
-        assertEquals("pass", url.getPassword());
-
-        WebURL updated = url
-                .withProtocol("http")
-                .withHost("example.org:8080")
-                .withUsername("a b")
-                .withPassword("p@ss")
-                .withPathname("/c d")
-                .withSearch("?q=a b&x=1")
-                .withHash("#frag ment");
-
-        assertEquals("https://user:pass@example.com/a/b?x=1#f", url.href());
-        assertEquals("http://a%20b:p%40ss@example.org:8080/c%20d?q=a%20b&x=1#frag%20ment", updated.href());
-        assertEquals("q=a%20b&x=1", updated.getRawQuery());
-        assertEquals("frag%20ment", updated.getRawFragment());
-        assertEquals("a b", updated.searchParams().get("q"));
-    }
-
-    /// Tests immutable search parameter updates.
-    @Test
-    public void updatesSearchParamsImmutably() {
+    public void readsSearchParamsImmutably() {
         WebURL url = WebURL.parseURL("https://example.test/?a=1&a=2");
         WebURLSearchParams params = url.searchParams();
 
@@ -227,12 +201,8 @@ public final class WebURLTest {
         WebURLSearchParams appended = params.append("b", "x y");
         assertEquals("https://example.test/?a=1&a=2", url.href());
         assertEquals("a=1&a=2", params.toString());
-
-        WebURL updated = url.withSearchParams(appended.set("a", "3"));
-        assertEquals("https://example.test/?a=3&b=x+y", updated.href());
-
-        WebURL withoutSearch = updated.withSearch("");
-        assertNull(withoutSearch.getRawQuery());
+        assertEquals("a=1&a=2&b=x+y", appended.toString());
+        assertEquals("a=3&b=x+y", appended.set("a", "3").toString());
         assertEquals(2, params.size());
     }
 
@@ -283,35 +253,6 @@ public final class WebURLTest {
         assertEquals("http://example.com/", WebURL.parseURL("http://example.com:80/").href());
         assertThrows(WebURLParseException.PortOutOfRange.class,
                 () -> WebURL.parseURL("http://example.com:65536/"));
-    }
-
-    /// Tests setter no-op cases from the URL Standard.
-    @Test
-    public void ignoresSettersWhenUrlCannotAcceptComponent() {
-        WebURL file = WebURL.parseURL("file:///tmp/demo");
-        WebURL changedFile = file.withUsername("user").withPassword("pass").withPort("123");
-        assertEquals("file:///tmp/demo", changedFile.href());
-
-        WebURL opaque = WebURL.parseURL("data:text/plain,hello");
-        WebURL changedOpaque = opaque.withHost("example.com").withHostname("example.com").withPathname("/ignored");
-        assertEquals("data:text/plain,hello", changedOpaque.href());
-    }
-
-    /// Tests protocol setter constraints.
-    @Test
-    public void constrainsProtocolSetter() {
-        WebURL special = WebURL.parseURL("http://example.com:21/");
-        assertEquals("ftp://example.com/", special.withProtocol("ftp").href());
-        assertEquals("ftp://example.com/", special.withScheme("ftp").href());
-        assertEquals("ftp://example.com/", special.withProtocol("ftp:").href());
-
-        WebURL cannotBecomeNonSpecial = WebURL.parseURL("http://example.com/");
-        assertEquals("http://example.com/", cannotBecomeNonSpecial.withProtocol("foo").href());
-        assertEquals("http://example.com/", cannotBecomeNonSpecial.withScheme("foo").href());
-
-        WebURL nonSpecial = WebURL.parseURL("foo://example.com/path");
-        assertEquals("foo://example.com/path", nonSpecial.withProtocol("https").href());
-        assertEquals("foo://example.com/path", nonSpecial.withScheme("https").href());
     }
 
     /// Tests opaque base URL fragment-only parsing and blob origin serialization.
