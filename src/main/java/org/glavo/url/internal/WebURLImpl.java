@@ -63,27 +63,28 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns whether this URL has an opaque path.
     boolean hasOpaquePath() {
-        return record.hasOpaquePath();
+        return record.opaquePath != null;
     }
 
     /// Returns whether this URL has a host.
     boolean hasHost() {
-        return record.hasHost();
+        return record.host != null;
     }
 
     /// Returns whether this URL has a host that serializes to an empty string.
     boolean hasEmptyHost() {
-        return record.hasEmptyHost();
+        return record.host != null && record.host.isEmpty();
     }
 
     /// Returns the serialized URL without its fragment.
     String hrefWithoutFragment() {
-        return record.hrefWithoutFragment();
+        String href = hrefValue();
+        return record.fragmentStart < 0 ? href : href.substring(0, record.fragmentStart - 1);
     }
 
     /// Returns whether the scheme equals the supplied lower-case ASCII value.
     boolean schemeEquals(String value) {
-        return record.schemeEquals(value);
+        return record.scheme.equals(value);
     }
 
     /// Returns the port value, or `-1` when absent.
@@ -98,33 +99,33 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns a mutable copy of the non-opaque path segments.
     List<String> pathSegments() {
-        return record.pathSegments();
+        return new ArrayList<>(record.path);
     }
 
     /// Returns the first path segment, or `null` when absent.
     @Nullable String firstPathSegment() {
-        return record.firstPathSegment();
+        return record.opaquePath != null || record.path.isEmpty() ? null : record.path.get(0);
     }
 
     /// Returns the opaque path value, or `null` for a non-opaque path.
     @Nullable String opaquePathValue() {
-        return record.opaquePathValue();
+        return record.opaquePath;
     }
 
     /// Returns the query value, or `null` when absent.
     @Nullable String queryValue() {
-        return record.queryValue();
+        return record.query;
     }
 
     /// Returns the fragment value, or `null` when absent.
     @Nullable String fragmentValue() {
-        return record.fragmentValue();
+        return record.fragment;
     }
 
     /// Returns the serialized URL.
     @Override
     public String href() {
-        return record.href();
+        return hrefValue();
     }
 
     /// Returns the serialized origin.
@@ -155,7 +156,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the scheme.
     @Override
     public String scheme() {
-        return record.scheme();
+        return record.scheme;
     }
 
     /// Returns a URL with the scheme updated when the URL Standard permits the change.
@@ -167,7 +168,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the protocol, including the trailing colon.
     @Override
     public String protocol() {
-        return record.protocol();
+        return hrefValue().substring(0, record.schemeEnd + 1);
     }
 
     /// Returns a URL with the protocol updated when the URL Standard permits the change.
@@ -179,7 +180,8 @@ public final class WebURLImpl implements WebURL {
     /// Returns the username.
     @Override
     public String username() {
-        return record.username();
+        String href = hrefValue();
+        return record.usernameStart < 0 ? "" : href.substring(record.usernameStart, record.usernameEnd);
     }
 
     /// Returns a URL with the username updated when the URL can have credentials.
@@ -196,7 +198,8 @@ public final class WebURLImpl implements WebURL {
     /// Returns the password.
     @Override
     public String password() {
-        return record.password();
+        String href = hrefValue();
+        return record.passwordStart < 0 ? "" : href.substring(record.passwordStart, record.passwordEnd);
     }
 
     /// Returns a URL with the password updated when the URL can have credentials.
@@ -213,7 +216,13 @@ public final class WebURLImpl implements WebURL {
     /// Returns the host, including the port when present.
     @Override
     public String host() {
-        return record.host();
+        String href = hrefValue();
+        if (record.hostStart < 0) {
+            return "";
+        }
+        return record.portStart < 0
+                ? href.substring(record.hostStart, record.hostEnd)
+                : href.substring(record.hostStart, record.portEnd);
     }
 
     /// Returns a URL with the host updated when the URL has a non-opaque path.
@@ -228,7 +237,8 @@ public final class WebURLImpl implements WebURL {
     /// Returns the hostname.
     @Override
     public String hostname() {
-        return record.hostname();
+        String href = hrefValue();
+        return record.hostStart < 0 ? "" : href.substring(record.hostStart, record.hostEnd);
     }
 
     /// Returns a URL with the hostname updated when the URL has a non-opaque path.
@@ -243,7 +253,8 @@ public final class WebURLImpl implements WebURL {
     /// Returns the port as a string.
     @Override
     public String port() {
-        return record.portString();
+        String href = hrefValue();
+        return record.portStart < 0 ? "" : href.substring(record.portStart, record.portEnd);
     }
 
     /// Returns a URL with the port updated when the URL can have a port.
@@ -263,7 +274,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized pathname.
     @Override
     public String pathname() {
-        return record.pathname();
+        return hrefValue().substring(record.pathStart, record.pathEnd);
     }
 
     /// Returns a URL with the pathname updated when the URL has a non-opaque path.
@@ -281,7 +292,10 @@ public final class WebURLImpl implements WebURL {
     /// Returns the search string, including the leading question mark when non-empty.
     @Override
     public String search() {
-        return record.search();
+        String href = hrefValue();
+        return record.queryStart < 0 || record.queryStart == record.queryEnd
+                ? ""
+                : href.substring(record.queryStart - 1, record.queryEnd);
     }
 
     /// Returns a URL with the search string updated.
@@ -303,9 +317,9 @@ public final class WebURLImpl implements WebURL {
     public WebURLSearchParams searchParams() {
         WebURLSearchParams params = searchParams;
         if (params == null) {
-            String href = record.href();
-            int queryStart = record.queryStart();
-            int queryEnd = record.queryEnd();
+            String href = hrefValue();
+            int queryStart = record.queryStart;
+            int queryEnd = record.queryEnd;
             params = WebURLSearchParamsImpl.fromQueryInternal(
                     queryStart < 0 ? "" : href.substring(queryStart, queryEnd));
             searchParams = params;
@@ -325,7 +339,10 @@ public final class WebURLImpl implements WebURL {
     /// Returns the hash string, including the leading number sign when non-empty.
     @Override
     public String hash() {
-        return record.hash();
+        String href = hrefValue();
+        return record.fragmentStart < 0 || record.fragmentStart == href.length()
+                ? ""
+                : href.substring(record.fragmentStart - 1);
     }
 
     /// Returns a URL with the hash string updated.
@@ -364,45 +381,54 @@ public final class WebURLImpl implements WebURL {
         return href();
     }
 
+    /// Returns the serialized URL from the frozen record.
+    private String hrefValue() {
+        String href = record.href;
+        if (href == null) {
+            throw new AssertionError("URL record is not serialized");
+        }
+        return href;
+    }
+
     /// Returns the serialized URL converted to Java's RFC 2396 URI syntax.
     @Override
     public String toRFC2396String() {
-        String href = record.href();
+        String href = hrefValue();
         StringBuilder output = new StringBuilder();
-        output.append(href, 0, record.schemeEnd() + 1);
+        output.append(href, 0, record.schemeEnd + 1);
 
         if (hasOpaquePath()) {
-            appendRfc2396Encoded(output, href, record.pathStart(), record.pathEnd(), WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href, record.pathStart, record.pathEnd, WebURLImpl::isRfc2396Uric);
         } else {
             if (hasHost()) {
                 output.append("//");
-                if (record.usernameStart() >= 0) {
-                    appendRfc2396Encoded(output, href, record.usernameStart(), record.usernameEnd(),
+                if (record.usernameStart >= 0) {
+                    appendRfc2396Encoded(output, href, record.usernameStart, record.usernameEnd,
                             WebURLImpl::isRfc2396UserInfo);
-                    if (record.passwordStart() >= 0) {
+                    if (record.passwordStart >= 0) {
                         output.append(':');
-                        appendRfc2396Encoded(output, href, record.passwordStart(), record.passwordEnd(),
+                        appendRfc2396Encoded(output, href, record.passwordStart, record.passwordEnd,
                                 WebURLImpl::isRfc2396UserInfo);
                     }
                     output.append('@');
                 }
-                appendRfc2396Encoded(output, href, record.hostStart(), record.hostEnd(), WebURLImpl::isRfc2396Host);
-                if (record.portStart() >= 0) {
-                    output.append(':').append(href, record.portStart(), record.portEnd());
+                appendRfc2396Encoded(output, href, record.hostStart, record.hostEnd, WebURLImpl::isRfc2396Host);
+                if (record.portStart >= 0) {
+                    output.append(':').append(href, record.portStart, record.portEnd);
                 }
-            } else if (record.pathPrefix()) {
+            } else if (record.pathPrefix) {
                 output.append("/.");
             }
-            appendRfc2396Encoded(output, href, record.pathStart(), record.pathEnd(), WebURLImpl::isRfc2396Path);
+            appendRfc2396Encoded(output, href, record.pathStart, record.pathEnd, WebURLImpl::isRfc2396Path);
         }
 
-        if (record.queryStart() >= 0) {
+        if (record.queryStart >= 0) {
             output.append('?');
-            appendRfc2396Encoded(output, href, record.queryStart(), record.queryEnd(), WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href, record.queryStart, record.queryEnd, WebURLImpl::isRfc2396Uric);
         }
-        if (record.fragmentStart() >= 0) {
+        if (record.fragmentStart >= 0) {
             output.append('#');
-            appendRfc2396Encoded(output, href, record.fragmentStart(), href.length(), WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href, record.fragmentStart, href.length(), WebURLImpl::isRfc2396Uric);
         }
         return output.toString();
     }

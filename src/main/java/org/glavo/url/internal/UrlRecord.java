@@ -29,56 +29,56 @@ import java.util.List;
 @NotNullByDefault
 final class UrlRecord {
     /// URL scheme without the trailing colon.
-    String scheme = "";
+    public String scheme = "";
     /// Percent-encoded username.
-    String username = "";
+    public String username = "";
     /// Percent-encoded password.
-    String password = "";
+    public String password = "";
     /// URL host, or `null` when absent.
-    @Nullable UrlHost host;
+    public @Nullable UrlHost host;
     /// URL port, or `-1` when absent or defaulted.
-    int port = -1;
+    public int port = -1;
     /// Non-opaque path segments.
-    List<String> path = new ArrayList<>();
+    public List<String> path = new ArrayList<>();
     /// Opaque path, or `null` when the URL has a path segment list.
-    @Nullable String opaquePath;
+    public @Nullable String opaquePath;
     /// Percent-encoded query, or `null` when absent.
-    @Nullable String query;
+    public @Nullable String query;
     /// Percent-encoded fragment, or `null` when absent.
-    @Nullable String fragment;
+    public @Nullable String fragment;
 
     /// Serialized URL, or `null` until adopted or generated.
-    private @Nullable String href;
+    public @Nullable String href;
     /// Index of the colon after the scheme.
-    private int schemeEnd;
+    public int schemeEnd;
     /// Start index of the username, or `-1` when credentials are absent.
-    private int usernameStart = -1;
+    public int usernameStart = -1;
     /// End index of the username, or `-1` when credentials are absent.
-    private int usernameEnd = -1;
+    public int usernameEnd = -1;
     /// Start index of the password, or `-1` when absent.
-    private int passwordStart = -1;
+    public int passwordStart = -1;
     /// End index of the password, or `-1` when absent.
-    private int passwordEnd = -1;
+    public int passwordEnd = -1;
     /// Start index of the host, or `-1` when absent.
-    private int hostStart = -1;
+    public int hostStart = -1;
     /// End index of the host, or `-1` when absent.
-    private int hostEnd = -1;
+    public int hostEnd = -1;
     /// Start index of the port, or `-1` when absent.
-    private int portStart = -1;
+    public int portStart = -1;
     /// End index of the port, or `-1` when absent.
-    private int portEnd = -1;
+    public int portEnd = -1;
     /// Start index of the logical path.
-    private int pathStart;
+    public int pathStart;
     /// End index of the logical path.
-    private int pathEnd;
+    public int pathEnd;
     /// Start index of the query, or `-1` when absent.
-    private int queryStart = -1;
+    public int queryStart = -1;
     /// End index of the query, or `-1` when absent.
-    private int queryEnd = -1;
+    public int queryEnd = -1;
     /// Start index of the fragment, or `-1` when absent.
-    private int fragmentStart = -1;
+    public int fragmentStart = -1;
     /// Whether href contains the extra `/.` prefix before the logical path.
-    private boolean pathPrefix;
+    public boolean pathPrefix;
 
     /// Creates an empty mutable URL record.
     UrlRecord() {
@@ -116,125 +116,6 @@ final class UrlRecord {
     /// Returns a component-only mutable copy of this record.
     UrlRecord copy() {
         return new UrlRecord(this);
-    }
-
-    /// Returns whether this URL has a host.
-    boolean hasHost() {
-        return host != null;
-    }
-
-    /// Returns whether this URL has a host that serializes to an empty string.
-    boolean hasEmptyHost() {
-        return host != null && host.isEmpty();
-    }
-
-    /// Returns whether this URL has an opaque path.
-    boolean hasOpaquePath() {
-        return opaquePath != null;
-    }
-
-    /// Returns whether the scheme equals the supplied lower-case ASCII value.
-    boolean schemeEquals(String value) {
-        return scheme.equals(value);
-    }
-
-    /// Returns a mutable copy of the non-opaque path segments.
-    List<String> pathSegments() {
-        return new ArrayList<>(path);
-    }
-
-    /// Returns the first path segment, or `null` when absent.
-    @Nullable String firstPathSegment() {
-        return opaquePath != null || path.isEmpty() ? null : path.get(0);
-    }
-
-    /// Returns the serialized URL.
-    String href() {
-        ensureHref();
-        return href == null ? "" : href;
-    }
-
-    /// Returns the serialized URL without its fragment.
-    String hrefWithoutFragment() {
-        String value = href();
-        return fragmentStart < 0 ? value : value.substring(0, fragmentStart - 1);
-    }
-
-    /// Returns the scheme component without the trailing colon.
-    String scheme() {
-        return scheme;
-    }
-
-    /// Returns the protocol component with the trailing colon.
-    String protocol() {
-        String value = href();
-        return value.substring(0, schemeEnd + 1);
-    }
-
-    /// Returns the username component.
-    String username() {
-        String value = href();
-        return usernameStart < 0 ? "" : value.substring(usernameStart, usernameEnd);
-    }
-
-    /// Returns the password component.
-    String password() {
-        String value = href();
-        return passwordStart < 0 ? "" : value.substring(passwordStart, passwordEnd);
-    }
-
-    /// Returns the host component, including the port when present.
-    String host() {
-        String value = href();
-        if (hostStart < 0) {
-            return "";
-        }
-        return portStart < 0 ? value.substring(hostStart, hostEnd) : value.substring(hostStart, portEnd);
-    }
-
-    /// Returns the hostname component.
-    String hostname() {
-        String value = href();
-        return hostStart < 0 ? "" : value.substring(hostStart, hostEnd);
-    }
-
-    /// Returns the port as a string.
-    String portString() {
-        String value = href();
-        return portStart < 0 ? "" : value.substring(portStart, portEnd);
-    }
-
-    /// Returns the serialized pathname.
-    String pathname() {
-        String value = href();
-        return value.substring(pathStart, pathEnd);
-    }
-
-    /// Returns the search string, including the leading question mark when non-empty.
-    String search() {
-        String value = href();
-        return queryStart < 0 || queryStart == queryEnd ? "" : value.substring(queryStart - 1, queryEnd);
-    }
-
-    /// Returns the hash string, including the leading number sign when non-empty.
-    String hash() {
-        String value = href();
-        return fragmentStart < 0 || fragmentStart == value.length() ? "" : value.substring(fragmentStart - 1);
-    }
-
-    /// Returns the query value, or `null` when absent.
-    @Nullable String queryValue() {
-        return query;
-    }
-
-    /// Returns the fragment value, or `null` when absent.
-    @Nullable String fragmentValue() {
-        return fragment;
-    }
-
-    /// Returns the opaque path value, or `null` for a non-opaque path.
-    @Nullable String opaquePathValue() {
-        return opaquePath;
     }
 
     /// Attempts to adopt an input string that is already the exact URL serialization.
@@ -456,96 +337,6 @@ final class UrlRecord {
         setHref(output.toString(), schemeEndValue, usernameStartValue, usernameEndValue,
                 passwordStartValue, passwordEndValue, hostStartValue, hostEndValue, portStartValue, portEndValue,
                 pathStartValue, pathEndValue, queryStartValue, queryEndValue, fragmentStartValue, pathPrefixValue);
-    }
-
-    /// Returns the scheme delimiter index.
-    int schemeEnd() {
-        ensureHref();
-        return schemeEnd;
-    }
-
-    /// Returns the username start index, or `-1`.
-    int usernameStart() {
-        ensureHref();
-        return usernameStart;
-    }
-
-    /// Returns the username end index, or `-1`.
-    int usernameEnd() {
-        ensureHref();
-        return usernameEnd;
-    }
-
-    /// Returns the password start index, or `-1`.
-    int passwordStart() {
-        ensureHref();
-        return passwordStart;
-    }
-
-    /// Returns the password end index, or `-1`.
-    int passwordEnd() {
-        ensureHref();
-        return passwordEnd;
-    }
-
-    /// Returns the host start index, or `-1`.
-    int hostStart() {
-        ensureHref();
-        return hostStart;
-    }
-
-    /// Returns the host end index, or `-1`.
-    int hostEnd() {
-        ensureHref();
-        return hostEnd;
-    }
-
-    /// Returns the port start index, or `-1`.
-    int portStart() {
-        ensureHref();
-        return portStart;
-    }
-
-    /// Returns the port end index, or `-1`.
-    int portEnd() {
-        ensureHref();
-        return portEnd;
-    }
-
-    /// Returns the path start index.
-    int pathStart() {
-        ensureHref();
-        return pathStart;
-    }
-
-    /// Returns the path end index.
-    int pathEnd() {
-        ensureHref();
-        return pathEnd;
-    }
-
-    /// Returns the query start index, or `-1`.
-    int queryStart() {
-        ensureHref();
-        return queryStart;
-    }
-
-    /// Returns the query end index, or `-1`.
-    int queryEnd() {
-        ensureHref();
-        return queryEnd;
-    }
-
-    /// Returns the fragment start index, or `-1`.
-    int fragmentStart() {
-        ensureHref();
-        return fragmentStart;
-    }
-
-    /// Returns whether the serialized URL includes a path prefix before the logical path.
-    boolean pathPrefix() {
-        ensureHref();
-        return pathPrefix;
     }
 
     /// Stores a serialized URL and its component indexes.
