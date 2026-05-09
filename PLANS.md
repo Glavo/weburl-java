@@ -54,7 +54,7 @@ Build the port in layers:
 4. Build immutable `WebURL` and `WebURLSearchParams` on top of the internal record.
    - `with...` methods should invoke the same state override paths as upstream on copied URL records.
    - `WebURLSearchParams` updates must return new parameter lists.
-   - Whole-URL replacement should use `WebURL.of(...)` or `WebURL.parse(...)` instead of a `withHref` method.
+   - Whole-URL replacement should use `WebURL.parse(...)` instead of a `withHref` method.
 
 5. Add IDNA provider support.
    - Define an internal `IdnaProcessor`.

@@ -42,7 +42,7 @@ import java.net.URL;
 /// settings. The static methods on this interface use `WebURLFactory.defaultFactory()`.
 @NotNullByDefault
 public sealed interface WebURL permits WebURLImpl {
-    /// Creates a URL by parsing an absolute input string.
+    /// Parses an absolute input string and returns the parsed URL.
     ///
     /// The input is parsed by the WHATWG basic URL parser with no base URL. Relative inputs therefore fail.
     ///
@@ -50,11 +50,11 @@ public sealed interface WebURL permits WebURLImpl {
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
-    static WebURL of(String input) {
+    static WebURL parse(String input) {
         return WebURLFactory.defaultFactory().parse(input);
     }
 
-    /// Creates a URL by parsing an input string against a base URL string.
+    /// Parses an input string against a base URL string and returns the parsed URL.
     ///
     /// The base is parsed first. The input may be either absolute or relative to that base.
     ///
@@ -63,11 +63,11 @@ public sealed interface WebURL permits WebURLImpl {
     /// @return the parsed URL
     /// @throws WebURLParseException when either input fails with a known URL validation error
     /// @throws IllegalArgumentException when either input fails without a specific public validation error
-    static WebURL of(String input, String base) {
+    static WebURL parse(String input, String base) {
         return WebURLFactory.defaultFactory().parse(input, base);
     }
 
-    /// Creates a URL by parsing an input string against a base URL.
+    /// Parses an input string against a base URL and returns the parsed URL.
     ///
     /// The input may be either absolute or relative to the supplied base URL.
     ///
@@ -76,42 +76,42 @@ public sealed interface WebURL permits WebURLImpl {
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
-    static WebURL of(String input, WebURL base) {
+    static WebURL parse(String input, WebURL base) {
         return WebURLFactory.defaultFactory().parse(input, base);
     }
 
     /// Parses an absolute input string and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `of(String)`, except failures are represented by `null`
+    /// This method has the same parser behavior as `parse(String)`, except failures are represented by `null`
     /// instead of an exception.
     ///
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if parsing fails
-    static @Nullable WebURL parse(String input) {
+    static @Nullable WebURL tryParse(String input) {
         return WebURLFactory.defaultFactory().tryParse(input);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `of(String, String)`, except failures are represented by
+    /// This method has the same parser behavior as `parse(String, String)`, except failures are represented by
     /// `null` instead of an exception.
     ///
     /// @param input the URL input string
     /// @param base the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
-    static @Nullable WebURL parse(String input, String base) {
+    static @Nullable WebURL tryParse(String input, String base) {
         return WebURLFactory.defaultFactory().tryParse(input, base);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `of(String, WebURL)`, except failures are represented by
+    /// This method has the same parser behavior as `parse(String, WebURL)`, except failures are represented by
     /// `null` instead of an exception.
     ///
     /// @param input the URL input string
     /// @param base the base URL
     /// @return the parsed URL, or `null` if the input cannot be parsed against the base
-    static @Nullable WebURL parse(String input, WebURL base) {
+    static @Nullable WebURL tryParse(String input, WebURL base) {
         return WebURLFactory.defaultFactory().tryParse(input, base);
     }
 

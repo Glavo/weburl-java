@@ -102,7 +102,7 @@ public final class WebURLWptTest {
         @Nullable String base = nullableString(testCase, "base");
 
         if (booleanValue(testCase, "failure")) {
-            assertNull(parse(input, base));
+            assertNull(tryParse(input, base));
             return;
         }
 
@@ -112,17 +112,17 @@ public final class WebURLWptTest {
             return;
         }
 
-        WebURL url = base == null ? WebURL.of(input) : WebURL.of(input, base);
+        WebURL url = base == null ? WebURL.parse(input) : WebURL.parse(input, base);
         assertExpectedUrlFields(url, testCase);
     }
 
     /// Asserts one WPT relative-only test case.
     private static void assertRelativeOnlyCase(String input, String relativeTo) {
         if (relativeTo.equals("any-base")) {
-            assertNotNull(WebURL.parse(input, OPAQUE_PATH_BASE));
-            assertNotNull(WebURL.parse(input, NON_OPAQUE_PATH_BASE));
+            assertNotNull(WebURL.tryParse(input, OPAQUE_PATH_BASE));
+            assertNotNull(WebURL.tryParse(input, NON_OPAQUE_PATH_BASE));
         } else if (relativeTo.equals("non-opaque-path-base")) {
-            assertNotNull(WebURL.parse(input, NON_OPAQUE_PATH_BASE));
+            assertNotNull(WebURL.tryParse(input, NON_OPAQUE_PATH_BASE));
         } else {
             throw new AssertionError("Unknown relativeTo value: " + relativeTo);
         }
@@ -130,7 +130,7 @@ public final class WebURLWptTest {
 
     /// Asserts one WPT URL setter test case.
     private static void assertSetterTest(String attribute, JsonObject testCase) {
-        WebURL original = WebURL.of(testCase.get("href").getAsString());
+        WebURL original = WebURL.parse(testCase.get("href").getAsString());
         WebURL updated = applySetter(original, attribute, testCase.get("new_value").getAsString());
         assertExpectedUrlFields(updated, testCase.get("expected").getAsJsonObject());
     }
@@ -208,9 +208,9 @@ public final class WebURLWptTest {
         }
     }
 
-    /// Parses a URL with an optional base.
-    private static @Nullable WebURL parse(String input, @Nullable String base) {
-        return base == null ? WebURL.parse(input) : WebURL.parse(input, base);
+    /// Tries to parse a URL with an optional base.
+    private static @Nullable WebURL tryParse(String input, @Nullable String base) {
+        return base == null ? WebURL.tryParse(input) : WebURL.tryParse(input, base);
     }
 
     /// Reads a WPT JSON file as an array.

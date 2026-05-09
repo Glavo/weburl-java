@@ -37,7 +37,7 @@ public final class WebURLFactoryTest {
         assertSame(factory, WebURLFactory.defaultFactory());
         assertEquals(IDNAProfile.defaultProfile(), factory.idnaProfile());
         assertSame(factory, factory.withIDNAProfile(IDNAProfile.defaultProfile()));
-        assertEquals(WebURL.of("https://example.com/a").href(), factory.parse("https://example.com/a").href());
+        assertEquals(WebURL.parse("https://example.com/a").href(), factory.parse("https://example.com/a").href());
         assertFalse(factory.canParse("../relative"));
     }
 
@@ -69,7 +69,7 @@ public final class WebURLFactoryTest {
     @Test
     public void parsesAgainstExplicitWebUrlBase() {
         WebURLFactory factory = WebURLFactory.defaultFactory();
-        WebURL base = WebURL.of("https://example.org/x/y/");
+        WebURL base = WebURL.parse("https://example.org/x/y/");
 
         assertEquals("https://example.org/x/z", factory.parse("../z", base).href());
         assertEquals("https://example.net/z", factory.parse("/z", "https://example.net/base").href());
@@ -126,6 +126,6 @@ public final class WebURLFactoryTest {
         }
         assertFalse(copied.canParse("../c"));
         assertEquals("https://example.net/d",
-                copied.parse("../d", WebURL.of("https://example.net/base/")).href());
+                copied.parse("../d", WebURL.parse("https://example.net/base/")).href());
     }
 }

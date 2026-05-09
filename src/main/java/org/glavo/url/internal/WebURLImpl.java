@@ -52,40 +52,40 @@ public final class WebURLImpl implements WebURL {
     /// The immutable query parameter object.
     private final WebURLSearchParams searchParams;
 
-    /// Creates a URL from an absolute input string.
+    /// Parses an absolute input string.
     ///
     /// Throws `WebURLParseException` when the input cannot be parsed.
-    public static WebURL of(String input) {
+    public static WebURL parse(String input) {
         return new WebURLImpl(input, null);
     }
 
-    /// Creates a URL from an input string and a base URL string.
+    /// Parses an input string against a base URL string.
     ///
     /// Throws `WebURLParseException` when the input or base URL cannot be parsed.
-    public static WebURL of(String input, String base) {
+    public static WebURL parse(String input, String base) {
         return new WebURLImpl(input, parseBase(base));
     }
 
-    /// Creates a URL from an input string and a base URL.
+    /// Parses an input string against a base URL.
     ///
     /// Throws `WebURLParseException` when the input cannot be parsed against the base URL.
-    public static WebURL of(String input, WebURL base) {
+    public static WebURL parse(String input, WebURL base) {
         return new WebURLImpl(input, implementation(base));
     }
 
     /// Parses a URL and returns `null` on failure.
-    public static @Nullable WebURL parse(String input) {
+    public static @Nullable WebURL tryParse(String input) {
         return UrlParser.basicParse(input, null, null, null);
     }
 
     /// Parses a URL against a base URL string and returns `null` on failure.
-    public static @Nullable WebURL parse(String input, String base) {
+    public static @Nullable WebURL tryParse(String input, String base) {
         WebURLImpl parsedBase = UrlParser.basicParse(base, null, null, null);
         return parsedBase == null ? null : UrlParser.basicParse(input, parsedBase, null, null);
     }
 
     /// Parses a URL against a base URL and returns `null` on failure.
-    public static @Nullable WebURL parse(String input, WebURL base) {
+    public static @Nullable WebURL tryParse(String input, WebURL base) {
         return UrlParser.basicParse(input, implementation(base), null, null);
     }
 
