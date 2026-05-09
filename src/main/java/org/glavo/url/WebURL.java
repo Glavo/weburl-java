@@ -401,13 +401,6 @@ public sealed interface WebURL permits WebURLImpl {
     /// @throws MalformedURLException when Java has no URL handler for the scheme or rejects the URL
     URL toURL() throws MalformedURLException;
 
-    /// Returns the JSON representation of this URL.
-    ///
-    /// This is identical to `href()`, matching the WHATWG `URL.toJSON()` operation.
-    ///
-    /// @return the serialized URL
-    String toJSON();
-
     /// Returns the serialized URL.
     ///
     /// This is identical to `href()`.

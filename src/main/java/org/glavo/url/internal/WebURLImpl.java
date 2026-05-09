@@ -281,12 +281,6 @@ public final class WebURLImpl implements WebURL {
         return toURI().toURL();
     }
 
-    /// Returns the JSON representation of this URL.
-    @Override
-    public String toJSON() {
-        return href();
-    }
-
     /// Returns the serialized URL.
     @Override
     public String toString() {
