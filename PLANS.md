@@ -16,7 +16,7 @@ Reference baseline:
 
 Implement the sealed `org.glavo.url.WebURL` interface with the observable behavior of the WHATWG `URL` interface:
 
-- Static `of`, `parse`, and `canParse` methods.
+- Static `of`, `parseURL`, and `canParseURL` methods.
 - A non-exported implementation class under `org.glavo.url.internal`.
 - Accessors for `href`, `origin`, and components, plus immutable `with...` methods for component-level updates.
 - Read-only `origin` and immutable `searchParams`.
@@ -54,7 +54,7 @@ Build the port in layers:
 4. Build immutable `WebURL` and `WebURLSearchParams` on top of the internal record.
    - `with...` methods should invoke the same state override paths as upstream on copied URL records.
    - `WebURLSearchParams` updates must return new parameter lists.
-   - Whole-URL replacement should use `WebURL.parse(...)` instead of a `withHref` method.
+   - Whole-URL replacement should use `WebURL.parseURL(...)` instead of a `withHref` method.
 
 5. Add IDNA provider support.
    - Define an internal `IdnaProcessor`.
@@ -104,7 +104,7 @@ Import or vendor the needed resources from the same WPT revision used by upstrea
 Create JUnit tests covering:
 
 - MDN factory and relative URL examples.
-- Parse failures and `canParse`.
+- Parse failures and `canParseURL`.
 - URL serialization and origin serialization.
 - Special schemes, non-special schemes, `file:`, opaque paths, IPv4, IPv6, credentials, default ports, query, and fragment behavior.
 - All immutable URL update methods, including no-op update cases.

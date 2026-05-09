@@ -28,8 +28,9 @@ import java.util.Objects;
 /// settings. The default factory returned by `defaultFactory()` uses the default IDNA profile; it is the factory
 /// used by the static parsing methods on `WebURL`.
 ///
-/// A factory does not store a base URL. `parse(String)`, `tryParse(String)`, and `canParse(String)` parse only
-/// absolute URL inputs. Overloads that accept a base URL use the supplied base only for that call.
+/// A factory does not store a base URL. `parseURL(String)`, `tryParseURL(String)`, and
+/// `canParseURL(String)` parse only absolute URL inputs. Overloads that accept a base URL use the supplied
+/// base only for that call.
 ///
 /// The factory object is immutable and thread-safe. Configuration methods whose names start with `with`
 /// return either this factory or a new factory with the requested setting.
@@ -86,15 +87,15 @@ public final class WebURLFactory {
 
     /// Parses an input string and returns the parsed URL.
     ///
-    /// The input must be an absolute URL. Use `parse(String, String)` or `parse(String, WebURL)` to parse a
-    /// relative input against an explicit base URL.
+    /// The input must be an absolute URL. Use `parseURL(String, String)` or `parseURL(String, WebURL)` to
+    /// parse a relative input against an explicit base URL.
     ///
     /// @param input the URL input string
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
-    public WebURL parse(String input) {
+    public WebURL parseURL(String input) {
         return parseRequired(input, null, "Invalid URL: " + input);
     }
 
@@ -109,7 +110,7 @@ public final class WebURLFactory {
     /// @throws WebURLParseException when either input fails with a known URL validation error
     /// @throws IllegalArgumentException when either input fails without a specific public validation error
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
-    public WebURL parse(String input, String base) {
+    public WebURL parseURL(String input, String base) {
         return parseRequired(input, parseBaseRequired(base), "Invalid URL: " + input);
     }
 
@@ -123,19 +124,19 @@ public final class WebURLFactory {
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
-    public WebURL parse(String input, WebURL base) {
+    public WebURL parseURL(String input, WebURL base) {
         return parseRequired(input, implementation(base), "Invalid URL: " + input);
     }
 
     /// Parses an input string and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parse(String)`, except URL parse failures are represented
-    /// by `null` instead of an exception.
+    /// This method has the same parser behavior as `parseURL(String)`, except URL parse failures are
+    /// represented by `null` instead of an exception.
     ///
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if parsing fails
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
-    public @Nullable WebURL tryParse(String input) {
+    public @Nullable WebURL tryParseURL(String input) {
         return parseNullable(input, null);
     }
 
@@ -147,7 +148,7 @@ public final class WebURLFactory {
     /// @param base the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
-    public @Nullable WebURL tryParse(String input, String base) {
+    public @Nullable WebURL tryParseURL(String input, String base) {
         WebURLImpl parsedBase = parseBaseNullable(base);
         return parsedBase == null ? null : parseNullable(input, parsedBase);
     }
@@ -160,20 +161,20 @@ public final class WebURLFactory {
     /// @param base the base URL
     /// @return the parsed URL, or `null` if parsing fails
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
-    public @Nullable WebURL tryParse(String input, WebURL base) {
+    public @Nullable WebURL tryParseURL(String input, WebURL base) {
         return parseNullable(input, implementation(base));
     }
 
     /// Returns whether an input string can be parsed.
     ///
-    /// The input must be an absolute URL. Use `canParse(String, String)` or `canParse(String, WebURL)` to test
-    /// a relative input against an explicit base URL.
+    /// The input must be an absolute URL. Use `canParseURL(String, String)` or `canParseURL(String, WebURL)`
+    /// to test a relative input against an explicit base URL.
     ///
     /// @param input the URL input string
     /// @return `true` if parsing succeeds, otherwise `false`
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
-    public boolean canParse(String input) {
-        return tryParse(input) != null;
+    public boolean canParseURL(String input) {
+        return tryParseURL(input) != null;
     }
 
     /// Returns whether an input string can be parsed against a base URL string.
@@ -184,8 +185,8 @@ public final class WebURLFactory {
     /// @param base the base URL string
     /// @return `true` if the base parses and the input parses against it, otherwise `false`
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
-    public boolean canParse(String input, String base) {
-        return tryParse(input, base) != null;
+    public boolean canParseURL(String input, String base) {
+        return tryParseURL(input, base) != null;
     }
 
     /// Returns whether an input string can be parsed against a base URL.
@@ -196,8 +197,8 @@ public final class WebURLFactory {
     /// @param base the base URL
     /// @return `true` if parsing succeeds, otherwise `false`
     /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
-    public boolean canParse(String input, WebURL base) {
-        return tryParse(input, base) != null;
+    public boolean canParseURL(String input, WebURL base) {
+        return tryParseURL(input, base) != null;
     }
 
     /// Parses an input string and throws when parsing fails.

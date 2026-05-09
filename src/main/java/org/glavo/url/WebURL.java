@@ -50,8 +50,8 @@ public sealed interface WebURL permits WebURLImpl {
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
-    static WebURL parse(String input) {
-        return WebURLFactory.defaultFactory().parse(input);
+    static WebURL parseURL(String input) {
+        return WebURLFactory.defaultFactory().parseURL(input);
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
@@ -63,8 +63,8 @@ public sealed interface WebURL permits WebURLImpl {
     /// @return the parsed URL
     /// @throws WebURLParseException when either input fails with a known URL validation error
     /// @throws IllegalArgumentException when either input fails without a specific public validation error
-    static WebURL parse(String input, String base) {
-        return WebURLFactory.defaultFactory().parse(input, base);
+    static WebURL parseURL(String input, String base) {
+        return WebURLFactory.defaultFactory().parseURL(input, base);
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
@@ -76,51 +76,51 @@ public sealed interface WebURL permits WebURLImpl {
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
-    static WebURL parse(String input, WebURL base) {
-        return WebURLFactory.defaultFactory().parse(input, base);
+    static WebURL parseURL(String input, WebURL base) {
+        return WebURLFactory.defaultFactory().parseURL(input, base);
     }
 
     /// Parses an absolute input string and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parse(String)`, except failures are represented by `null`
+    /// This method has the same parser behavior as `parseURL(String)`, except failures are represented by `null`
     /// instead of an exception.
     ///
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if parsing fails
-    static @Nullable WebURL tryParse(String input) {
-        return WebURLFactory.defaultFactory().tryParse(input);
+    static @Nullable WebURL tryParseURL(String input) {
+        return WebURLFactory.defaultFactory().tryParseURL(input);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parse(String, String)`, except failures are represented by
+    /// This method has the same parser behavior as `parseURL(String, String)`, except failures are represented by
     /// `null` instead of an exception.
     ///
     /// @param input the URL input string
     /// @param base the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
-    static @Nullable WebURL tryParse(String input, String base) {
-        return WebURLFactory.defaultFactory().tryParse(input, base);
+    static @Nullable WebURL tryParseURL(String input, String base) {
+        return WebURLFactory.defaultFactory().tryParseURL(input, base);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parse(String, WebURL)`, except failures are represented by
+    /// This method has the same parser behavior as `parseURL(String, WebURL)`, except failures are represented by
     /// `null` instead of an exception.
     ///
     /// @param input the URL input string
     /// @param base the base URL
     /// @return the parsed URL, or `null` if the input cannot be parsed against the base
-    static @Nullable WebURL tryParse(String input, WebURL base) {
-        return WebURLFactory.defaultFactory().tryParse(input, base);
+    static @Nullable WebURL tryParseURL(String input, WebURL base) {
+        return WebURLFactory.defaultFactory().tryParseURL(input, base);
     }
 
     /// Returns whether an input string can be parsed as an absolute URL.
     ///
     /// @param input the URL input string
     /// @return `true` if parsing succeeds, otherwise `false`
-    static boolean canParse(String input) {
-        return WebURLFactory.defaultFactory().canParse(input);
+    static boolean canParseURL(String input) {
+        return WebURLFactory.defaultFactory().canParseURL(input);
     }
 
     /// Returns whether an input string can be parsed against a base URL string.
@@ -128,8 +128,8 @@ public sealed interface WebURL permits WebURLImpl {
     /// @param input the URL input string
     /// @param base the base URL string
     /// @return `true` if the base parses and the input parses against it, otherwise `false`
-    static boolean canParse(String input, String base) {
-        return WebURLFactory.defaultFactory().canParse(input, base);
+    static boolean canParseURL(String input, String base) {
+        return WebURLFactory.defaultFactory().canParseURL(input, base);
     }
 
     /// Returns whether an input string can be parsed against a base URL.
@@ -137,8 +137,8 @@ public sealed interface WebURL permits WebURLImpl {
     /// @param input the URL input string
     /// @param base the base URL
     /// @return `true` if the input parses against the base, otherwise `false`
-    static boolean canParse(String input, WebURL base) {
-        return WebURLFactory.defaultFactory().canParse(input, base);
+    static boolean canParseURL(String input, WebURL base) {
+        return WebURLFactory.defaultFactory().canParseURL(input, base);
     }
 
     /// Returns the complete serialized URL.

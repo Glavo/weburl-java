@@ -107,7 +107,7 @@ public final class WebURLSearchParamsTest {
     /// Tests that copying URL search parameters creates a detached list.
     @Test
     public void copiesUrlParamsAsDetachedParams() {
-        WebURL url = WebURL.parse("https://example.test/?a=1");
+        WebURL url = WebURL.parseURL("https://example.test/?a=1");
         WebURLSearchParams copy = WebURLSearchParams.of(url.searchParams());
 
         WebURLSearchParams updated = copy.set("a", "2");

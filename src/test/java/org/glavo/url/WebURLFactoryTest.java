@@ -37,8 +37,8 @@ public final class WebURLFactoryTest {
         assertSame(factory, WebURLFactory.defaultFactory());
         assertEquals(IDNAProfile.defaultProfile(), factory.idnaProfile());
         assertSame(factory, factory.withIDNAProfile(IDNAProfile.defaultProfile()));
-        assertEquals(WebURL.parse("https://example.com/a").href(), factory.parse("https://example.com/a").href());
-        assertFalse(factory.canParse("../relative"));
+        assertEquals(WebURL.parseURL("https://example.com/a").href(), factory.parseURL("https://example.com/a").href());
+        assertFalse(factory.canParseURL("../relative"));
     }
 
     /// Tests default IDNA profile inference.
@@ -59,32 +59,32 @@ public final class WebURLFactoryTest {
     public void parsesAgainstExplicitBase() {
         WebURLFactory factory = WebURLFactory.defaultFactory();
 
-        assertEquals("https://example.com/a/c", factory.parse("../c", "https://example.com/a/b/").href());
-        assertEquals("https://example.com/a/b/d", factory.tryParse("d", "https://example.com/a/b/").href());
-        assertTrue(factory.canParse("?q=1", "https://example.com/a/b/"));
-        assertFalse(factory.canParse("?q=1"));
+        assertEquals("https://example.com/a/c", factory.parseURL("../c", "https://example.com/a/b/").href());
+        assertEquals("https://example.com/a/b/d", factory.tryParseURL("d", "https://example.com/a/b/").href());
+        assertTrue(factory.canParseURL("?q=1", "https://example.com/a/b/"));
+        assertFalse(factory.canParseURL("?q=1"));
     }
 
     /// Tests explicit base arguments with an already parsed base URL.
     @Test
     public void parsesAgainstExplicitWebUrlBase() {
         WebURLFactory factory = WebURLFactory.defaultFactory();
-        WebURL base = WebURL.parse("https://example.org/x/y/");
+        WebURL base = WebURL.parseURL("https://example.org/x/y/");
 
-        assertEquals("https://example.org/x/z", factory.parse("../z", base).href());
-        assertEquals("https://example.net/z", factory.parse("/z", "https://example.net/base").href());
+        assertEquals("https://example.org/x/z", factory.parseURL("../z", base).href());
+        assertEquals("https://example.net/z", factory.parseURL("/z", "https://example.net/base").href());
     }
 
-    /// Tests parse and canParse failure handling through a factory.
+    /// Tests parseURL and canParseURL failure handling through a factory.
     @Test
     public void reportsFailuresThroughFactory() {
         WebURLFactory factory = WebURLFactory.defaultFactory();
 
-        assertNull(factory.tryParse("https://example.com:999999/"));
-        assertFalse(factory.canParse("https://example.com:999999/"));
-        assertNull(factory.tryParse("/relative", "not a url"));
+        assertNull(factory.tryParseURL("https://example.com:999999/"));
+        assertFalse(factory.canParseURL("https://example.com:999999/"));
+        assertNull(factory.tryParseURL("/relative", "not a url"));
         assertThrows(WebURLParseException.PortOutOfRange.class,
-                () -> factory.parse("https://example.com:999999/"));
+                () -> factory.parseURL("https://example.com:999999/"));
     }
 
     /// Tests IDNA 2003 profile selection with the dependency-free JDK implementation.
@@ -93,7 +93,7 @@ public final class WebURLFactoryTest {
         WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.IDNA_2003);
 
         assertEquals(IDNAProfile.IDNA_2003, factory.idnaProfile());
-        assertEquals("https://xn--bcher-kva.example/", factory.parse("https://bücher.example/").href());
+        assertEquals("https://xn--bcher-kva.example/", factory.parseURL("https://bücher.example/").href());
         assertTrue(IDNAProfile.IDNA_2003.isAvailable());
     }
 
@@ -103,7 +103,7 @@ public final class WebURLFactoryTest {
         if (IDNAProfile.UTS_46.isAvailable()) {
             WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.UTS_46);
 
-            assertEquals("https://xn--bcher-kva.example/", factory.parse("https://bücher.example/").href());
+            assertEquals("https://xn--bcher-kva.example/", factory.parseURL("https://bücher.example/").href());
         } else {
             assertThrows(IllegalStateException.class,
                     () -> WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.UTS_46));
@@ -124,8 +124,8 @@ public final class WebURLFactoryTest {
             assertNotSame(factory, changed);
             assertEquals(IDNAProfile.UTS_46, changed.idnaProfile());
         }
-        assertFalse(copied.canParse("../c"));
+        assertFalse(copied.canParseURL("../c"));
         assertEquals("https://example.net/d",
-                copied.parse("../d", WebURL.parse("https://example.net/base/")).href());
+                copied.parseURL("../d", WebURL.parseURL("https://example.net/base/")).href());
     }
 }
