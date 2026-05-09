@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,24 +34,9 @@ public final class WebURLFactoryTest {
         WebURLFactory factory = WebURLFactory.defaultFactory();
 
         assertSame(factory, WebURLFactory.defaultFactory());
-        assertEquals(IDNAProfile.defaultProfile(), factory.idnaProfile());
-        assertSame(factory, factory.withIDNAProfile(IDNAProfile.defaultProfile()));
         assertEquals(WebURL.parseURL("https://example.com/a").href(), factory.parseURL("https://example.com/a").href());
         assertEquals(WebURL.parseAddress("example.com").href(), factory.parseAddress("example.com").href());
         assertFalse(factory.canParseURL("../relative"));
-    }
-
-    /// Tests default IDNA profile inference.
-    @Test
-    public void infersDefaultIDNAProfile() {
-        IDNAProfile defaultProfile = IDNAProfile.defaultProfile();
-
-        assertTrue(defaultProfile.isAvailable());
-        if (IDNAProfile.UTS_46.isAvailable()) {
-            assertEquals(IDNAProfile.UTS_46, defaultProfile);
-        } else {
-            assertEquals(IDNAProfile.IDNA_2003, defaultProfile);
-        }
     }
 
     /// Tests explicit base URL arguments.
@@ -111,43 +95,23 @@ public final class WebURLFactoryTest {
                 () -> factory.parseURL("https://example.com:999999/"));
     }
 
-    /// Tests IDNA 2003 profile selection with the dependency-free JDK implementation.
+    /// Tests UTS #46 domain processing.
     @Test
-    public void parsesWithIDNA2003Profile() {
-        WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.IDNA_2003);
+    public void parsesUnicodeDomainsWithUts46() {
+        WebURLFactory factory = WebURLFactory.defaultFactory();
 
-        assertEquals(IDNAProfile.IDNA_2003, factory.idnaProfile());
         assertEquals("https://xn--bcher-kva.example/", factory.parseURL("https://bücher.example/").href());
-        assertTrue(IDNAProfile.IDNA_2003.isAvailable());
+        assertEquals("https://xn--fa-hia.example/", factory.parseURL("https://faß.example/").href());
+        assertTrue(factory.canParseURL("https://xn--bcher-kva.example/"));
     }
 
-    /// Tests UTS #46 availability handling.
+    /// Tests immutable default factory reuse.
     @Test
-    public void handlesUts46Availability() {
-        if (IDNAProfile.UTS_46.isAvailable()) {
-            WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.UTS_46);
-
-            assertEquals("https://xn--bcher-kva.example/", factory.parseURL("https://bücher.example/").href());
-        } else {
-            assertThrows(IllegalStateException.class,
-                    () -> WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.UTS_46));
-        }
-    }
-
-    /// Tests immutable factory derivation.
-    @Test
-    public void derivesFactoryConfiguration() {
-        WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.IDNA_2003);
-        WebURLFactory copied = factory.withIDNAProfile(IDNAProfile.IDNA_2003);
+    public void reusesDefaultFactory() {
+        WebURLFactory factory = WebURLFactory.defaultFactory();
+        WebURLFactory copied = WebURLFactory.defaultFactory();
 
         assertSame(factory, copied);
-        assertEquals(IDNAProfile.IDNA_2003, copied.idnaProfile());
-        if (IDNAProfile.UTS_46.isAvailable()) {
-            WebURLFactory changed = factory.withIDNAProfile(IDNAProfile.UTS_46);
-
-            assertNotSame(factory, changed);
-            assertEquals(IDNAProfile.UTS_46, changed.idnaProfile());
-        }
         assertFalse(copied.canParseURL("../c"));
         assertEquals("https://example.net/d",
                 copied.parseURL("../d", WebURL.parseURL("https://example.net/base/")).href());

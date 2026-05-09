@@ -15,7 +15,6 @@
  */
 package org.glavo.url.internal;
 
-import org.glavo.url.IDNAProfile;
 import org.glavo.url.WebURLParseException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -45,31 +44,19 @@ public final class UrlParser {
             @Nullable UrlRecord url,
             @Nullable State stateOverride
     ) {
-        return basicParse(input, baseUrl, url, stateOverride, IDNAProfile.defaultProfile());
-    }
-
-    /// Runs the basic URL parser with a configured IDNA profile.
-    public static @Nullable WebURLImpl basicParse(
-            String input,
-            @Nullable WebURLImpl baseUrl,
-            @Nullable UrlRecord url,
-            @Nullable State stateOverride,
-            IDNAProfile idnaProfile
-    ) {
         try {
-            return basicParseRequired(input, baseUrl, url, stateOverride, idnaProfile);
+            return basicParseRequired(input, baseUrl, url, stateOverride);
         } catch (IllegalArgumentException ignored) {
             return null;
         }
     }
 
-    /// Runs the basic URL parser with a configured IDNA profile and throws when parsing fails.
+    /// Runs the basic URL parser and throws when parsing fails.
     public static WebURLImpl basicParseRequired(
             String input,
             @Nullable WebURLImpl baseUrl,
             @Nullable UrlRecord url,
-            @Nullable State stateOverride,
-            IDNAProfile idnaProfile
+            @Nullable State stateOverride
     ) {
         if (baseUrl == null && url == null && stateOverride == null) {
             @Nullable WebURLImpl fastUrl = UrlFastParser.parse(input);
@@ -77,7 +64,7 @@ public final class UrlParser {
                 return fastUrl;
             }
         }
-        StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride, idnaProfile);
+        StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride);
         return stateMachine.toUrl();
     }
 
@@ -128,7 +115,7 @@ public final class UrlParser {
     }
 
     /// Parses a host string.
-    private static UrlHost parseHost(String input, boolean opaque, IDNAProfile idnaProfile) {
+    private static UrlHost parseHost(String input, boolean opaque) {
         if (input.startsWith("[")) {
             if (!input.endsWith("]")) {
                 throw new WebURLParseException.IPv6Unclosed();
@@ -144,7 +131,7 @@ public final class UrlParser {
         String domain = containsPercent(input)
                 ? Encoding.utf8DecodeWithoutBom(PercentEncoding.percentDecodeString(input))
                 : input;
-        String asciiDomain = domainToAscii(domain, false, idnaProfile);
+        String asciiDomain = domainToAscii(domain, false);
 
         if (endsInANumber(asciiDomain)) {
             return UrlHost.ipv4(parseIpv4(asciiDomain));
@@ -182,8 +169,7 @@ public final class UrlParser {
     /// Converts a domain to ASCII.
     private static String domainToAscii(
             String domain,
-            boolean strict,
-            IDNAProfile idnaProfile
+            boolean strict
     ) {
         if (!strict && isAsciiOnly(domain) && !containsPunycodeLabel(domain)) {
             String result = containsAsciiUppercase(domain) ? domain.toLowerCase(Locale.ROOT) : domain;
@@ -196,7 +182,7 @@ public final class UrlParser {
             return result;
         }
 
-        String result = IDNAProcessor.toAscii(domain, strict, idnaProfile);
+        String result = IDNAProcessor.toAscii(domain, strict);
         if (result == null) {
             throw new WebURLParseException.DomainToASCII();
         }
@@ -871,8 +857,6 @@ public final class UrlParser {
         private final @Nullable WebURLImpl base;
         /// State override.
         private final @Nullable State stateOverride;
-        /// IDNA profile used by host parsing in this parser run.
-        private final IDNAProfile idnaProfile;
         /// Mutable URL record produced by this parser run.
         private final UrlRecord record;
         /// Current parser state.
@@ -891,13 +875,11 @@ public final class UrlParser {
                 String inputText,
                 @Nullable WebURLImpl base,
                 @Nullable UrlRecord url,
-                @Nullable State stateOverride,
-                IDNAProfile idnaProfile
+                @Nullable State stateOverride
         ) {
             this.pointer = 0;
             this.base = base;
             this.stateOverride = stateOverride;
-            this.idnaProfile = idnaProfile;
             this.record = url == null ? new UrlRecord() : url;
             this.state = stateOverride == null ? State.SCHEME_START : stateOverride;
 
@@ -1339,7 +1321,7 @@ public final class UrlParser {
                 if (stateOverride == State.HOSTNAME) {
                     return failApiValidation();
                 }
-                record.host = parseHost(buffer.toString(), isNotSpecial(), idnaProfile);
+                record.host = parseHost(buffer.toString(), isNotSpecial());
                 buffer.clear();
                 state = State.PORT;
             } else if (c == EOF || c == '/' || c == '?' || c == '#' || (isSpecial() && c == '\\')) {
@@ -1350,7 +1332,7 @@ public final class UrlParser {
                         && (includesCredentials() || record.port != -1)) {
                     return failApiValidation();
                 }
-                record.host = parseHost(buffer.toString(), isNotSpecial(), idnaProfile);
+                record.host = parseHost(buffer.toString(), isNotSpecial());
                 buffer.clear();
                 state = State.PATH_START;
                 if (stateOverride != null) {
@@ -1476,7 +1458,7 @@ public final class UrlParser {
                     }
                     state = State.PATH_START;
                 } else {
-                    UrlHost parsedHost = parseHost(fileHost, isNotSpecial(), idnaProfile);
+                    UrlHost parsedHost = parseHost(fileHost, isNotSpecial());
                     if (serializeHost(parsedHost).equals("localhost")) {
                         parsedHost = UrlHost.domain("");
                     }
