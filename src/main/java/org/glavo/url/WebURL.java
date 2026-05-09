@@ -16,6 +16,7 @@
 package org.glavo.url;
 
 import org.glavo.url.internal.WebURLImpl;
+import org.glavo.url.internal.WebURLParsing;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 

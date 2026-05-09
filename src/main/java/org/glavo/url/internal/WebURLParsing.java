@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.glavo.url;
+package org.glavo.url.internal;
 
-import org.glavo.url.internal.UrlParser;
-import org.glavo.url.internal.WebURLImpl;
+import org.glavo.url.WebURL;
+import org.glavo.url.WebURLParseException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/// Package-private parsing helpers used by `WebURL` static factory methods.
+/// Internal parsing helpers used by `WebURL` static factory methods.
 @NotNullByDefault
-final class WebURLParsing {
+public final class WebURLParsing {
     /// The scheme used for browser address inputs without an explicit scheme.
     private static final String ADDRESS_SCHEME = "https";
 
@@ -33,53 +33,53 @@ final class WebURLParsing {
     }
 
     /// Parses an input string and returns the parsed URL.
-    static WebURL parseURL(String input) {
+    public static WebURL parseURL(String input) {
         return parseRequired(input, null, "Invalid URL: " + input);
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
-    static WebURL parseURL(String input, String base) {
+    public static WebURL parseURL(String input, String base) {
         return parseRequired(input, parseBaseRequired(base), "Invalid URL: " + input);
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
-    static WebURL parseURL(String input, WebURL base) {
+    public static WebURL parseURL(String input, WebURL base) {
         return parseRequired(input, implementation(base), "Invalid URL: " + input);
     }
 
     /// Parses an input string and returns `null` on failure.
-    static @Nullable WebURL tryParseURL(String input) {
+    public static @Nullable WebURL tryParseURL(String input) {
         return parseNullable(input, null);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
-    static @Nullable WebURL tryParseURL(String input, String base) {
+    public static @Nullable WebURL tryParseURL(String input, String base) {
         WebURLImpl parsedBase = parseBaseNullable(base);
         return parsedBase == null ? null : parseNullable(input, parsedBase);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
-    static @Nullable WebURL tryParseURL(String input, WebURL base) {
+    public static @Nullable WebURL tryParseURL(String input, WebURL base) {
         return parseNullable(input, implementation(base));
     }
 
     /// Returns whether an input string can be parsed.
-    static boolean canParseURL(String input) {
+    public static boolean canParseURL(String input) {
         return tryParseURL(input) != null;
     }
 
     /// Returns whether an input string can be parsed against a base URL string.
-    static boolean canParseURL(String input, String base) {
+    public static boolean canParseURL(String input, String base) {
         return tryParseURL(input, base) != null;
     }
 
     /// Returns whether an input string can be parsed against a base URL.
-    static boolean canParseURL(String input, WebURL base) {
+    public static boolean canParseURL(String input, WebURL base) {
         return tryParseURL(input, base) != null;
     }
 
     /// Parses a browser address input and returns the parsed URL.
-    static WebURL parseAddress(String input) {
+    public static WebURL parseAddress(String input) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
         if (addressInput != null) {
@@ -89,14 +89,14 @@ final class WebURLParsing {
     }
 
     /// Parses a browser address input and returns `null` on failure.
-    static @Nullable WebURL tryParseAddress(String input) {
+    public static @Nullable WebURL tryParseAddress(String input) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
         return parseNullable(addressInput == null ? input : addressInput, null);
     }
 
     /// Returns whether a browser address input can be parsed.
-    static boolean canParseAddress(String input) {
+    public static boolean canParseAddress(String input) {
         return tryParseAddress(input) != null;
     }
 
