@@ -1,8 +1,8 @@
 import org.gradle.kotlin.dsl.sourceSets
 import org.gradle.language.jvm.tasks.ProcessResources
 import java.io.ByteArrayOutputStream
-import java.io.DataOutputStream
 import java.io.File
+import java.io.OutputStream
 import java.nio.charset.StandardCharsets
 
 plugins {
@@ -349,49 +349,61 @@ private fun generateIdnaBinary(
     }
 
     outputFile.parentFile.mkdirs()
-    DataOutputStream(outputFile.outputStream().buffered()).use { output ->
-        output.writeInt(IDNA_DATA_MAGIC)
-        output.writeInt(IDNA_DATA_VERSION)
+    outputFile.outputStream().buffered().use { output ->
+        output.writeIntLittleEndian(IDNA_DATA_MAGIC)
+        output.writeIntLittleEndian(IDNA_DATA_VERSION)
 
-        output.writeInt(binaryMappingRanges.size)
+        output.writeIntLittleEndian(binaryMappingRanges.size)
         for (range in binaryMappingRanges) {
-            output.writeInt(range.start)
-            output.writeInt(range.end)
-            output.writeByte(range.status)
-            output.writeInt(range.mappingOffset)
-            output.writeShort(range.mappingLength)
+            output.writeIntLittleEndian(range.start)
+            output.writeIntLittleEndian(range.end)
+            output.write(range.status)
+            output.writeIntLittleEndian(range.mappingOffset)
+            output.writeShortLittleEndian(range.mappingLength)
         }
 
         val mappingPoolBytes = mappingPool.toByteArray()
-        output.writeInt(mappingPoolBytes.size)
+        output.writeIntLittleEndian(mappingPoolBytes.size)
         output.write(mappingPoolBytes)
 
-        output.writeInt(viramaRanges.size)
+        output.writeIntLittleEndian(viramaRanges.size)
         for (range in viramaRanges) {
-            output.writeInt(range.start)
-            output.writeInt(range.end)
+            output.writeIntLittleEndian(range.start)
+            output.writeIntLittleEndian(range.end)
         }
 
-        output.writeInt(markRanges.size)
+        output.writeIntLittleEndian(markRanges.size)
         for (range in markRanges) {
-            output.writeInt(range.start)
-            output.writeInt(range.end)
+            output.writeIntLittleEndian(range.start)
+            output.writeIntLittleEndian(range.end)
         }
 
-        output.writeInt(bidiClassRanges.size)
+        output.writeIntLittleEndian(bidiClassRanges.size)
         for (range in bidiClassRanges) {
-            output.writeInt(range.start)
-            output.writeInt(range.end)
-            output.writeByte(range.bidiClass)
+            output.writeIntLittleEndian(range.start)
+            output.writeIntLittleEndian(range.end)
+            output.write(range.bidiClass)
         }
 
-        output.writeInt(joiningTypeRanges.size)
+        output.writeIntLittleEndian(joiningTypeRanges.size)
         for (range in joiningTypeRanges) {
-            output.writeInt(range.start)
-            output.writeInt(range.end)
-            output.writeByte(range.joiningType)
+            output.writeIntLittleEndian(range.start)
+            output.writeIntLittleEndian(range.end)
+            output.write(range.joiningType)
         }
     }
+}
+
+private fun OutputStream.writeIntLittleEndian(value: Int) {
+    write(value and 0xff)
+    write(value ushr 8 and 0xff)
+    write(value ushr 16 and 0xff)
+    write(value ushr 24 and 0xff)
+}
+
+private fun OutputStream.writeShortLittleEndian(value: Int) {
+    write(value and 0xff)
+    write(value ushr 8 and 0xff)
 }
 
 private fun parseIdnaMappingRanges(file: File): List<IdnaMappingRange> {

@@ -19,10 +19,10 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 /// Runtime view of the generated UTS #46 data tables.
@@ -158,47 +158,50 @@ final class IdnaData {
             throw new ExceptionInInitializerError("Missing generated IDNA data resource: " + RESOURCE_NAME);
         }
 
-        try (DataInputStream data = new DataInputStream(new BufferedInputStream(input))) {
-            int magic = data.readInt();
-            int version = data.readInt();
+        try (input) {
+            byte[] bytes = input.readAllBytes();
+            ByteBuffer data = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+
+            int magic = data.getInt();
+            int version = data.getInt();
             if (magic != MAGIC || version != VERSION) {
                 throw new IOException("Unsupported IDNA data format");
             }
 
-            int mappingRangeCount = data.readInt();
+            int mappingRangeCount = data.getInt();
             int[] mappingStarts = new int[mappingRangeCount];
             int[] mappingEnds = new int[mappingRangeCount];
             byte[] mappingStatuses = new byte[mappingRangeCount];
             int[] mappingOffsets = new int[mappingRangeCount];
             int[] mappingLengths = new int[mappingRangeCount];
             for (int i = 0; i < mappingRangeCount; i++) {
-                mappingStarts[i] = data.readInt();
-                mappingEnds[i] = data.readInt();
-                mappingStatuses[i] = data.readByte();
-                mappingOffsets[i] = data.readInt();
-                mappingLengths[i] = data.readUnsignedShort();
+                mappingStarts[i] = data.getInt();
+                mappingEnds[i] = data.getInt();
+                mappingStatuses[i] = data.get();
+                mappingOffsets[i] = data.getInt();
+                mappingLengths[i] = Short.toUnsignedInt(data.getShort());
             }
 
-            byte[] mappingPool = new byte[data.readInt()];
-            data.readFully(mappingPool);
+            byte[] mappingPool = new byte[data.getInt()];
+            data.get(mappingPool);
 
-            int viramaRangeCount = data.readInt();
+            int viramaRangeCount = data.getInt();
             int[] viramaStarts = new int[viramaRangeCount];
             int[] viramaEnds = new int[viramaRangeCount];
             readSimpleRanges(data, viramaStarts, viramaEnds);
 
-            int markRangeCount = data.readInt();
+            int markRangeCount = data.getInt();
             int[] markStarts = new int[markRangeCount];
             int[] markEnds = new int[markRangeCount];
             readSimpleRanges(data, markStarts, markEnds);
 
-            int bidiRangeCount = data.readInt();
+            int bidiRangeCount = data.getInt();
             int[] bidiStarts = new int[bidiRangeCount];
             int[] bidiEnds = new int[bidiRangeCount];
             byte[] bidiClasses = new byte[bidiRangeCount];
             readTypedRanges(data, bidiStarts, bidiEnds, bidiClasses);
 
-            int joiningRangeCount = data.readInt();
+            int joiningRangeCount = data.getInt();
             int[] joiningStarts = new int[joiningRangeCount];
             int[] joiningEnds = new int[joiningRangeCount];
             byte[] joiningTypes = new byte[joiningRangeCount];
@@ -222,34 +225,34 @@ final class IdnaData {
                     joiningEnds,
                     joiningTypes
             );
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             throw new ExceptionInInitializerError(e);
         }
     }
 
     /// Reads ranges without an associated byte value.
     private static void readSimpleRanges(
-            DataInputStream data,
+            ByteBuffer data,
             int @Unmodifiable [] starts,
             int @Unmodifiable [] ends
-    ) throws IOException {
+    ) {
         for (int i = 0; i < starts.length; i++) {
-            starts[i] = data.readInt();
-            ends[i] = data.readInt();
+            starts[i] = data.getInt();
+            ends[i] = data.getInt();
         }
     }
 
     /// Reads ranges with an associated byte value.
     private static void readTypedRanges(
-            DataInputStream data,
+            ByteBuffer data,
             int @Unmodifiable [] starts,
             int @Unmodifiable [] ends,
             byte @Unmodifiable [] values
-    ) throws IOException {
+    ) {
         for (int i = 0; i < starts.length; i++) {
-            starts[i] = data.readInt();
-            ends[i] = data.readInt();
-            values[i] = data.readByte();
+            starts[i] = data.getInt();
+            ends[i] = data.getInt();
+            values[i] = data.get();
         }
     }
 
