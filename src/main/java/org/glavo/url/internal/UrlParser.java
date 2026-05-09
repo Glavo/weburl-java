@@ -81,6 +81,12 @@ public final class UrlParser {
             @Nullable State stateOverride,
             IDNAProfile idnaProfile
     ) {
+        if (baseUrl == null && url == null && stateOverride == null) {
+            @Nullable WebURLImpl fastUrl = UrlFastParser.parse(input);
+            if (fastUrl != null) {
+                return fastUrl;
+            }
+        }
         StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride, idnaProfile);
         return stateMachine.toUrl();
     }
