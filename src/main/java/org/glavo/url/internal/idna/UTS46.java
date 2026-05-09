@@ -235,10 +235,7 @@ public final class UTS46 {
             boolean useStd3AsciiRules,
             boolean transitionalProcessing
     ) {
-        boolean error = false;
-        if (!Normalizer.isNormalized(label, Normalizer.Form.NFC)) {
-            error = true;
-        }
+        boolean error = !Normalizer.isNormalized(label, Normalizer.Form.NFC);
 
         if (checkHyphens && hasInvalidHyphenPlacement(label)) {
             error = true;
@@ -541,24 +538,13 @@ public final class UTS46 {
     }
 
     /// Result of punycode label decoding.
+    ///
+    /// @param labels        Processed labels.
+    /// @param decodedLabels Whether each label was decoded from an A-label.
+    /// @param error         Whether punycode processing produced an error.
     @NotNullByDefault
-    private static final class LabelProcessingResult {
-        /// Processed labels.
-        private final String @Unmodifiable [] labels;
-        /// Whether each label was decoded from an A-label.
-        private final boolean @Unmodifiable [] decodedLabels;
-        /// Whether punycode processing produced an error.
-        private final boolean error;
-
-        /// Creates a punycode label processing result.
-        private LabelProcessingResult(
-                String @Unmodifiable [] labels,
-                boolean @Unmodifiable [] decodedLabels,
-                boolean error
-        ) {
-            this.labels = labels;
-            this.decodedLabels = decodedLabels;
-            this.error = error;
-        }
+    private record LabelProcessingResult(String @Unmodifiable [] labels,
+                                         boolean @Unmodifiable [] decodedLabels,
+                                         boolean error) {
     }
 }
