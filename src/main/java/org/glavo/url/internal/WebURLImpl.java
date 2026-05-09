@@ -69,6 +69,10 @@ public final class WebURLImpl implements WebURL {
     private @Nullable String rawUsername;
     /// Cached raw password string, or `null` until requested.
     private @Nullable String rawPassword;
+    /// Cached decoded authority string, or `null` until requested or when absent.
+    private @Nullable String authority;
+    /// Cached raw authority string, or `null` until requested or when absent.
+    private @Nullable String rawAuthority;
     /// Cached host string, or `null` until requested or when absent.
     private @Nullable String host;
     /// Cached decoded path string, or `null` until requested.
@@ -266,6 +270,37 @@ public final class WebURLImpl implements WebURL {
     @Override
     public @Nullable String getRawPassword() {
         return passwordStart < 0 ? null : getRawPasswordOrEmpty();
+    }
+
+    /// Returns the decoded authority, or `null` when absent.
+    @Override
+    public @Nullable String getAuthority() {
+        @Nullable String rawValue = getRawAuthority();
+        if (rawValue == null) {
+            return null;
+        }
+
+        @Nullable String value = authority;
+        if (value == null) {
+            value = PercentEncoding.percentDecodeUtf8(rawValue);
+            authority = value;
+        }
+        return value;
+    }
+
+    /// Returns the raw authority, or `null` when absent.
+    @Override
+    public @Nullable String getRawAuthority() {
+        if (hostStart < 0) {
+            return null;
+        }
+
+        @Nullable String value = rawAuthority;
+        if (value == null) {
+            value = href().substring(schemeEnd + 3, portStart < 0 ? hostEnd : portEnd);
+            rawAuthority = value;
+        }
+        return value;
     }
 
     /// Returns the host, or `null` when absent.

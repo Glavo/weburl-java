@@ -106,6 +106,8 @@ public final class WebURLTest {
         assertSame(url.getRawUsernameOrEmpty(), url.getRawUsernameOrEmpty());
         assertSame(url.getRawPassword(), url.getRawPassword());
         assertSame(url.getRawPasswordOrEmpty(), url.getRawPasswordOrEmpty());
+        assertSame(url.getAuthority(), url.getAuthority());
+        assertSame(url.getRawAuthority(), url.getRawAuthority());
         assertSame(url.getHost(), url.getHost());
         assertSame(url.getPath(), url.getPath());
         assertSame(url.getRawPath(), url.getRawPath());
@@ -128,6 +130,8 @@ public final class WebURLTest {
         assertEquals("user", url.getRawUsernameOrEmpty());
         assertEquals("pass", url.getRawPassword());
         assertEquals("pass", url.getRawPasswordOrEmpty());
+        assertEquals("user:pass@example.com:8080", url.getAuthority());
+        assertEquals("user:pass@example.com:8080", url.getRawAuthority());
         assertEquals("example.com", url.getHost());
         assertEquals(8080, url.getPort());
         assertEquals("/a%2Fb", url.getRawPath());
@@ -141,6 +145,8 @@ public final class WebURLTest {
         assertEquals("", absentComponents.getRawUsernameOrEmpty());
         assertNull(absentComponents.getRawPassword());
         assertEquals("", absentComponents.getRawPasswordOrEmpty());
+        assertEquals("example.com", absentComponents.getAuthority());
+        assertEquals("example.com", absentComponents.getRawAuthority());
         assertEquals("example.com", absentComponents.getHost());
         assertEquals(-1, absentComponents.getPort());
         assertEquals("/path", absentComponents.getRawPath());
@@ -156,6 +162,14 @@ public final class WebURLTest {
         WebURL emptyUsername = WebURL.parseURL("https://:pass@example.com/");
         assertEquals("", emptyUsername.getRawUsername());
         assertEquals("pass", emptyUsername.getRawPassword());
+
+        WebURL emptyAuthority = WebURL.parseURL("file:///C:/demo");
+        assertEquals("", emptyAuthority.getAuthority());
+        assertEquals("", emptyAuthority.getRawAuthority());
+
+        WebURL noAuthority = WebURL.parseURL("data:text/plain,hi");
+        assertNull(noAuthority.getAuthority());
+        assertNull(noAuthority.getRawAuthority());
     }
 
     /// Tests Java-style decoded component getters.
@@ -167,6 +181,10 @@ public final class WebURLTest {
         assertEquals("/a b/路径", url.getPath());
         assertEquals("plus=a+b&encoded=a+b&space=a b", url.getQuery());
         assertEquals("frag#ment x", url.getFragment());
+
+        WebURL credentials = WebURL.parseURL("https://u%20ser:p%40ss@example.com/");
+        assertEquals("u%20ser:p%40ss@example.com", credentials.getRawAuthority());
+        assertEquals("u ser:p@ss@example.com", credentials.getAuthority());
 
         WebURL absentComponents = WebURL.parseURL("https://example.com/path");
         assertNull(absentComponents.getQuery());

@@ -252,6 +252,41 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the raw password component, or the empty string when absent
     String getRawPasswordOrEmpty();
 
+    /// Returns the decoded authority component.
+    ///
+    /// This method is the Java `URI`-style getter for the decoded URL authority. It is equivalent to
+    /// {@link #getRawAuthority()} with valid percent triplets decoded as UTF-8. It does not include the leading
+    /// double solidus (`//`).
+    ///
+    /// The authority is present when the URL record has a host component. When present, it consists of the
+    /// serialized credentials followed by at-sign (`@`) when credentials are present, the serialized host, and
+    /// the serialized port prefixed by colon (`:`) when a non-default port is present. Domain hosts remain in
+    /// their URL Standard ASCII form; this method does not convert Punycode labels back to Unicode. Percent
+    /// escapes that are invalid or incomplete are left unchanged.
+    ///
+    /// The result is `null` when the URL record has no host component. A URL with an explicitly empty authority,
+    /// such as a `file` URL with an empty host, returns the empty string.
+    ///
+    /// @return the decoded authority component, or `null` when absent
+    @Nullable String getAuthority();
+
+    /// Returns the raw authority component.
+    ///
+    /// This method is the Java `URI`-style getter for the URL authority with percent-encoding preserved. It
+    /// returns the normalized authority serialization without the leading double solidus (`//`). The returned
+    /// value is not necessarily a substring of the original input because URL parsing may normalize,
+    /// percent-encode, or otherwise rewrite credentials, hosts, and ports.
+    ///
+    /// The authority is present when the URL record has a host component. When present, it consists of the raw
+    /// username and optional raw password followed by at-sign (`@`) when credentials are present, the serialized
+    /// host, and the serialized port prefixed by colon (`:`) when a non-default port is present.
+    ///
+    /// The result is `null` when the URL record has no host component. A URL with an explicitly empty authority,
+    /// such as a `file` URL with an empty host, returns the empty string.
+    ///
+    /// @return the raw authority component, or `null` when absent
+    @Nullable String getRawAuthority();
+
     /// Returns the host component.
     ///
     /// This method is the Java `URI`-style getter for the URL host. The returned value is the normalized
