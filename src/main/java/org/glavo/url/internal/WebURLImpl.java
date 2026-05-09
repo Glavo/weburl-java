@@ -52,75 +52,6 @@ public final class WebURLImpl implements WebURL {
     /// The immutable query parameter object.
     private final WebURLSearchParams searchParams;
 
-    /// Parses an absolute input string.
-    ///
-    /// Throws `WebURLParseException` when the input cannot be parsed.
-    public static WebURL parse(String input) {
-        return new WebURLImpl(input, null);
-    }
-
-    /// Parses an input string against a base URL string.
-    ///
-    /// Throws `WebURLParseException` when the input or base URL cannot be parsed.
-    public static WebURL parse(String input, String base) {
-        return new WebURLImpl(input, parseBase(base));
-    }
-
-    /// Parses an input string against a base URL.
-    ///
-    /// Throws `WebURLParseException` when the input cannot be parsed against the base URL.
-    public static WebURL parse(String input, WebURL base) {
-        return new WebURLImpl(input, implementation(base));
-    }
-
-    /// Parses a URL and returns `null` on failure.
-    public static @Nullable WebURL tryParse(String input) {
-        return UrlParser.basicParse(input, null, null, null);
-    }
-
-    /// Parses a URL against a base URL string and returns `null` on failure.
-    public static @Nullable WebURL tryParse(String input, String base) {
-        WebURLImpl parsedBase = UrlParser.basicParse(base, null, null, null);
-        return parsedBase == null ? null : UrlParser.basicParse(input, parsedBase, null, null);
-    }
-
-    /// Parses a URL against a base URL and returns `null` on failure.
-    public static @Nullable WebURL tryParse(String input, WebURL base) {
-        return UrlParser.basicParse(input, implementation(base), null, null);
-    }
-
-    /// Returns whether an input can be parsed as a URL.
-    public static boolean canParse(String input) {
-        return UrlParser.basicParse(input, null, null, null) != null;
-    }
-
-    /// Returns whether an input can be parsed against a base URL string.
-    public static boolean canParse(String input, String base) {
-        WebURLImpl parsedBase = UrlParser.basicParse(base, null, null, null);
-        return parsedBase != null && UrlParser.basicParse(input, parsedBase, null, null) != null;
-    }
-
-    /// Returns whether an input can be parsed against a base URL.
-    public static boolean canParse(String input, WebURL base) {
-        return UrlParser.basicParse(input, implementation(base), null, null) != null;
-    }
-
-    /// Creates a URL from an input string and an optional base URL.
-    private WebURLImpl(String input, @Nullable WebURLImpl base) {
-        WebURLImpl parsed = parseRequired(input, base, "Invalid URL: " + input);
-
-        this.scheme = parsed.scheme;
-        this.username = parsed.username;
-        this.password = parsed.password;
-        this.host = parsed.host;
-        this.port = parsed.port;
-        this.path = parsed.path;
-        this.opaquePath = parsed.opaquePath;
-        this.query = parsed.query;
-        this.fragment = parsed.fragment;
-        this.searchParams = parsed.searchParams;
-    }
-
     /// Creates an immutable URL from parsed components.
     WebURLImpl(
             String scheme,
@@ -507,11 +438,6 @@ public final class WebURLImpl implements WebURL {
     private WebURL parseIntoCopyOrThis(String input, WebURLImpl copy, UrlParser.State state) {
         WebURLImpl parsed = UrlParser.basicParse(input, null, copy, state);
         return parsed == null ? this : parsed;
-    }
-
-    /// Parses a base URL string.
-    private static WebURLImpl parseBase(String base) {
-        return parseRequired(base, null, "Invalid base URL: " + base);
     }
 
     /// Parses an input string and throws when parsing fails.
