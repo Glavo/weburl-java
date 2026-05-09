@@ -15,7 +15,7 @@
  */
 package org.glavo.url.internal;
 
-import org.glavo.url.WebURLParser;
+import org.glavo.url.WebURLFactory;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,13 +38,13 @@ final class IdnaProcessor {
     }
 
     /// Converts a domain name to ASCII, returning `null` on failure.
-    static @Nullable String toAscii(String domain, boolean strict, WebURLParser.IdnaProvider provider) {
+    static @Nullable String toAscii(String domain, boolean strict, WebURLFactory.IdnaProvider provider) {
         Processor processor = processor(provider);
         return processor == null ? null : processor.toAscii(domain, strict);
     }
 
     /// Returns whether a configured IDNA provider is available.
-    static boolean isAvailable(WebURLParser.IdnaProvider provider) {
+    static boolean isAvailable(WebURLFactory.IdnaProvider provider) {
         return switch (provider) {
             case AUTOMATIC, JDK -> true;
             case ICU4J -> ICU_PROCESSOR != null;
@@ -52,7 +52,7 @@ final class IdnaProcessor {
     }
 
     /// Selects the processor for a configured provider.
-    private static @Nullable Processor processor(WebURLParser.IdnaProvider provider) {
+    private static @Nullable Processor processor(WebURLFactory.IdnaProvider provider) {
         return switch (provider) {
             case AUTOMATIC -> ICU_PROCESSOR != null ? ICU_PROCESSOR : JDK_PROCESSOR;
             case ICU4J -> ICU_PROCESSOR;

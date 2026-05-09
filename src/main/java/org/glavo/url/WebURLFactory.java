@@ -22,46 +22,46 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/// A reusable, immutable parser for WHATWG URLs.
+/// A reusable, immutable factory for WHATWG URLs.
 ///
-/// A parser combines the URL Standard basic URL parser with a small set of caller-controlled parsing
-/// settings. The standard parser returned by `standard()` has no base URL and uses the automatic IDNA
-/// provider; it is the parser used by the static parsing methods on `WebURL`.
+/// A factory combines the URL Standard basic URL parser with a small set of caller-controlled creation
+/// settings. The standard factory returned by `standard()` has no base URL and uses the automatic IDNA
+/// provider; it is the factory used by the static parsing methods on `WebURL`.
 ///
-/// A parser may have a configured base URL. When present, `of(String)`, `parse(String)`, and
+/// A factory may have a configured base URL. When present, `of(String)`, `parse(String)`, and
 /// `canParse(String)` parse their input relative to that base. Overloads that accept a base URL use the
-/// supplied base for that call and do not read the parser's configured base.
+/// supplied base for that call and do not read the factory's configured base.
 ///
-/// The parser object is immutable and thread-safe. `Builder` is mutable and is intended to be confined to
-/// the thread or construction scope that creates a parser.
+/// The factory object is immutable and thread-safe. `Builder` is mutable and is intended to be confined to
+/// the thread or construction scope that creates a factory.
 @NotNullByDefault
-public final class WebURLParser {
-    /// The standard parser used by `WebURL` static parsing methods.
-    private static final WebURLParser STANDARD = new WebURLParser(null, IdnaProvider.AUTOMATIC);
+public final class WebURLFactory {
+    /// The standard factory used by `WebURL` static parsing methods.
+    private static final WebURLFactory STANDARD = new WebURLFactory(null, IdnaProvider.AUTOMATIC);
 
-    /// The configured base URL, or `null` when this parser has no base URL.
+    /// The configured base URL, or `null` when this factory has no base URL.
     private final @Nullable WebURLImpl base;
     /// The configured IDNA provider.
     private final IdnaProvider idnaProvider;
 
-    /// Creates a parser from validated parser settings.
-    private WebURLParser(@Nullable WebURLImpl base, IdnaProvider idnaProvider) {
+    /// Creates a factory from validated factory settings.
+    private WebURLFactory(@Nullable WebURLImpl base, IdnaProvider idnaProvider) {
         this.base = base;
         this.idnaProvider = idnaProvider;
     }
 
-    /// Returns the standard URL parser.
+    /// Returns the standard URL factory.
     ///
-    /// The standard parser has no base URL and uses `IdnaProvider.AUTOMATIC`. It therefore parses only
+    /// The standard factory has no base URL and uses `IdnaProvider.AUTOMATIC`. It therefore parses only
     /// absolute URLs unless a base is supplied to an overload that accepts one. This method always returns the
-    /// same immutable parser instance.
+    /// same immutable factory instance.
     ///
-    /// @return the standard parser
-    public static WebURLParser standard() {
+    /// @return the standard factory
+    public static WebURLFactory standard() {
         return STANDARD;
     }
 
-    /// Returns a new parser builder.
+    /// Returns a new factory builder.
     ///
     /// The builder initially has no base URL and uses `IdnaProvider.AUTOMATIC`.
     ///
@@ -75,7 +75,7 @@ public final class WebURLParser {
     /// The base URL is used only by `of(String)`, `parse(String)`, and `canParse(String)`. It is not used by
     /// overloads that receive an explicit base URL argument.
     ///
-    /// @return the configured base URL, or `null` when this parser has no base URL
+    /// @return the configured base URL, or `null` when this factory has no base URL
     public @Nullable WebURL base() {
         return base;
     }
@@ -92,22 +92,22 @@ public final class WebURLParser {
 
     /// Parses an input string and returns the parsed URL.
     ///
-    /// If this parser has a configured base URL, the input may be absolute or relative to that base. If this
-    /// parser has no configured base URL, the input must be absolute.
+    /// If this factory has a configured base URL, the input may be absolute or relative to that base. If this
+    /// factory has no configured base URL, the input must be absolute.
     ///
     /// @param input the URL input string
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
-    /// @throws IllegalStateException when this parser requires an unavailable IDNA provider
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
     public WebURL of(String input) {
         return parseRequired(input, base, "Invalid URL: " + input);
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
     ///
-    /// The supplied base string is parsed first with no base URL and with this parser's IDNA provider. The
-    /// input is then parsed relative to that base. This parser's configured base URL, if any, is ignored for
+    /// The supplied base string is parsed first with no base URL and with this factory's IDNA provider. The
+    /// input is then parsed relative to that base. This factory's configured base URL, if any, is ignored for
     /// this call.
     ///
     /// @param input the URL input string
@@ -115,21 +115,21 @@ public final class WebURLParser {
     /// @return the parsed URL
     /// @throws WebURLParseException when either input fails with a known URL validation error
     /// @throws IllegalArgumentException when either input fails without a specific public validation error
-    /// @throws IllegalStateException when this parser requires an unavailable IDNA provider
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
     public WebURL of(String input, String base) {
         return parseRequired(input, parseBaseRequired(base), "Invalid URL: " + input);
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
     ///
-    /// The supplied base URL is used only for this call. This parser's configured base URL, if any, is ignored.
+    /// The supplied base URL is used only for this call. This factory's configured base URL, if any, is ignored.
     ///
     /// @param input the URL input string
     /// @param base the base URL
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails with a known URL validation error
     /// @throws IllegalArgumentException when parsing fails without a specific public validation error
-    /// @throws IllegalStateException when this parser requires an unavailable IDNA provider
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
     public WebURL of(String input, WebURL base) {
         return parseRequired(input, implementation(base), "Invalid URL: " + input);
     }
@@ -141,20 +141,20 @@ public final class WebURLParser {
     ///
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if parsing fails
-    /// @throws IllegalStateException when this parser requires an unavailable IDNA provider
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
     public @Nullable WebURL parse(String input) {
         return parseNullable(input, base);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
     ///
-    /// The supplied base string is parsed with no base URL and with this parser's IDNA provider. This parser's
+    /// The supplied base string is parsed with no base URL and with this factory's IDNA provider. This factory's
     /// configured base URL, if any, is ignored for this call.
     ///
     /// @param input the URL input string
     /// @param base the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
-    /// @throws IllegalStateException when this parser requires an unavailable IDNA provider
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
     public @Nullable WebURL parse(String input, String base) {
         WebURLImpl parsedBase = parseBaseNullable(base);
         return parsedBase == null ? null : parseNullable(input, parsedBase);
@@ -162,87 +162,87 @@ public final class WebURLParser {
 
     /// Parses an input string against a base URL and returns `null` on failure.
     ///
-    /// The supplied base URL is used only for this call. This parser's configured base URL, if any, is ignored.
+    /// The supplied base URL is used only for this call. This factory's configured base URL, if any, is ignored.
     ///
     /// @param input the URL input string
     /// @param base the base URL
     /// @return the parsed URL, or `null` if parsing fails
-    /// @throws IllegalStateException when this parser requires an unavailable IDNA provider
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
     public @Nullable WebURL parse(String input, WebURL base) {
         return parseNullable(input, implementation(base));
     }
 
     /// Returns whether an input string can be parsed.
     ///
-    /// If this parser has a configured base URL, the input may be absolute or relative to that base. If this
-    /// parser has no configured base URL, the input must be absolute.
+    /// If this factory has a configured base URL, the input may be absolute or relative to that base. If this
+    /// factory has no configured base URL, the input must be absolute.
     ///
     /// @param input the URL input string
     /// @return `true` if parsing succeeds, otherwise `false`
-    /// @throws IllegalStateException when this parser requires an unavailable IDNA provider
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
     public boolean canParse(String input) {
         return parse(input) != null;
     }
 
     /// Returns whether an input string can be parsed against a base URL string.
     ///
-    /// The supplied base string is parsed with no base URL and with this parser's IDNA provider. This parser's
+    /// The supplied base string is parsed with no base URL and with this factory's IDNA provider. This factory's
     /// configured base URL, if any, is ignored for this call.
     ///
     /// @param input the URL input string
     /// @param base the base URL string
     /// @return `true` if the base parses and the input parses against it, otherwise `false`
-    /// @throws IllegalStateException when this parser requires an unavailable IDNA provider
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
     public boolean canParse(String input, String base) {
         return parse(input, base) != null;
     }
 
     /// Returns whether an input string can be parsed against a base URL.
     ///
-    /// The supplied base URL is used only for this call. This parser's configured base URL, if any, is ignored.
+    /// The supplied base URL is used only for this call. This factory's configured base URL, if any, is ignored.
     ///
     /// @param input the URL input string
     /// @param base the base URL
     /// @return `true` if parsing succeeds, otherwise `false`
-    /// @throws IllegalStateException when this parser requires an unavailable IDNA provider
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
     public boolean canParse(String input, WebURL base) {
         return parse(input, base) != null;
     }
 
-    /// Returns a parser with the supplied base URL and this parser's other settings.
+    /// Returns a factory with the supplied base URL and this factory's other settings.
     ///
     /// @param base the base URL to use for single-argument parsing methods
-    /// @return a parser with the supplied base URL
-    public WebURLParser withBase(WebURL base) {
-        return new WebURLParser(implementation(base), idnaProvider);
+    /// @return a factory with the supplied base URL
+    public WebURLFactory withBase(WebURL base) {
+        return new WebURLFactory(implementation(base), idnaProvider);
     }
 
-    /// Returns a parser with a base URL parsed from the supplied string.
+    /// Returns a factory with a base URL parsed from the supplied string.
     ///
-    /// The base string is parsed with no base URL and with this parser's IDNA provider. The returned parser
-    /// inherits this parser's other settings.
+    /// The base string is parsed with no base URL and with this factory's IDNA provider. The returned factory
+    /// inherits this factory's other settings.
     ///
     /// @param base the base URL string
-    /// @return a parser with the parsed base URL
+    /// @return a factory with the parsed base URL
     /// @throws WebURLParseException when the base fails with a known URL validation error
     /// @throws IllegalArgumentException when the base fails without a specific public validation error
-    /// @throws IllegalStateException when this parser requires an unavailable IDNA provider
-    public WebURLParser withBase(String base) {
-        return new WebURLParser(parseBaseRequired(base), idnaProvider);
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA provider
+    public WebURLFactory withBase(String base) {
+        return new WebURLFactory(parseBaseRequired(base), idnaProvider);
     }
 
-    /// Returns a parser with no configured base URL and this parser's other settings.
+    /// Returns a factory with no configured base URL and this factory's other settings.
     ///
-    /// @return a parser without a configured base URL
-    public WebURLParser withoutBase() {
-        return base == null ? this : new WebURLParser(null, idnaProvider);
+    /// @return a factory without a configured base URL
+    public WebURLFactory withoutBase() {
+        return base == null ? this : new WebURLFactory(null, idnaProvider);
     }
 
-    /// Returns a mutable builder initialized from this parser.
+    /// Returns a mutable builder initialized from this factory.
     ///
-    /// Changes to the returned builder do not affect this parser.
+    /// Changes to the returned builder do not affect this factory.
     ///
-    /// @return a new mutable builder containing this parser's settings
+    /// @return a new mutable builder containing this factory's settings
     public Builder toBuilder() {
         return new Builder(base, idnaProvider);
     }
@@ -277,7 +277,7 @@ public final class WebURLParser {
         return parseNullable(base, null);
     }
 
-    /// Runs the internal parser using this parser's configuration.
+    /// Runs the internal parser using this factory's configuration.
     private UrlParser.ParseResult parseResult(String input, @Nullable WebURLImpl base) {
         Objects.requireNonNull(input, "input");
         ensureIdnaProviderAvailable(idnaProvider);
@@ -296,7 +296,7 @@ public final class WebURLParser {
         }
     }
 
-    /// Returns the parser exception, or a generic argument exception when none is available.
+    /// Returns the parse exception, or a generic argument exception when none is available.
     private static IllegalArgumentException parseExceptionOrIllegalArgument(
             @Nullable WebURLParseException exception,
             String message
@@ -342,15 +342,15 @@ public final class WebURLParser {
         }
     }
 
-    /// A mutable builder for `WebURLParser`.
+    /// A mutable builder for `WebURLFactory`.
     ///
     /// A new builder starts with the same configuration as `standard()`: no base URL and
     /// `IdnaProvider.AUTOMATIC`. Builder methods mutate and return this builder so calls can be chained.
     @NotNullByDefault
     public static final class Builder {
-        /// The configured base URL, or `null` when the parser being built has no base URL.
+        /// The configured base URL, or `null` when the factory being built has no base URL.
         private @Nullable WebURLImpl base;
-        /// The configured IDNA provider for the parser being built.
+        /// The configured IDNA provider for the factory being built.
         private IdnaProvider idnaProvider;
 
         /// Creates a builder initialized from parser settings.
@@ -368,7 +368,7 @@ public final class WebURLParser {
 
         /// Sets the base URL.
         ///
-        /// The base URL is used by the single-argument parsing methods of parsers created by this builder.
+        /// The base URL is used by the single-argument parsing methods of factories created by this builder.
         ///
         /// @param base the base URL to use for relative parsing
         /// @return this builder
@@ -388,13 +388,13 @@ public final class WebURLParser {
         /// @throws IllegalArgumentException when the base fails without a specific public validation error
         /// @throws IllegalStateException when the current IDNA provider is unavailable
         public Builder base(String base) {
-            this.base = new WebURLParser(null, idnaProvider).parseBaseRequired(base);
+            this.base = new WebURLFactory(null, idnaProvider).parseBaseRequired(base);
             return this;
         }
 
         /// Clears the configured base URL.
         ///
-        /// Parsers built after this call require absolute input unless a parsing method is called with an
+        /// Factories built after this call require absolute input unless a parsing method is called with an
         /// explicit base argument.
         ///
         /// @return this builder
@@ -413,7 +413,7 @@ public final class WebURLParser {
         /// Sets the IDNA provider.
         ///
         /// The provider affects domain-to-ASCII conversion for future base-string parsing on this builder and
-        /// for all parsing methods on parsers created by this builder.
+        /// for all parsing methods on factories created by this builder.
         ///
         /// @param idnaProvider the IDNA provider
         /// @return this builder
@@ -422,13 +422,13 @@ public final class WebURLParser {
             return this;
         }
 
-        /// Creates an immutable parser from the current builder state.
+        /// Creates an immutable factory from the current builder state.
         ///
-        /// @return a configured immutable parser
+        /// @return a configured immutable factory
         /// @throws IllegalStateException when the configured IDNA provider is unavailable
-        public WebURLParser build() {
+        public WebURLFactory build() {
             ensureIdnaProviderAvailable(idnaProvider);
-            return new WebURLParser(base, idnaProvider);
+            return new WebURLFactory(base, idnaProvider);
         }
     }
 }

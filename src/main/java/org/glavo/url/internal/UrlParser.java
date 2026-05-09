@@ -15,7 +15,7 @@
  */
 package org.glavo.url.internal;
 
-import org.glavo.url.WebURLParser;
+import org.glavo.url.WebURLFactory;
 import org.glavo.url.WebURLParseException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +52,7 @@ public final class UrlParser {
             @Nullable WebURLImpl url,
             @Nullable State stateOverride
     ) {
-        return basicParseResult(input, baseUrl, url, stateOverride, WebURLParser.IdnaProvider.AUTOMATIC).url();
+        return basicParseResult(input, baseUrl, url, stateOverride, WebURLFactory.IdnaProvider.AUTOMATIC).url();
     }
 
     /// Runs the basic URL parser with a configured IDNA provider.
@@ -61,7 +61,7 @@ public final class UrlParser {
             @Nullable WebURLImpl baseUrl,
             @Nullable WebURLImpl url,
             @Nullable State stateOverride,
-            WebURLParser.IdnaProvider idnaProvider
+            WebURLFactory.IdnaProvider idnaProvider
     ) {
         return basicParseResult(input, baseUrl, url, stateOverride, idnaProvider).url();
     }
@@ -73,7 +73,7 @@ public final class UrlParser {
             @Nullable WebURLImpl url,
             @Nullable State stateOverride
     ) {
-        return basicParseResult(input, baseUrl, url, stateOverride, WebURLParser.IdnaProvider.AUTOMATIC);
+        return basicParseResult(input, baseUrl, url, stateOverride, WebURLFactory.IdnaProvider.AUTOMATIC);
     }
 
     /// Runs the basic URL parser with a configured IDNA provider and returns the parse error when parsing fails.
@@ -82,7 +82,7 @@ public final class UrlParser {
             @Nullable WebURLImpl baseUrl,
             @Nullable WebURLImpl url,
             @Nullable State stateOverride,
-            WebURLParser.IdnaProvider idnaProvider
+            WebURLFactory.IdnaProvider idnaProvider
     ) {
         StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride, idnaProvider);
         return new ParseResult(
@@ -91,7 +91,7 @@ public final class UrlParser {
     }
 
     /// Returns whether a configured IDNA provider is available.
-    public static boolean isIdnaProviderAvailable(WebURLParser.IdnaProvider provider) {
+    public static boolean isIdnaProviderAvailable(WebURLFactory.IdnaProvider provider) {
         return IdnaProcessor.isAvailable(provider);
     }
 
@@ -252,7 +252,7 @@ public final class UrlParser {
     }
 
     /// Parses a host string.
-    private static UrlHost parseHost(String input, boolean opaque, WebURLParser.IdnaProvider idnaProvider) {
+    private static UrlHost parseHost(String input, boolean opaque, WebURLFactory.IdnaProvider idnaProvider) {
         if (input.startsWith("[")) {
             if (!input.endsWith("]")) {
                 throw new WebURLParseException.IPv6Unclosed();
@@ -288,7 +288,7 @@ public final class UrlParser {
     private static String domainToAscii(
             String domain,
             boolean strict,
-            WebURLParser.IdnaProvider idnaProvider
+            WebURLFactory.IdnaProvider idnaProvider
     ) {
         if (!strict && isAsciiOnly(domain) && !containsPunycodeLabel(domain)) {
             String result = domain.toLowerCase(Locale.ROOT);
@@ -720,7 +720,7 @@ public final class UrlParser {
         /// State override.
         private final @Nullable State stateOverride;
         /// IDNA provider used by host parsing in this parser run.
-        private final WebURLParser.IdnaProvider idnaProvider;
+        private final WebURLFactory.IdnaProvider idnaProvider;
         /// URL scheme without the trailing colon.
         private String scheme = "";
         /// Percent-encoded username.
@@ -760,7 +760,7 @@ public final class UrlParser {
                 @Nullable WebURLImpl base,
                 @Nullable WebURLImpl url,
                 @Nullable State stateOverride,
-                WebURLParser.IdnaProvider idnaProvider
+                WebURLFactory.IdnaProvider idnaProvider
         ) {
             this.pointer = 0;
             this.base = base;
