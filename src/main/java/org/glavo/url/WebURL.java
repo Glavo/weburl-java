@@ -192,7 +192,10 @@ public sealed interface WebURL permits WebURLImpl {
     /// URL embedded in the blob path when that embedded URL has an HTTP(S) origin. For `file` URLs, opaque
     /// origins, and other schemes without a tuple origin, the result is the literal string `null`.
     ///
-    /// @return the serialized origin, or `null` as a string for an opaque origin
+    /// This method never returns Java `null`. The string value `null` is the URL Standard serialization of an
+    /// opaque origin.
+    ///
+    /// @return the non-null serialized origin; the literal string `null` represents an opaque origin
     String origin();
 
     /// Returns the scheme component without its delimiter.
