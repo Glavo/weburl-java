@@ -34,7 +34,7 @@ public final class WebURLFactoryTest {
         WebURLFactory factory = WebURLFactory.standard();
 
         assertSame(factory, WebURLFactory.standard());
-        assertEquals(WebURLFactory.IdnaProvider.AUTOMATIC, factory.idnaProvider());
+        assertEquals(WebURLFactory.IdnaVersion.UTS_46, factory.idnaVersion());
         assertEquals(WebURL.of("https://example.com/a").href(), factory.parse("https://example.com/a").href());
         assertFalse(factory.canParse("../relative"));
     }
@@ -72,31 +72,30 @@ public final class WebURLFactoryTest {
                 () -> factory.parse("https://example.com:999999/"));
     }
 
-    /// Tests provider selection with the dependency-free JDK provider.
+    /// Tests IDNA 2003 selection with the dependency-free JDK implementation.
     @Test
-    public void parsesWithJdkIdnaProvider() {
+    public void parsesWithIdna2003Version() {
         WebURLFactory factory = WebURLFactory.builder()
-                .idnaProvider(WebURLFactory.IdnaProvider.JDK)
+                .idnaVersion(WebURLFactory.IdnaVersion.IDNA_2003)
                 .build();
 
-        assertEquals(WebURLFactory.IdnaProvider.JDK, factory.idnaProvider());
+        assertEquals(WebURLFactory.IdnaVersion.IDNA_2003, factory.idnaVersion());
         assertEquals("https://xn--bcher-kva.example/", factory.parse("https://bücher.example/").href());
-        assertTrue(WebURLFactory.IdnaProvider.JDK.isAvailable());
-        assertTrue(WebURLFactory.IdnaProvider.AUTOMATIC.isAvailable());
+        assertTrue(WebURLFactory.IdnaVersion.IDNA_2003.isAvailable());
     }
 
-    /// Tests ICU4J provider availability handling.
+    /// Tests UTS #46 availability handling.
     @Test
-    public void handlesIcu4jIdnaProviderAvailability() {
-        if (WebURLFactory.IdnaProvider.ICU4J.isAvailable()) {
-            WebURLFactory factory = WebURLFactory.builder()
-                    .idnaProvider(WebURLFactory.IdnaProvider.ICU4J)
-                    .build();
+    public void handlesUts46Availability() {
+        WebURLFactory factory = WebURLFactory.builder()
+                .idnaVersion(WebURLFactory.IdnaVersion.UTS_46)
+                .build();
+
+        if (WebURLFactory.IdnaVersion.UTS_46.isAvailable()) {
             assertEquals("https://xn--bcher-kva.example/", factory.parse("https://bücher.example/").href());
         } else {
-            assertThrows(IllegalStateException.class, () -> WebURLFactory.builder()
-                    .idnaProvider(WebURLFactory.IdnaProvider.ICU4J)
-                    .build());
+            assertEquals("https://example.com/", factory.parse("https://example.com/").href());
+            assertThrows(IllegalStateException.class, () -> factory.parse("https://bücher.example/"));
         }
     }
 
@@ -104,12 +103,12 @@ public final class WebURLFactoryTest {
     @Test
     public void copiesFactoryConfiguration() {
         WebURLFactory factory = WebURLFactory.builder()
-                .idnaProvider(WebURLFactory.IdnaProvider.JDK)
+                .idnaVersion(WebURLFactory.IdnaVersion.IDNA_2003)
                 .build();
 
         WebURLFactory copied = factory.toBuilder().build();
 
-        assertEquals(WebURLFactory.IdnaProvider.JDK, copied.idnaProvider());
+        assertEquals(WebURLFactory.IdnaVersion.IDNA_2003, copied.idnaVersion());
         assertFalse(copied.canParse("../c"));
         assertEquals("https://example.net/d",
                 copied.parse("../d", WebURL.of("https://example.net/base/")).href());

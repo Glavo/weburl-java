@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
 import java.net.IDN;
 import java.util.Locale;
 
-/// Converts Unicode domain names to ASCII using ICU when present and JDK IDN otherwise.
+/// Converts Unicode domain names to ASCII using the configured IDNA version.
 @NotNullByDefault
 final class IdnaProcessor {
     /// The JDK `java.net.IDN` processor.
@@ -38,25 +38,27 @@ final class IdnaProcessor {
     }
 
     /// Converts a domain name to ASCII, returning `null` on failure.
-    static @Nullable String toAscii(String domain, boolean strict, WebURLFactory.IdnaProvider provider) {
-        Processor processor = processor(provider);
-        return processor == null ? null : processor.toAscii(domain, strict);
+    static @Nullable String toAscii(String domain, boolean strict, WebURLFactory.IdnaVersion version) {
+        Processor processor = processor(version);
+        if (processor == null) {
+            throw new IllegalStateException("UTS #46 IDNA processing is not available");
+        }
+        return processor.toAscii(domain, strict);
     }
 
-    /// Returns whether a configured IDNA provider is available.
-    static boolean isAvailable(WebURLFactory.IdnaProvider provider) {
-        return switch (provider) {
-            case AUTOMATIC, JDK -> true;
-            case ICU4J -> ICU_PROCESSOR != null;
+    /// Returns whether a configured IDNA version is available.
+    static boolean isAvailable(WebURLFactory.IdnaVersion version) {
+        return switch (version) {
+            case UTS_46 -> ICU_PROCESSOR != null;
+            case IDNA_2003 -> true;
         };
     }
 
-    /// Selects the processor for a configured provider.
-    private static @Nullable Processor processor(WebURLFactory.IdnaProvider provider) {
-        return switch (provider) {
-            case AUTOMATIC -> ICU_PROCESSOR != null ? ICU_PROCESSOR : JDK_PROCESSOR;
-            case ICU4J -> ICU_PROCESSOR;
-            case JDK -> JDK_PROCESSOR;
+    /// Selects the processor for a configured version.
+    private static @Nullable Processor processor(WebURLFactory.IdnaVersion version) {
+        return switch (version) {
+            case UTS_46 -> ICU_PROCESSOR;
+            case IDNA_2003 -> JDK_PROCESSOR;
         };
     }
 

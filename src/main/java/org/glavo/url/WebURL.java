@@ -38,7 +38,7 @@ import java.net.URL;
 /// The serialized form returned by `href()`, `toString()`, and `toJSON()` is the WHATWG URL serialization.
 /// It is not identical to Java `URI` syntax for all inputs; use `toURI()` to obtain a Java `URI` value.
 ///
-/// Use `WebURLFactory` when URL creation should be configured with an explicit IDNA provider or other factory
+/// Use `WebURLFactory` when URL creation should be configured with an explicit IDNA version or other factory
 /// settings. The static methods on this interface use `WebURLFactory.standard()`.
 @NotNullByDefault
 public sealed interface WebURL permits WebURLImpl {
