@@ -240,39 +240,6 @@ public final class WebURLFactory {
         return (WebURLImpl) Objects.requireNonNull(url, "url");
     }
 
-    /// IDNA processing profile for domain host parsing.
-    ///
-    /// The URL Standard's domain-to-ASCII operation is observable in the serialized hostname for any URL whose
-    /// host contains non-ASCII domain labels or punycode labels. Profile selection affects only domain hosts.
-    /// It does not affect opaque hosts, IPv4 parsing, IPv6 parsing, path parsing, query parsing, or fragment
-    /// parsing.
-    @NotNullByDefault
-    public enum IDNAProfile {
-        /// Uses UTS #46 non-transitional processing.
-        ///
-        /// This is the profile used by the URL Standard and by `WebURL` static parsing methods. It requires the
-        /// optional ICU4J IDNA classes to be visible at runtime when a domain actually needs IDNA processing.
-        /// ASCII domains that do not contain punycode labels use the parser's ASCII fast path and do not load
-        /// ICU4J.
-        UTS_46,
-
-        /// Uses the JDK `java.net.IDN` implementation, which is based on IDNA 2003.
-        ///
-        /// This profile has no runtime dependencies outside `java.base`. It may differ from the URL Standard's
-        /// UTS #46 non-transitional processing for some names, but it is always available on a Java runtime.
-        IDNA_2003;
-
-        /// Returns whether this profile can be used in the current runtime.
-        ///
-        /// `IDNA_2003` is always available. `UTS_46` is available only when the ICU4J IDNA classes can be loaded
-        /// and invoked by this module.
-        ///
-        /// @return `true` if this profile can be selected for full IDNA processing
-        public boolean isAvailable() {
-            return UrlParser.isIDNAProfileAvailable(this);
-        }
-    }
-
     /// A mutable builder for `WebURLFactory`.
     ///
     /// A new builder starts with the same configuration as `standard()`: `IDNAProfile.UTS_46`. Builder

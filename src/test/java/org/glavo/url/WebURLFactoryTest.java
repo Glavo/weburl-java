@@ -34,7 +34,7 @@ public final class WebURLFactoryTest {
         WebURLFactory factory = WebURLFactory.standard();
 
         assertSame(factory, WebURLFactory.standard());
-        assertEquals(WebURLFactory.IDNAProfile.UTS_46, factory.idnaProfile());
+        assertEquals(IDNAProfile.UTS_46, factory.idnaProfile());
         assertEquals(WebURL.of("https://example.com/a").href(), factory.parse("https://example.com/a").href());
         assertFalse(factory.canParse("../relative"));
     }
@@ -76,22 +76,22 @@ public final class WebURLFactoryTest {
     @Test
     public void parsesWithIDNA2003Profile() {
         WebURLFactory factory = WebURLFactory.builder()
-                .idnaProfile(WebURLFactory.IDNAProfile.IDNA_2003)
+                .idnaProfile(IDNAProfile.IDNA_2003)
                 .build();
 
-        assertEquals(WebURLFactory.IDNAProfile.IDNA_2003, factory.idnaProfile());
+        assertEquals(IDNAProfile.IDNA_2003, factory.idnaProfile());
         assertEquals("https://xn--bcher-kva.example/", factory.parse("https://bücher.example/").href());
-        assertTrue(WebURLFactory.IDNAProfile.IDNA_2003.isAvailable());
+        assertTrue(IDNAProfile.IDNA_2003.isAvailable());
     }
 
     /// Tests UTS #46 availability handling.
     @Test
     public void handlesUts46Availability() {
         WebURLFactory factory = WebURLFactory.builder()
-                .idnaProfile(WebURLFactory.IDNAProfile.UTS_46)
+                .idnaProfile(IDNAProfile.UTS_46)
                 .build();
 
-        if (WebURLFactory.IDNAProfile.UTS_46.isAvailable()) {
+        if (IDNAProfile.UTS_46.isAvailable()) {
             assertEquals("https://xn--bcher-kva.example/", factory.parse("https://bücher.example/").href());
         } else {
             assertEquals("https://example.com/", factory.parse("https://example.com/").href());
@@ -103,12 +103,12 @@ public final class WebURLFactoryTest {
     @Test
     public void copiesFactoryConfiguration() {
         WebURLFactory factory = WebURLFactory.builder()
-                .idnaProfile(WebURLFactory.IDNAProfile.IDNA_2003)
+                .idnaProfile(IDNAProfile.IDNA_2003)
                 .build();
 
         WebURLFactory copied = factory.toBuilder().build();
 
-        assertEquals(WebURLFactory.IDNAProfile.IDNA_2003, copied.idnaProfile());
+        assertEquals(IDNAProfile.IDNA_2003, copied.idnaProfile());
         assertFalse(copied.canParse("../c"));
         assertEquals("https://example.net/d",
                 copied.parse("../d", WebURL.of("https://example.net/base/")).href());

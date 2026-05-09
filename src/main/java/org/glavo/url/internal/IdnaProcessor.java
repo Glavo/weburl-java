@@ -15,7 +15,7 @@
  */
 package org.glavo.url.internal;
 
-import org.glavo.url.WebURLFactory;
+import org.glavo.url.IDNAProfile;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,7 @@ final class IdnaProcessor {
     }
 
     /// Converts a domain name to ASCII, returning `null` on failure.
-    static @Nullable String toAscii(String domain, boolean strict, WebURLFactory.IDNAProfile profile) {
+    static @Nullable String toAscii(String domain, boolean strict, IDNAProfile profile) {
         Processor processor = processor(profile);
         if (processor == null) {
             throw new IllegalStateException("UTS #46 IDNA processing is not available");
@@ -47,7 +47,7 @@ final class IdnaProcessor {
     }
 
     /// Returns whether a configured IDNA profile is available.
-    static boolean isAvailable(WebURLFactory.IDNAProfile profile) {
+    static boolean isAvailable(IDNAProfile profile) {
         return switch (profile) {
             case UTS_46 -> ICU_PROCESSOR != null;
             case IDNA_2003 -> true;
@@ -55,7 +55,7 @@ final class IdnaProcessor {
     }
 
     /// Selects the processor for a configured profile.
-    private static @Nullable Processor processor(WebURLFactory.IDNAProfile profile) {
+    private static @Nullable Processor processor(IDNAProfile profile) {
         return switch (profile) {
             case UTS_46 -> ICU_PROCESSOR;
             case IDNA_2003 -> JDK_PROCESSOR;
