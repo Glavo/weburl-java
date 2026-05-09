@@ -20,6 +20,7 @@ import org.glavo.url.internal.WebURLImpl;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Objects;
 
 /// A reusable, immutable factory for WHATWG URLs.
@@ -30,21 +31,30 @@ import java.util.Objects;
 ///
 /// A factory does not store a base URL. `parseURL(String)`, `tryParseURL(String)`, and
 /// `canParseURL(String)` parse only absolute URL inputs. Overloads that accept a base URL use the supplied
-/// base only for that call.
+/// base only for that call. `parseAddress(String)`, `tryParseAddress(String)`, and
+/// `canParseAddress(String)` additionally accept browser address bar style URL inputs such as bare domain
+/// names and host-port pairs.
 ///
 /// The factory object is immutable and thread-safe. Configuration methods whose names start with `with`
 /// return either this factory or a new factory with the requested setting.
 @NotNullByDefault
 public final class WebURLFactory {
+    /// The default scheme used for browser address inputs without an explicit scheme.
+    private static final String DEFAULT_ADDRESS_SCHEME = "https";
+
     /// The default factory used by `WebURL` static parsing methods.
-    private static final WebURLFactory DEFAULT = new WebURLFactory(IDNAProfile.defaultProfile());
+    private static final WebURLFactory DEFAULT =
+            new WebURLFactory(IDNAProfile.defaultProfile(), DEFAULT_ADDRESS_SCHEME);
 
     /// The configured IDNA profile.
     private final IDNAProfile idnaProfile;
+    /// The default scheme used when parsing browser address inputs without an explicit scheme.
+    private final String addressDefaultScheme;
 
     /// Creates a factory from validated factory settings.
-    private WebURLFactory(IDNAProfile idnaProfile) {
+    private WebURLFactory(IDNAProfile idnaProfile, String addressDefaultScheme) {
         this.idnaProfile = idnaProfile;
+        this.addressDefaultScheme = addressDefaultScheme;
     }
 
     /// Returns the default URL factory.
@@ -67,6 +77,17 @@ public final class WebURLFactory {
         return idnaProfile;
     }
 
+    /// Returns the default scheme used for browser address inputs.
+    ///
+    /// This scheme is prepended when `parseAddress(String)` accepts a browser address input that does not
+    /// already contain an explicit URL scheme, for example `www.example.com` or `localhost:8080`. The returned
+    /// scheme is normalized to lower case and does not include a trailing colon.
+    ///
+    /// @return the default browser address scheme
+    public String addressDefaultScheme() {
+        return addressDefaultScheme;
+    }
+
     /// Returns a factory with the supplied IDNA profile.
     ///
     /// If the supplied profile is the same as this factory's profile, this method returns this factory.
@@ -82,7 +103,22 @@ public final class WebURLFactory {
         if (!newProfile.isAvailable()) {
             throw new UnsupportedOperationException("IDNA profile is not available: " + newProfile);
         }
-        return this.idnaProfile == newProfile ? this : new WebURLFactory(newProfile);
+        return this.idnaProfile == newProfile ? this : new WebURLFactory(newProfile, addressDefaultScheme);
+    }
+
+    /// Returns a factory with the supplied default browser address scheme.
+    ///
+    /// The scheme is used by `parseAddress(String)`, `tryParseAddress(String)`, and
+    /// `canParseAddress(String)` when a browser address input omits an explicit scheme. The supplied value
+    /// must be a valid URL scheme name. A trailing colon is accepted but is not stored. The value is normalized
+    /// to lower case.
+    ///
+    /// @param scheme the default browser address scheme, with or without a trailing colon
+    /// @return a factory configured with the supplied default browser address scheme
+    /// @throws IllegalArgumentException when the supplied value is not a valid URL scheme
+    public WebURLFactory withAddressDefaultScheme(String scheme) {
+        String newScheme = normalizeScheme(scheme);
+        return addressDefaultScheme.equals(newScheme) ? this : new WebURLFactory(idnaProfile, newScheme);
     }
 
     /// Parses an input string and returns the parsed URL.
@@ -201,6 +237,56 @@ public final class WebURLFactory {
         return tryParseURL(input, base) != null;
     }
 
+    /// Parses a browser address input and returns the parsed URL.
+    ///
+    /// This method first recognizes address-bar style URL inputs that are not absolute URL strings, such as
+    /// `www.example.com`, `example.com/path`, `//example.com/path`, `localhost:8080`, `127.0.0.1:3000`, and
+    /// `[::1]:8080`. Such inputs are converted to absolute URL strings by prepending
+    /// `addressDefaultScheme()`. Inputs with an explicit URL scheme, such as `https://example.com/`,
+    /// `data:text/plain,hi`, or `mailto:user@example.com`, are parsed as standard URLs.
+    ///
+    /// This method does not implement search fallback. Inputs that are neither URL strings nor recognized
+    /// browser address inputs fail instead of being interpreted as search terms.
+    ///
+    /// @param input the browser address input string
+    /// @return the parsed URL
+    /// @throws WebURLParseException when parsing fails with a known URL validation error
+    /// @throws IllegalArgumentException when parsing fails without a specific public validation error
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
+    public WebURL parseAddress(String input) {
+        Objects.requireNonNull(input, "input");
+        String addressInput = toAddressUrlInput(input);
+        if (addressInput != null) {
+            return parseRequired(addressInput, null, "Invalid address: " + input);
+        }
+        return parseRequired(input, null, "Invalid address: " + input);
+    }
+
+    /// Parses a browser address input and returns `null` on failure.
+    ///
+    /// This method has the same parser behavior as `parseAddress(String)`, except failures are represented by
+    /// `null` instead of an exception.
+    ///
+    /// @param input the browser address input string
+    /// @return the parsed URL, or `null` if parsing fails
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
+    public @Nullable WebURL tryParseAddress(String input) {
+        Objects.requireNonNull(input, "input");
+        String addressInput = toAddressUrlInput(input);
+        return parseNullable(addressInput == null ? input : addressInput, null);
+    }
+
+    /// Returns whether a browser address input can be parsed.
+    ///
+    /// This method has the same parser behavior as `parseAddress(String)`, except it returns a boolean result.
+    ///
+    /// @param input the browser address input string
+    /// @return `true` if parsing succeeds, otherwise `false`
+    /// @throws IllegalStateException when this factory requires an unavailable IDNA profile implementation
+    public boolean canParseAddress(String input) {
+        return tryParseAddress(input) != null;
+    }
+
     /// Parses an input string and throws when parsing fails.
     private WebURL parseRequired(String input, @Nullable WebURLImpl base, String message) {
         Objects.requireNonNull(input, "input");
@@ -234,6 +320,156 @@ public final class WebURLFactory {
     /// Parses a base URL string and returns `null` when parsing fails.
     private @Nullable WebURLImpl parseBaseNullable(String base) {
         return parseNullable(base, null);
+    }
+
+    /// Converts a browser address input to an absolute URL input, or returns `null` for standard URL input.
+    private @Nullable String toAddressUrlInput(String input) {
+        String text = removeTabsAndNewlines(trimControlChars(input));
+        if (text.isEmpty()) {
+            return null;
+        }
+        if (text.startsWith("//") || text.startsWith("\\\\")) {
+            return addressDefaultScheme + ":" + text;
+        }
+        if (text.charAt(0) == '/' || text.charAt(0) == '\\' || text.charAt(0) == '?' || text.charAt(0) == '#') {
+            return null;
+        }
+
+        int authorityEnd = firstAddressAuthorityDelimiter(text);
+        String authority = text.substring(0, authorityEnd);
+        int schemeEnd = validSchemeEnd(authority);
+        if (schemeEnd >= 0 && !isAddressHost(authority.substring(0, schemeEnd))) {
+            return null;
+        }
+        return isAddressAuthority(authority) ? addressDefaultScheme + "://" + text : null;
+    }
+
+    /// Returns whether a string is a browser-address authority.
+    private static boolean isAddressAuthority(String authority) {
+        if (authority.isEmpty() || containsAddressAuthoritySpace(authority)) {
+            return false;
+        }
+        int at = authority.lastIndexOf('@');
+        String hostPort = at < 0 ? authority : authority.substring(at + 1);
+        if (hostPort.isEmpty()) {
+            return false;
+        }
+        return isAddressHost(extractAddressHost(hostPort));
+    }
+
+    /// Extracts the host portion from an address authority tail.
+    private static String extractAddressHost(String hostPort) {
+        if (hostPort.startsWith("[")) {
+            int end = hostPort.indexOf(']');
+            return end < 0 ? hostPort : hostPort.substring(0, end + 1);
+        }
+        int colon = hostPort.lastIndexOf(':');
+        return colon < 0 ? hostPort : hostPort.substring(0, colon);
+    }
+
+    /// Returns whether a host string is recognized as a browser address host.
+    private static boolean isAddressHost(String host) {
+        return host.startsWith("[")
+                || host.equalsIgnoreCase("localhost")
+                || containsDomainDot(host);
+    }
+
+    /// Returns whether a string contains a domain-label separator.
+    private static boolean containsDomainDot(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '.' || c == '\u3002' || c == '\uff0e' || c == '\uff61') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Returns whether an address authority contains an ASCII space or control character.
+    private static boolean containsAddressAuthoritySpace(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (value.charAt(i) <= 0x20) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Returns the first delimiter after the address authority.
+    private static int firstAddressAuthorityDelimiter(String input) {
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c == '/' || c == '\\' || c == '?' || c == '#') {
+                return i;
+            }
+        }
+        return input.length();
+    }
+
+    /// Returns the end index of a valid scheme in a string prefix, or `-1` when absent.
+    private static int validSchemeEnd(String value) {
+        int colon = value.indexOf(':');
+        if (colon <= 0 || !isAsciiAlpha(value.charAt(0))) {
+            return -1;
+        }
+        for (int i = 1; i < colon; i++) {
+            char c = value.charAt(i);
+            if (!isAsciiAlphanumeric(c) && c != '+' && c != '-' && c != '.') {
+                return -1;
+            }
+        }
+        return colon;
+    }
+
+    /// Normalizes and validates a URL scheme.
+    private static String normalizeScheme(String scheme) {
+        Objects.requireNonNull(scheme, "scheme");
+        int end = scheme.endsWith(":") ? scheme.length() - 1 : scheme.length();
+        if (end <= 0 || !isAsciiAlpha(scheme.charAt(0))) {
+            throw new IllegalArgumentException("Invalid URL scheme: " + scheme);
+        }
+        for (int i = 1; i < end; i++) {
+            char c = scheme.charAt(i);
+            if (!isAsciiAlphanumeric(c) && c != '+' && c != '-' && c != '.') {
+                throw new IllegalArgumentException("Invalid URL scheme: " + scheme);
+            }
+        }
+        return scheme.substring(0, end).toLowerCase(Locale.ROOT);
+    }
+
+    /// Trims leading and trailing C0 controls and spaces.
+    private static String trimControlChars(String string) {
+        int start = 0;
+        int end = string.length();
+        while (start < end && string.charAt(start) <= 0x20) {
+            start++;
+        }
+        while (end > start && string.charAt(end - 1) <= 0x20) {
+            end--;
+        }
+        return string.substring(start, end);
+    }
+
+    /// Removes ASCII tabs and newlines.
+    private static String removeTabsAndNewlines(String value) {
+        StringBuilder output = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c != '\t' && c != '\n' && c != '\r') {
+                output.append(c);
+            }
+        }
+        return output.toString();
+    }
+
+    /// Returns whether a character is an ASCII letter.
+    private static boolean isAsciiAlpha(char c) {
+        return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z';
+    }
+
+    /// Returns whether a character is an ASCII letter or digit.
+    private static boolean isAsciiAlphanumeric(char c) {
+        return isAsciiAlpha(c) || c >= '0' && c <= '9';
     }
 
     /// Returns the implementation object for a `WebURL`.

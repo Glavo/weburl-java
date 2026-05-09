@@ -36,8 +36,10 @@ public final class WebURLFactoryTest {
 
         assertSame(factory, WebURLFactory.defaultFactory());
         assertEquals(IDNAProfile.defaultProfile(), factory.idnaProfile());
+        assertEquals("https", factory.addressDefaultScheme());
         assertSame(factory, factory.withIDNAProfile(IDNAProfile.defaultProfile()));
         assertEquals(WebURL.parseURL("https://example.com/a").href(), factory.parseURL("https://example.com/a").href());
+        assertEquals(WebURL.parseAddress("example.com").href(), factory.parseAddress("example.com").href());
         assertFalse(factory.canParseURL("../relative"));
     }
 
@@ -73,6 +75,40 @@ public final class WebURLFactoryTest {
 
         assertEquals("https://example.org/x/z", factory.parseURL("../z", base).href());
         assertEquals("https://example.net/z", factory.parseURL("/z", "https://example.net/base").href());
+    }
+
+    /// Tests browser address parsing.
+    @Test
+    public void parsesBrowserAddresses() {
+        WebURLFactory factory = WebURLFactory.defaultFactory();
+
+        assertEquals("https://www.glavo.site/", factory.parseAddress("www.glavo.site").href());
+        assertEquals("https://www.glavo.site/path?q=1#f", factory.parseAddress("www.glavo.site/path?q=1#f").href());
+        assertEquals("https://www.glavo.site/path", factory.parseAddress("//www.glavo.site/path").href());
+        assertEquals("https://localhost:8080/path", factory.parseAddress("localhost:8080/path").href());
+        assertEquals("https://127.0.0.1:3000/", factory.parseAddress("127.0.0.1:3000").href());
+        assertEquals("https://[::1]:8080/", factory.parseAddress("[::1]:8080").href());
+        assertEquals("https://xn--r8jz45g.xn--zckzah/",
+                factory.parseAddress("例え.テスト").href());
+        assertEquals("data:text/plain,hi", factory.parseAddress("data:text/plain,hi").href());
+
+        assertFalse(factory.canParseURL("www.glavo.site"));
+        assertTrue(factory.canParseAddress("www.glavo.site"));
+        assertNull(factory.tryParseAddress("not a url"));
+        assertThrows(WebURLParseException.PortInvalid.class,
+                () -> factory.parseAddress("www.glavo.site:abc"));
+    }
+
+    /// Tests browser address default scheme configuration.
+    @Test
+    public void configuresAddressDefaultScheme() {
+        WebURLFactory factory = WebURLFactory.defaultFactory().withAddressDefaultScheme("HTTP:");
+
+        assertEquals("http", factory.addressDefaultScheme());
+        assertSame(factory, factory.withAddressDefaultScheme("http"));
+        assertEquals("http://www.glavo.site/", factory.parseAddress("www.glavo.site").href());
+        assertThrows(IllegalArgumentException.class,
+                () -> factory.withAddressDefaultScheme("1https"));
     }
 
     /// Tests parseURL and canParseURL failure handling through a factory.

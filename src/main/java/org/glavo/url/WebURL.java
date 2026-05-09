@@ -141,6 +141,45 @@ public sealed interface WebURL permits WebURLImpl {
         return WebURLFactory.defaultFactory().canParseURL(input, base);
     }
 
+    /// Parses a browser address input and returns the parsed URL.
+    ///
+    /// This method uses `WebURLFactory.defaultFactory().parseAddress(input)`. It accepts standard absolute
+    /// URL strings and browser address bar style URL inputs such as bare domain names, `//`-prefixed
+    /// authorities, `localhost` with a port, IP addresses, and bracketed IPv6 addresses. Inputs without an
+    /// explicit scheme are completed with the default factory's address scheme.
+    ///
+    /// This method does not implement search fallback. Inputs that are neither URL strings nor recognized
+    /// browser address inputs fail instead of being interpreted as search terms.
+    ///
+    /// @param input the browser address input string
+    /// @return the parsed URL
+    /// @throws WebURLParseException when parsing fails with a known URL validation error
+    /// @throws IllegalArgumentException when parsing fails without a specific public validation error
+    static WebURL parseAddress(String input) {
+        return WebURLFactory.defaultFactory().parseAddress(input);
+    }
+
+    /// Parses a browser address input and returns `null` on failure.
+    ///
+    /// This method has the same parser behavior as `parseAddress(String)`, except failures are represented by
+    /// `null` instead of an exception.
+    ///
+    /// @param input the browser address input string
+    /// @return the parsed URL, or `null` if parsing fails
+    static @Nullable WebURL tryParseAddress(String input) {
+        return WebURLFactory.defaultFactory().tryParseAddress(input);
+    }
+
+    /// Returns whether a browser address input can be parsed.
+    ///
+    /// This method has the same parser behavior as `parseAddress(String)`, except it returns a boolean result.
+    ///
+    /// @param input the browser address input string
+    /// @return `true` if parsing succeeds, otherwise `false`
+    static boolean canParseAddress(String input) {
+        return WebURLFactory.defaultFactory().canParseAddress(input);
+    }
+
     /// Returns the complete serialized URL.
     ///
     /// The returned string is the WHATWG URL serialization, including the scheme, path, query, and fragment.
