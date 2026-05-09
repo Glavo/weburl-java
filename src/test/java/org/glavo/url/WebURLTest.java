@@ -102,10 +102,14 @@ public final class WebURLTest {
         assertSame(url.href(), url.href());
         assertSame(url.origin(), url.origin());
         assertSame(url.getScheme(), url.getScheme());
+        assertSame(url.getUsername(), url.getUsername());
         assertSame(url.getRawUsername(), url.getRawUsername());
         assertSame(url.getRawUsernameOrEmpty(), url.getRawUsernameOrEmpty());
+        assertSame(url.getPassword(), url.getPassword());
         assertSame(url.getRawPassword(), url.getRawPassword());
         assertSame(url.getRawPasswordOrEmpty(), url.getRawPasswordOrEmpty());
+        assertSame(url.getUserInfo(), url.getUserInfo());
+        assertSame(url.getRawUserInfo(), url.getRawUserInfo());
         assertSame(url.getAuthority(), url.getAuthority());
         assertSame(url.getRawAuthority(), url.getRawAuthority());
         assertSame(url.getHost(), url.getHost());
@@ -126,10 +130,14 @@ public final class WebURLTest {
         WebURL url = WebURL.parseURL("https://user:pass@example.com:8080/a%2Fb?x=a%26b#frag%23ment");
 
         assertEquals("https", url.getScheme());
+        assertEquals("user", url.getUsername());
         assertEquals("user", url.getRawUsername());
         assertEquals("user", url.getRawUsernameOrEmpty());
+        assertEquals("pass", url.getPassword());
         assertEquals("pass", url.getRawPassword());
         assertEquals("pass", url.getRawPasswordOrEmpty());
+        assertEquals("user:pass", url.getUserInfo());
+        assertEquals("user:pass", url.getRawUserInfo());
         assertEquals("user:pass@example.com:8080", url.getAuthority());
         assertEquals("user:pass@example.com:8080", url.getRawAuthority());
         assertEquals("example.com", url.getHost());
@@ -141,10 +149,14 @@ public final class WebURLTest {
         assertEquals("frag%23ment", url.getRawFragmentOrEmpty());
 
         WebURL absentComponents = WebURL.parseURL("https://example.com/path");
+        assertNull(absentComponents.getUsername());
         assertNull(absentComponents.getRawUsername());
         assertEquals("", absentComponents.getRawUsernameOrEmpty());
+        assertNull(absentComponents.getPassword());
         assertNull(absentComponents.getRawPassword());
         assertEquals("", absentComponents.getRawPasswordOrEmpty());
+        assertNull(absentComponents.getUserInfo());
+        assertNull(absentComponents.getRawUserInfo());
         assertEquals("example.com", absentComponents.getAuthority());
         assertEquals("example.com", absentComponents.getRawAuthority());
         assertEquals("example.com", absentComponents.getHost());
@@ -160,14 +172,22 @@ public final class WebURLTest {
         assertEquals("", WebURL.parseURL("https://example.com/path#").getRawFragment());
 
         WebURL emptyUsername = WebURL.parseURL("https://:pass@example.com/");
+        assertEquals("", emptyUsername.getUsername());
         assertEquals("", emptyUsername.getRawUsername());
+        assertEquals("pass", emptyUsername.getPassword());
         assertEquals("pass", emptyUsername.getRawPassword());
+        assertEquals(":pass", emptyUsername.getUserInfo());
+        assertEquals(":pass", emptyUsername.getRawUserInfo());
 
         WebURL emptyAuthority = WebURL.parseURL("file:///C:/demo");
+        assertNull(emptyAuthority.getUserInfo());
+        assertNull(emptyAuthority.getRawUserInfo());
         assertEquals("", emptyAuthority.getAuthority());
         assertEquals("", emptyAuthority.getRawAuthority());
 
         WebURL noAuthority = WebURL.parseURL("data:text/plain,hi");
+        assertNull(noAuthority.getUserInfo());
+        assertNull(noAuthority.getRawUserInfo());
         assertNull(noAuthority.getAuthority());
         assertNull(noAuthority.getRawAuthority());
     }
@@ -183,6 +203,12 @@ public final class WebURLTest {
         assertEquals("frag#ment x", url.getFragment());
 
         WebURL credentials = WebURL.parseURL("https://u%20ser:p%40ss@example.com/");
+        assertEquals("u%20ser", credentials.getRawUsername());
+        assertEquals("u ser", credentials.getUsername());
+        assertEquals("p%40ss", credentials.getRawPassword());
+        assertEquals("p@ss", credentials.getPassword());
+        assertEquals("u%20ser:p%40ss", credentials.getRawUserInfo());
+        assertEquals("u ser:p@ss", credentials.getUserInfo());
         assertEquals("u%20ser:p%40ss@example.com", credentials.getRawAuthority());
         assertEquals("u ser:p@ss@example.com", credentials.getAuthority());
 

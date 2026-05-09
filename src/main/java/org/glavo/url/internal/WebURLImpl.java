@@ -65,10 +65,18 @@ public final class WebURLImpl implements WebURL {
     private final boolean pathPrefix;
     /// Cached origin string, or `null` until requested.
     private @Nullable String origin;
+    /// Cached decoded username string, or `null` until requested or when absent.
+    private @Nullable String username;
     /// Cached raw username string, or `null` until requested.
     private @Nullable String rawUsername;
+    /// Cached decoded password string, or `null` until requested or when absent.
+    private @Nullable String password;
     /// Cached raw password string, or `null` until requested.
     private @Nullable String rawPassword;
+    /// Cached decoded user-info string, or `null` until requested or when absent.
+    private @Nullable String userInfo;
+    /// Cached raw user-info string, or `null` until requested or when absent.
+    private @Nullable String rawUserInfo;
     /// Cached decoded authority string, or `null` until requested or when absent.
     private @Nullable String authority;
     /// Cached raw authority string, or `null` until requested or when absent.
@@ -236,6 +244,22 @@ public final class WebURLImpl implements WebURL {
         return record.scheme;
     }
 
+    /// Returns the decoded username, or `null` when absent.
+    @Override
+    public @Nullable String getUsername() {
+        @Nullable String rawValue = getRawUsername();
+        if (rawValue == null) {
+            return null;
+        }
+
+        @Nullable String value = username;
+        if (value == null) {
+            value = PercentEncoding.percentDecodeUtf8(rawValue);
+            username = value;
+        }
+        return value;
+    }
+
     /// Returns the raw username, or the empty string when absent.
     @Override
     public String getRawUsernameOrEmpty() {
@@ -254,6 +278,22 @@ public final class WebURLImpl implements WebURL {
         return usernameStart < 0 ? null : getRawUsernameOrEmpty();
     }
 
+    /// Returns the decoded password, or `null` when absent.
+    @Override
+    public @Nullable String getPassword() {
+        @Nullable String rawValue = getRawPassword();
+        if (rawValue == null) {
+            return null;
+        }
+
+        @Nullable String value = password;
+        if (value == null) {
+            value = PercentEncoding.percentDecodeUtf8(rawValue);
+            password = value;
+        }
+        return value;
+    }
+
     /// Returns the raw password, or the empty string when absent.
     @Override
     public String getRawPasswordOrEmpty() {
@@ -270,6 +310,37 @@ public final class WebURLImpl implements WebURL {
     @Override
     public @Nullable String getRawPassword() {
         return passwordStart < 0 ? null : getRawPasswordOrEmpty();
+    }
+
+    /// Returns the decoded user-info, or `null` when absent.
+    @Override
+    public @Nullable String getUserInfo() {
+        @Nullable String rawValue = getRawUserInfo();
+        if (rawValue == null) {
+            return null;
+        }
+
+        @Nullable String value = userInfo;
+        if (value == null) {
+            value = PercentEncoding.percentDecodeUtf8(rawValue);
+            userInfo = value;
+        }
+        return value;
+    }
+
+    /// Returns the raw user-info, or `null` when absent.
+    @Override
+    public @Nullable String getRawUserInfo() {
+        if (usernameStart < 0) {
+            return null;
+        }
+
+        @Nullable String value = rawUserInfo;
+        if (value == null) {
+            value = href().substring(usernameStart, hostStart - 1);
+            rawUserInfo = value;
+        }
+        return value;
     }
 
     /// Returns the decoded authority, or `null` when absent.

@@ -211,6 +211,19 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the scheme component without the trailing colon
     String getScheme();
 
+    /// Returns the decoded username component.
+    ///
+    /// This method is the Java `URI`-style decoded view of the URL username. It is equivalent to
+    /// {@link #getRawUsername()} with valid percent triplets decoded as UTF-8. It does not apply
+    /// `application/x-www-form-urlencoded` rules and therefore does not treat plus (`+`) as a space.
+    ///
+    /// The result is `null` when the URL has no serialized credentials. When the URL has credentials with an
+    /// empty username, the result is the empty string. Percent escapes that are invalid or incomplete are left
+    /// unchanged.
+    ///
+    /// @return the decoded username component, or `null` when absent
+    @Nullable String getUsername();
+
     /// Returns the raw username component.
     ///
     /// This method exposes the normalized, percent-encoded username stored in the URL record. It does not
@@ -232,6 +245,18 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the raw username component, or the empty string when absent
     String getRawUsernameOrEmpty();
 
+    /// Returns the decoded password component.
+    ///
+    /// This method is the Java `URI`-style decoded view of the URL password. It is equivalent to
+    /// {@link #getRawPassword()} with valid percent triplets decoded as UTF-8. It does not apply
+    /// `application/x-www-form-urlencoded` rules and therefore does not treat plus (`+`) as a space.
+    ///
+    /// The result is `null` when the URL has no password component. Percent escapes that are invalid or
+    /// incomplete are left unchanged.
+    ///
+    /// @return the decoded password component, or `null` when absent
+    @Nullable String getPassword();
+
     /// Returns the raw password component.
     ///
     /// This method exposes the normalized, percent-encoded password stored in the URL record. It does not
@@ -251,6 +276,36 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// @return the raw password component, or the empty string when absent
     String getRawPasswordOrEmpty();
+
+    /// Returns the decoded user-info component.
+    ///
+    /// This method is the Java `URI`-style getter for the decoded URL user-info. It is equivalent to
+    /// {@link #getRawUserInfo()} with valid percent triplets decoded as UTF-8. It does not include the trailing
+    /// at-sign (`@`) that separates user-info from the host.
+    ///
+    /// User-info is present when the URL serialization contains credentials. When present, it consists of the
+    /// username and, if a password component is serialized, a colon (`:`) followed by the password. Percent
+    /// escapes that are invalid or incomplete are left unchanged.
+    ///
+    /// The result is `null` when the URL has no serialized credentials.
+    ///
+    /// @return the decoded user-info component, or `null` when absent
+    @Nullable String getUserInfo();
+
+    /// Returns the raw user-info component.
+    ///
+    /// This method is the Java `URI`-style getter for the URL user-info with percent-encoding preserved. It
+    /// returns the normalized user-info serialization without the trailing at-sign (`@`). The returned value is
+    /// not necessarily a substring of the original input because URL parsing may normalize, percent-encode, or
+    /// otherwise rewrite credentials.
+    ///
+    /// User-info is present when the URL serialization contains credentials. When present, it consists of the
+    /// raw username and, if a password component is serialized, a colon (`:`) followed by the raw password.
+    ///
+    /// The result is `null` when the URL has no serialized credentials.
+    ///
+    /// @return the raw user-info component, or `null` when absent
+    @Nullable String getRawUserInfo();
 
     /// Returns the decoded authority component.
     ///
