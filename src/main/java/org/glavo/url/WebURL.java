@@ -33,9 +33,6 @@ import java.net.URL;
 /// The serialized form returned by `href()`, `toString()`, and `toJSON()` is the WHATWG URL serialization.
 /// It is not identical to Java `URI` syntax for all inputs; use `toURI()` to obtain a Java `URI` value.
 ///
-/// Use `WebURLFactory` when URL creation should be configured with an explicit IDNA profile or other factory
-/// settings. The static methods on this interface use `WebURLFactory.defaultFactory()`.
-///
 /// Equality, hash code, and natural ordering are defined by the complete WHATWG URL serialization returned by
 /// `href()`. Two URL objects are equal when their serialized URLs are equal, and `compareTo(WebURL)` orders
 /// URLs by the lexicographic order of those serialized strings.
@@ -49,7 +46,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails
     static WebURL parseURL(String input) {
-        return WebURLFactory.defaultFactory().parseURL(input);
+        return WebURLParsing.parseURL(input);
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
@@ -61,7 +58,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the parsed URL
     /// @throws WebURLParseException when either input fails
     static WebURL parseURL(String input, String base) {
-        return WebURLFactory.defaultFactory().parseURL(input, base);
+        return WebURLParsing.parseURL(input, base);
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
@@ -73,7 +70,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails
     static WebURL parseURL(String input, WebURL base) {
-        return WebURLFactory.defaultFactory().parseURL(input, base);
+        return WebURLParsing.parseURL(input, base);
     }
 
     /// Parses an absolute input string and returns `null` on failure.
@@ -84,7 +81,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if parsing fails
     static @Nullable WebURL tryParseURL(String input) {
-        return WebURLFactory.defaultFactory().tryParseURL(input);
+        return WebURLParsing.tryParseURL(input);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
@@ -96,7 +93,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param base the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
     static @Nullable WebURL tryParseURL(String input, String base) {
-        return WebURLFactory.defaultFactory().tryParseURL(input, base);
+        return WebURLParsing.tryParseURL(input, base);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
@@ -108,7 +105,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param base the base URL
     /// @return the parsed URL, or `null` if the input cannot be parsed against the base
     static @Nullable WebURL tryParseURL(String input, WebURL base) {
-        return WebURLFactory.defaultFactory().tryParseURL(input, base);
+        return WebURLParsing.tryParseURL(input, base);
     }
 
     /// Returns whether an input string can be parsed as an absolute URL.
@@ -116,7 +113,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param input the URL input string
     /// @return `true` if parsing succeeds, otherwise `false`
     static boolean canParseURL(String input) {
-        return WebURLFactory.defaultFactory().canParseURL(input);
+        return WebURLParsing.canParseURL(input);
     }
 
     /// Returns whether an input string can be parsed against a base URL string.
@@ -125,7 +122,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param base the base URL string
     /// @return `true` if the base parses and the input parses against it, otherwise `false`
     static boolean canParseURL(String input, String base) {
-        return WebURLFactory.defaultFactory().canParseURL(input, base);
+        return WebURLParsing.canParseURL(input, base);
     }
 
     /// Returns whether an input string can be parsed against a base URL.
@@ -134,15 +131,14 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param base the base URL
     /// @return `true` if the input parses against the base, otherwise `false`
     static boolean canParseURL(String input, WebURL base) {
-        return WebURLFactory.defaultFactory().canParseURL(input, base);
+        return WebURLParsing.canParseURL(input, base);
     }
 
     /// Parses a browser address input and returns the parsed URL.
     ///
-    /// This method uses `WebURLFactory.defaultFactory().parseAddress(input)`. It accepts standard absolute
-    /// URL strings and browser address bar style URL inputs such as bare domain names, `//`-prefixed
-    /// authorities, `localhost` with a port, IP addresses, and bracketed IPv6 addresses. Inputs without an
-    /// explicit scheme are completed with `https`.
+    /// This method accepts standard absolute URL strings and browser address bar style URL inputs such as bare
+    /// domain names, `//`-prefixed authorities, `localhost` with a port, IP addresses, and bracketed IPv6
+    /// addresses. Inputs without an explicit scheme are completed with `https`.
     ///
     /// This method does not implement search fallback. Inputs that are neither URL strings nor recognized
     /// browser address inputs fail instead of being interpreted as search terms.
@@ -151,7 +147,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails
     static WebURL parseAddress(String input) {
-        return WebURLFactory.defaultFactory().parseAddress(input);
+        return WebURLParsing.parseAddress(input);
     }
 
     /// Parses a browser address input and returns `null` on failure.
@@ -162,7 +158,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param input the browser address input string
     /// @return the parsed URL, or `null` if parsing fails
     static @Nullable WebURL tryParseAddress(String input) {
-        return WebURLFactory.defaultFactory().tryParseAddress(input);
+        return WebURLParsing.tryParseAddress(input);
     }
 
     /// Returns whether a browser address input can be parsed.
@@ -172,7 +168,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param input the browser address input string
     /// @return `true` if parsing succeeds, otherwise `false`
     static boolean canParseAddress(String input) {
-        return WebURLFactory.defaultFactory().canParseAddress(input);
+        return WebURLParsing.canParseAddress(input);
     }
 
     /// Returns the complete serialized URL.
