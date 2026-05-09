@@ -90,6 +90,26 @@ public final class WebURLTest {
         assertSame(ipv6, WebURL.parseURL(ipv6).href());
     }
 
+    /// Tests that repeated string getters return cached strings.
+    @Test
+    public void cachesStringGetters() {
+        WebURL url = WebURL.parseURL("https://user:pass@example.com:8080/a/b?x=1#f");
+
+        assertSame(url.href(), url.href());
+        assertSame(url.origin(), url.origin());
+        assertSame(url.scheme(), url.scheme());
+        assertSame(url.protocol(), url.protocol());
+        assertSame(url.username(), url.username());
+        assertSame(url.password(), url.password());
+        assertSame(url.host(), url.host());
+        assertSame(url.hostname(), url.hostname());
+        assertSame(url.port(), url.port());
+        assertSame(url.pathname(), url.pathname());
+        assertSame(url.search(), url.search());
+        assertSame(url.hash(), url.hash());
+        assertSame(url.toRFC2396String(), url.toRFC2396String());
+    }
+
     /// Tests URL getters and setters.
     @Test
     public void updatesComponentsWithSetters() {
