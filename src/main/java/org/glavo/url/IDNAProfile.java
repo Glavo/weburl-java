@@ -15,7 +15,7 @@
  */
 package org.glavo.url;
 
-import org.glavo.url.internal.UrlParser;
+import org.glavo.url.internal.IDNAProcessor;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /// IDNA processing profile for domain host parsing.
@@ -57,6 +57,6 @@ public enum IDNAProfile {
     ///
     /// @return `true` if this profile can be selected for full IDNA processing
     public boolean isAvailable() {
-        return UrlParser.isIDNAProfileAvailable(this);
+        return IDNAProcessor.isAvailable(this);
     }
 }

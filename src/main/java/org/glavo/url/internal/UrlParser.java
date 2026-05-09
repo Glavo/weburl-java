@@ -87,11 +87,6 @@ public final class UrlParser {
         return stateMachine.toUrl();
     }
 
-    /// Returns whether a configured IDNA profile is available.
-    public static boolean isIDNAProfileAvailable(IDNAProfile profile) {
-        return IdnaProcessor.isAvailable(profile);
-    }
-
     /// Serializes a URL.
     public static String serializeUrl(WebURLImpl url) {
         return serializeUrl(url, false);
@@ -273,7 +268,7 @@ public final class UrlParser {
             return result;
         }
 
-        String result = IdnaProcessor.toAscii(domain, strict, idnaProfile);
+        String result = IDNAProcessor.toAscii(domain, strict, idnaProfile);
         if (result == null) {
             throw new WebURLParseException.DomainToASCII();
         }

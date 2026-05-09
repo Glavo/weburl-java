@@ -27,14 +27,22 @@ import java.util.Locale;
 
 /// Converts Unicode domain names to ASCII using the configured IDNA profile.
 @NotNullByDefault
-final class IdnaProcessor {
+public final class IDNAProcessor {
     /// The JDK `java.net.IDN` processor.
     private static final Processor JDK_PROCESSOR = new JdkProcessor();
     /// The ICU4J processor, or `null` when ICU4J is not available.
     private static final @Nullable Processor ICU_PROCESSOR = IcuProcessor.tryCreate();
 
     /// Creates no instances.
-    private IdnaProcessor() {
+    private IDNAProcessor() {
+    }
+
+    /// Returns whether a configured IDNA profile is available.
+    public static boolean isAvailable(IDNAProfile profile) {
+        return switch (profile) {
+            case UTS_46 -> ICU_PROCESSOR != null;
+            case IDNA_2003 -> true;
+        };
     }
 
     /// Converts a domain name to ASCII, returning `null` on failure.
@@ -44,14 +52,6 @@ final class IdnaProcessor {
             throw new IllegalStateException("UTS #46 IDNA processing is not available");
         }
         return processor.toAscii(domain, strict);
-    }
-
-    /// Returns whether a configured IDNA profile is available.
-    static boolean isAvailable(IDNAProfile profile) {
-        return switch (profile) {
-            case UTS_46 -> ICU_PROCESSOR != null;
-            case IDNA_2003 -> true;
-        };
     }
 
     /// Selects the processor for a configured profile.
