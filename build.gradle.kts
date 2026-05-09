@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.sourceSets
+
 plugins {
     id("java-library")
     id("jacoco")
@@ -15,10 +17,29 @@ repositories {
     mavenCentral()
 }
 
+val mainSourceSet = sourceSets["main"]
+val benchmarkSourceSet = sourceSets.create("benchmark") {
+    java.srcDir("src/benchmark/java")
+    resources.srcDir("src/benchmark/resources")
+
+    compileClasspath += mainSourceSet.output
+    runtimeClasspath += output + compileClasspath
+}
+
 configurations {
     testImplementation {
         extendsFrom(configurations.compileOnly.get())
     }
+}
+
+configurations.named(benchmarkSourceSet.implementationConfigurationName) {
+    extendsFrom(configurations["implementation"])
+}
+configurations.named(benchmarkSourceSet.compileOnlyConfigurationName) {
+    extendsFrom(configurations["compileOnly"])
+}
+configurations.named(benchmarkSourceSet.runtimeOnlyConfigurationName) {
+    extendsFrom(configurations["runtimeOnly"])
 }
 
 dependencies {
@@ -29,15 +50,42 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    fun benchmarkImplementation(notation: Any) = add(benchmarkSourceSet.implementationConfigurationName, notation)
+    fun benchmarkAnnotationProcessor(notation: Any) =
+        add(benchmarkSourceSet.annotationProcessorConfigurationName, notation)
+
+    val jmhVersion = "1.37"
+    benchmarkImplementation("org.openjdk.jmh:jmh-core:$jmhVersion")
+    benchmarkAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion")
 }
 
 tasks.withType(JavaCompile::class) {
     options.release.set(17)
 }
 
+tasks.named<JavaCompile>(benchmarkSourceSet.compileJavaTaskName) {
+    modularity.inferModulePath.set(false)
+}
+
 tasks.test {
     useJUnitPlatform()
     testLogging.showStandardStreams = true
+}
+
+tasks.register<JavaExec>("benchmark") {
+    group = "benchmark"
+    description = "Runs JMH benchmarks from src/benchmark/java."
+    dependsOn(tasks.named(benchmarkSourceSet.classesTaskName))
+    classpath = benchmarkSourceSet.runtimeClasspath
+
+    JavaVersion.current().majorVersion.toIntOrNull()?.let {
+        if (it in 24..27) {
+            jvmArgs("--sun-misc-unsafe-memory-access=allow")
+        }
+    }
+
+    mainClass.set("org.openjdk.jmh.Main")
 }
 
 val downloadDir = layout.buildDirectory.dir("downloads")
