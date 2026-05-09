@@ -30,6 +30,9 @@ import java.util.List;
 /// Internal immutable implementation of `WebURL`.
 @NotNullByDefault
 public final class WebURLImpl implements WebURL {
+    /// Shared empty immutable path.
+    private static final String @Unmodifiable [] EMPTY_PATH = new String[0];
+
     /// URL scheme without the trailing colon.
     final String scheme;
     /// Percent-encoded username.
@@ -41,15 +44,15 @@ public final class WebURLImpl implements WebURL {
     /// URL port, or `-1` when absent or defaulted.
     final int port;
     /// Non-opaque immutable path segments.
-    final @Unmodifiable List<String> path;
+    final String @Unmodifiable [] path;
     /// Opaque path, or `null` when the URL has a path segment list.
     final @Nullable String opaquePath;
     /// Percent-encoded query, or `null` when absent.
     final @Nullable String query;
     /// Percent-encoded fragment, or `null` when absent.
     final @Nullable String fragment;
-    /// The immutable query parameter object.
-    private final WebURLSearchParams searchParams;
+    /// Cached immutable query parameter object, or `null` until requested.
+    private volatile @Nullable WebURLSearchParams searchParams;
 
     /// Creates an immutable URL from parsed components.
     WebURLImpl(
@@ -68,11 +71,33 @@ public final class WebURLImpl implements WebURL {
         this.password = password;
         this.host = host;
         this.port = port;
-        this.path = List.copyOf(path);
+        this.path = path.isEmpty() ? EMPTY_PATH : path.toArray(String[]::new);
         this.opaquePath = opaquePath;
         this.query = query;
         this.fragment = fragment;
-        this.searchParams = WebURLSearchParamsImpl.fromQueryInternal(query == null ? "" : query);
+    }
+
+    /// Creates an immutable URL from parsed components and an existing immutable path array.
+    private WebURLImpl(
+            String scheme,
+            String username,
+            String password,
+            @Nullable UrlHost host,
+            int port,
+            String @Unmodifiable [] path,
+            @Nullable String opaquePath,
+            @Nullable String query,
+            @Nullable String fragment
+    ) {
+        this.scheme = scheme;
+        this.username = username;
+        this.password = password;
+        this.host = host;
+        this.port = port;
+        this.path = path.length == 0 ? EMPTY_PATH : path.clone();
+        this.opaquePath = opaquePath;
+        this.query = query;
+        this.fragment = fragment;
     }
 
     /// Returns whether this URL has an opaque path.
@@ -235,7 +260,12 @@ public final class WebURLImpl implements WebURL {
     /// Returns immutable search parameters parsed from the current query.
     @Override
     public WebURLSearchParams searchParams() {
-        return searchParams;
+        WebURLSearchParams params = searchParams;
+        if (params == null) {
+            params = WebURLSearchParamsImpl.fromQueryInternal(query == null ? "" : query);
+            searchParams = params;
+        }
+        return params;
     }
 
     /// Returns a URL with the query replaced by serialized search parameters.
@@ -292,6 +322,20 @@ public final class WebURLImpl implements WebURL {
             String password,
             @Nullable UrlHost host,
             int port,
+            String @Unmodifiable [] path,
+            @Nullable String opaquePath,
+            @Nullable String query,
+            @Nullable String fragment
+    ) {
+        return new WebURLImpl(scheme, username, password, host, port, path, opaquePath, query, fragment);
+    }
+
+    /// Creates a URL copy with replacement components and a path list.
+    private WebURLImpl copy(
+            String username,
+            String password,
+            @Nullable UrlHost host,
+            int port,
             List<String> path,
             @Nullable String opaquePath,
             @Nullable String query,
@@ -328,7 +372,7 @@ public final class WebURLImpl implements WebURL {
                 if (port != -1) {
                     output.append(':').append(port);
                 }
-            } else if (path.size() > 1 && path.get(0).isEmpty()) {
+            } else if (path.length > 1 && path[0].isEmpty()) {
                 output.append("/.");
             }
             appendRfc2396Encoded(output, UrlParser.serializePath(this), WebURLImpl::isRfc2396Path);

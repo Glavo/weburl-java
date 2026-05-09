@@ -25,6 +25,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Tests for `WebURLSearchParams`.
@@ -115,5 +116,13 @@ public final class WebURLSearchParamsTest {
         assertEquals("https://example.test/?a=1", url.href());
         assertEquals("a=1", copy.toString());
         assertEquals("a=2", updated.toString());
+    }
+
+    /// Tests that URL search parameters are cached after the first access.
+    @Test
+    public void cachesUrlSearchParams() {
+        WebURL url = WebURL.parseURL("https://example.test/?a=1");
+
+        assertSame(url.searchParams(), url.searchParams());
     }
 }

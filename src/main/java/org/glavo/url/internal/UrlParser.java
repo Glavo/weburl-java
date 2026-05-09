@@ -111,7 +111,7 @@ public final class UrlParser {
             }
         }
 
-        if (url.host == null && !url.hasOpaquePath() && url.path.size() > 1 && url.path.get(0).isEmpty()) {
+        if (url.host == null && !url.hasOpaquePath() && url.path.length > 1 && url.path[0].isEmpty()) {
             output.append("/.");
         }
         output.append(serializePath(url));
@@ -747,7 +747,7 @@ public final class UrlParser {
                 password = url.password;
                 host = url.host;
                 port = url.port;
-                path = new ArrayList<>(url.path);
+                path = new ArrayList<>(Arrays.asList(url.path));
                 opaquePath = url.opaquePath;
                 query = url.query;
                 fragment = url.fragment;
@@ -985,7 +985,7 @@ public final class UrlParser {
             } else if (base.hasOpaquePath() && c == '#') {
                 scheme = base.scheme;
                 opaquePath = base.opaquePath;
-                path = new ArrayList<>(base.path);
+                path = new ArrayList<>(Arrays.asList(base.path));
                 query = base.query;
                 fragment = "";
                 state = State.FRAGMENT;
@@ -1039,7 +1039,7 @@ public final class UrlParser {
                 password = base.password;
                 host = base.host;
                 port = base.port;
-                path = new ArrayList<>(base.path);
+                path = new ArrayList<>(Arrays.asList(base.path));
                 opaquePath = base.opaquePath;
                 query = base.query;
                 if (c == '?') {
@@ -1236,7 +1236,7 @@ public final class UrlParser {
                 state = State.FILE_SLASH;
             } else if (base != null && base.scheme.equals("file")) {
                 host = base.host;
-                path = new ArrayList<>(base.path);
+                path = new ArrayList<>(Arrays.asList(base.path));
                 query = base.query;
                 if (c == '?') {
                     query = "";
@@ -1272,9 +1272,9 @@ public final class UrlParser {
             } else {
                 if (base != null && base.scheme.equals("file")) {
                     if (!startsWithWindowsDriveLetter(input, pointer)
-                            && !base.path.isEmpty()
-                            && isNormalizedWindowsDriveLetterString(base.path.get(0))) {
-                        path.add(base.path.get(0));
+                            && base.path.length > 0
+                            && isNormalizedWindowsDriveLetterString(base.path[0])) {
+                        path.add(base.path[0]);
                     }
                     host = base.host;
                 }
