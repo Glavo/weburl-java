@@ -370,7 +370,8 @@ public final class WebURLImpl implements WebURL {
     }
 
     /// Returns the serialized URL converted to Java's RFC 2396 URI syntax.
-    private String toRFC2396String() {
+    @Override
+    public String toRFC2396String() {
         StringBuilder output = new StringBuilder();
         output.append(scheme).append(':');
 

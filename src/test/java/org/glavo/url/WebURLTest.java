@@ -239,11 +239,11 @@ public final class WebURLTest {
     @Test
     public void convertsToJavaUriSyntax() {
         assertEquals("http://!%22$&'()*+,-.;=_%60%7B%7D~/",
-                WebURL.parse("http://!\"$&'()*+,-.;=_`{}~/").toURI().toASCIIString());
+                WebURL.parse("http://!\"$&'()*+,-.;=_`{}~/").toRFC2396String());
         assertEquals("http://example.com/%25zz",
-                WebURL.parse("http://example.com/%zz").toURI().toASCIIString());
+                WebURL.parse("http://example.com/%zz").toRFC2396String());
         assertEquals("data:text/plain,hi%20?x#%20y",
-                WebURL.parse("data:text/plain,hi ?x# y").toURI().toASCIIString());
+                WebURL.parse("data:text/plain,hi ?x# y").toRFC2396String());
     }
 
     /// Tests Java URI conversion preserves existing percent escapes.
@@ -253,6 +253,8 @@ public final class WebURLTest {
         URI uri = url.toURI();
 
         assertEquals("https://user%40name:pa%3Ass@example.com/a%2Fb?x=a%26b#frag%23ment",
+                url.toRFC2396String());
+        assertEquals(url.toRFC2396String(),
                 uri.toASCIIString());
         assertEquals("/a%2Fb", uri.getRawPath());
         assertEquals("x=a%26b", uri.getRawQuery());
@@ -263,20 +265,25 @@ public final class WebURLTest {
     @Test
     public void escapesBarePercentInJavaUriConversion() {
         assertEquals("http://example.com/%25zz?x=%25zz#%25zz",
-                WebURL.parse("http://example.com/%zz?x=%zz#%zz").toURI().toASCIIString());
+                WebURL.parse("http://example.com/%zz?x=%zz#%zz").toRFC2396String());
     }
 
     /// Tests Java URI conversion escapes characters outside RFC 2396.
     @Test
     public void escapesNonRfc2396CharactersInJavaUriConversion() {
         assertEquals("http://example.com/%5B%5D?x=%5B%5D%7B%7D%7C%60#a%5B%5D%7B%7D%7C%60%23b",
-                WebURL.parse("http://example.com/[]?x=[]{}|`#a[]{}|`#b").toURI().toASCIIString());
+                WebURL.parse("http://example.com/[]?x=[]{}|`#a[]{}|`#b").toRFC2396String());
     }
 
     /// Tests Java URI conversion rejects WHATWG URLs that have no RFC 2396 representation.
     @Test
     public void rejectsUrlsWithoutRfc2396Representation() {
-        assertThrows(IllegalStateException.class, () -> WebURL.parse("non-special:").toURI());
-        assertThrows(IllegalStateException.class, () -> WebURL.parse("non-special:#fragment").toURI());
+        WebURL emptyOpaque = WebURL.parse("non-special:");
+        WebURL emptyOpaqueWithFragment = WebURL.parse("non-special:#fragment");
+
+        assertEquals("non-special:", emptyOpaque.toRFC2396String());
+        assertEquals("non-special:#fragment", emptyOpaqueWithFragment.toRFC2396String());
+        assertThrows(IllegalStateException.class, emptyOpaque::toURI);
+        assertThrows(IllegalStateException.class, emptyOpaqueWithFragment::toURI);
     }
 }

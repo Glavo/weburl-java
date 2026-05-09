@@ -337,14 +337,21 @@ public sealed interface WebURL permits WebURLImpl {
     /// @return the updated URL
     WebURL withHash(String value);
 
-    /// Returns the serialized URL as a Java `URI`.
+    /// Returns the serialized URL converted to RFC 2396 URI syntax.
     ///
-    /// The URI is constructed from this URL's parsed components rather than by reparsing `href()` as a WHATWG
-    /// URL. Existing valid percent escapes are preserved in the resulting raw URI string, and bare percent signs
-    /// or characters accepted by WHATWG URL serialization but rejected by Java URI syntax are percent-encoded.
+    /// The returned string is suitable for Java `URI` parsing when this URL has an RFC 2396 representation.
+    /// Existing valid percent escapes are preserved, and bare percent signs or characters accepted by WHATWG
+    /// URL serialization but rejected by Java URI syntax are percent-encoded.
     ///
     /// Some WHATWG URLs, such as non-special URLs with an empty opaque path and no query, have no corresponding
     /// absolute RFC 2396 URI because Java `URI` requires a non-empty scheme-specific part.
+    ///
+    /// @return the RFC 2396 URI string
+    String toRFC2396String();
+
+    /// Returns the serialized URL as a Java `URI`.
+    ///
+    /// The URI is constructed from `toRFC2396String()`.
     ///
     /// @return a Java `URI` representing this URL
     /// @throws IllegalStateException when this URL has no RFC 2396 representation accepted by Java `URI`
