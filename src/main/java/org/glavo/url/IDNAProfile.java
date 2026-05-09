@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 /// path parsing, query parsing, or fragment parsing. It also does not expose or require a particular
 /// implementation provider as part of the public API.
 ///
-/// `WebURLFactory.standard()` and the static parsing methods on `WebURL` use `defaultProfile()`.
+/// `WebURLFactory.defaultFactory()` and the static parsing methods on `WebURL` use `defaultProfile()`.
 @NotNullByDefault
 public enum IDNAProfile {
     /// Uses the original IDNA 2003 standards.

@@ -28,12 +28,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// Tests for `WebURLFactory`.
 @NotNullByDefault
 public final class WebURLFactoryTest {
-    /// Tests the standard factory exposed by `WebURLFactory.standard()`.
+    /// Tests the default factory exposed by `WebURLFactory.defaultFactory()`.
     @Test
-    public void standardFactoryMatchesWebUrlStaticMethods() {
-        WebURLFactory factory = WebURLFactory.standard();
+    public void defaultFactoryMatchesWebUrlStaticMethods() {
+        WebURLFactory factory = WebURLFactory.defaultFactory();
 
-        assertSame(factory, WebURLFactory.standard());
+        assertSame(factory, WebURLFactory.defaultFactory());
         assertEquals(IDNAProfile.defaultProfile(), factory.idnaProfile());
         assertEquals(IDNAProfile.defaultProfile(), WebURLFactory.builder().build().idnaProfile());
         assertEquals(WebURL.of("https://example.com/a").href(), factory.parse("https://example.com/a").href());
@@ -56,7 +56,7 @@ public final class WebURLFactoryTest {
     /// Tests explicit base URL arguments.
     @Test
     public void parsesAgainstExplicitBase() {
-        WebURLFactory factory = WebURLFactory.standard();
+        WebURLFactory factory = WebURLFactory.defaultFactory();
 
         assertEquals("https://example.com/a/c", factory.parse("../c", "https://example.com/a/b/").href());
         assertEquals("https://example.com/a/b/d", factory.tryParse("d", "https://example.com/a/b/").href());
@@ -67,7 +67,7 @@ public final class WebURLFactoryTest {
     /// Tests explicit base arguments with an already parsed base URL.
     @Test
     public void parsesAgainstExplicitWebUrlBase() {
-        WebURLFactory factory = WebURLFactory.standard();
+        WebURLFactory factory = WebURLFactory.defaultFactory();
         WebURL base = WebURL.of("https://example.org/x/y/");
 
         assertEquals("https://example.org/x/z", factory.parse("../z", base).href());
@@ -77,7 +77,7 @@ public final class WebURLFactoryTest {
     /// Tests parse and canParse failure handling through a factory.
     @Test
     public void reportsFailuresThroughFactory() {
-        WebURLFactory factory = WebURLFactory.standard();
+        WebURLFactory factory = WebURLFactory.defaultFactory();
 
         assertNull(factory.tryParse("https://example.com:999999/"));
         assertFalse(factory.canParse("https://example.com:999999/"));

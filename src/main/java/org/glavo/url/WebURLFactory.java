@@ -25,7 +25,7 @@ import java.util.Objects;
 /// A reusable, immutable factory for WHATWG URLs.
 ///
 /// A factory combines the URL Standard basic URL parser with a small set of caller-controlled creation
-/// settings. The standard factory returned by `standard()` uses the default IDNA profile; it is the factory
+/// settings. The default factory returned by `defaultFactory()` uses the default IDNA profile; it is the factory
 /// used by the static parsing methods on `WebURL`.
 ///
 /// A factory does not store a base URL. `parse(String)`, `tryParse(String)`, and `canParse(String)` parse only
@@ -35,8 +35,8 @@ import java.util.Objects;
 /// the thread or construction scope that creates a factory.
 @NotNullByDefault
 public final class WebURLFactory {
-    /// The standard factory used by `WebURL` static parsing methods.
-    private static final WebURLFactory STANDARD = new WebURLFactory(IDNAProfile.defaultProfile());
+    /// The default factory used by `WebURL` static parsing methods.
+    private static final WebURLFactory DEFAULT = new WebURLFactory(IDNAProfile.defaultProfile());
 
     /// The configured IDNA profile.
     private final IDNAProfile idnaProfile;
@@ -46,14 +46,14 @@ public final class WebURLFactory {
         this.idnaProfile = idnaProfile;
     }
 
-    /// Returns the standard URL factory.
+    /// Returns the default URL factory.
     ///
-    /// The standard factory uses `IDNAProfile.defaultProfile()`. It parses only absolute URLs unless a base is
+    /// The default factory uses `IDNAProfile.defaultProfile()`. It parses only absolute URLs unless a base is
     /// supplied to an overload that accepts one. This method always returns the same immutable factory instance.
     ///
-    /// @return the standard factory
-    public static WebURLFactory standard() {
-        return STANDARD;
+    /// @return the default factory
+    public static WebURLFactory defaultFactory() {
+        return DEFAULT;
     }
 
     /// Returns a new factory builder.
@@ -242,7 +242,7 @@ public final class WebURLFactory {
 
     /// A mutable builder for `WebURLFactory`.
     ///
-    /// A new builder starts with the same configuration as `standard()`: `IDNAProfile.defaultProfile()`. Builder
+    /// A new builder starts with the same configuration as `defaultFactory()`: `IDNAProfile.defaultProfile()`. Builder
     /// methods mutate and return this builder so calls can be chained.
     @NotNullByDefault
     public static final class Builder {
