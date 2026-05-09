@@ -31,6 +31,38 @@ import java.util.List;
 public final class WebURLImpl implements WebURL {
     /// Frozen URL record owned by this immutable URL.
     private final UrlRecord record;
+    /// Serialized WHATWG URL.
+    private final String href;
+    /// Index of the colon after the scheme.
+    private final int schemeEnd;
+    /// Start index of the username, or `-1` when credentials are absent.
+    private final int usernameStart;
+    /// End index of the username, or `-1` when credentials are absent.
+    private final int usernameEnd;
+    /// Start index of the password, or `-1` when absent.
+    private final int passwordStart;
+    /// End index of the password, or `-1` when absent.
+    private final int passwordEnd;
+    /// Start index of the host, or `-1` when absent.
+    private final int hostStart;
+    /// End index of the host, or `-1` when absent.
+    private final int hostEnd;
+    /// Start index of the port, or `-1` when absent.
+    private final int portStart;
+    /// End index of the port, or `-1` when absent.
+    private final int portEnd;
+    /// Start index of the logical path.
+    private final int pathStart;
+    /// End index of the logical path.
+    private final int pathEnd;
+    /// Start index of the query, or `-1` when absent.
+    private final int queryStart;
+    /// End index of the query, or `-1` when absent.
+    private final int queryEnd;
+    /// Start index of the fragment, or `-1` when absent.
+    private final int fragmentStart;
+    /// Whether href contains the extra `/.` prefix before the logical path.
+    private final boolean pathPrefix;
     /// Cached origin string, or `null` until requested.
     private @Nullable String origin;
     /// Cached username string, or `null` until requested.
@@ -47,10 +79,245 @@ public final class WebURLImpl implements WebURL {
     private @Nullable String fragment;
     /// Cached RFC 2396 URI string, or `null` until requested.
     private @Nullable String rfc2396String;
-    /// Creates an immutable URL from a completed URL record.
-    WebURLImpl(UrlRecord record) {
-        record.ensureHref();
+    /// Creates an immutable URL from a completed URL record and the parser input.
+    WebURLImpl(UrlRecord record, String input) {
+        Serialization serialization = tryAdoptHref(record, input);
+        if (serialization == null) {
+            serialization = serialize(record);
+        }
         this.record = record;
+        this.href = serialization.href();
+        this.schemeEnd = serialization.schemeEnd();
+        this.usernameStart = serialization.usernameStart();
+        this.usernameEnd = serialization.usernameEnd();
+        this.passwordStart = serialization.passwordStart();
+        this.passwordEnd = serialization.passwordEnd();
+        this.hostStart = serialization.hostStart();
+        this.hostEnd = serialization.hostEnd();
+        this.portStart = serialization.portStart();
+        this.portEnd = serialization.portEnd();
+        this.pathStart = serialization.pathStart();
+        this.pathEnd = serialization.pathEnd();
+        this.queryStart = serialization.queryStart();
+        this.queryEnd = serialization.queryEnd();
+        this.fragmentStart = serialization.fragmentStart();
+        this.pathPrefix = serialization.pathPrefix();
+    }
+
+    /// Attempts to adopt an input string that is already the exact URL serialization.
+    private static @Nullable Serialization tryAdoptHref(UrlRecord record, String input) {
+        int index = 0;
+        if (mismatches(input, index, record.scheme)) {
+            return null;
+        }
+        int schemeEndValue = record.scheme.length();
+        index = schemeEndValue;
+        if (missingChar(input, index, ':')) {
+            return null;
+        }
+        index++;
+
+        int usernameStartValue = -1;
+        int usernameEndValue = -1;
+        int passwordStartValue = -1;
+        int passwordEndValue = -1;
+        int hostStartValue = -1;
+        int hostEndValue = -1;
+        int portStartValue = -1;
+        int portEndValue = -1;
+
+        if (record.host != null) {
+            if (missingChar(input, index, '/') || missingChar(input, index + 1, '/')) {
+                return null;
+            }
+            index += 2;
+            if (!record.username.isEmpty() || !record.password.isEmpty()) {
+                usernameStartValue = index;
+                if (mismatches(input, index, record.username)) {
+                    return null;
+                }
+                index += record.username.length();
+                usernameEndValue = index;
+                if (!record.password.isEmpty()) {
+                    if (missingChar(input, index, ':')) {
+                        return null;
+                    }
+                    index++;
+                    passwordStartValue = index;
+                    if (mismatches(input, index, record.password)) {
+                        return null;
+                    }
+                    index += record.password.length();
+                    passwordEndValue = index;
+                }
+                if (missingChar(input, index, '@')) {
+                    return null;
+                }
+                index++;
+            }
+
+            hostStartValue = index;
+            index = record.host.matchSerialized(input, index);
+            if (index < 0) {
+                return null;
+            }
+            hostEndValue = index;
+            if (record.port != -1) {
+                if (missingChar(input, index, ':')) {
+                    return null;
+                }
+                index++;
+                portStartValue = index;
+                index = matchDecimal(input, index, record.port);
+                if (index < 0) {
+                    return null;
+                }
+                portEndValue = index;
+            }
+        }
+
+        boolean pathPrefixValue = false;
+        int pathStartValue = index;
+        if (record.opaquePath != null) {
+            if (mismatches(input, index, record.opaquePath)) {
+                return null;
+            }
+            index += record.opaquePath.length();
+        } else {
+            if (record.host == null && record.path.size() > 1 && record.path.get(0).isEmpty()) {
+                if (missingChar(input, index, '/') || missingChar(input, index + 1, '.')) {
+                    return null;
+                }
+                index += 2;
+                pathStartValue = index;
+                pathPrefixValue = true;
+            }
+            for (String segment : record.path) {
+                if (missingChar(input, index, '/')) {
+                    return null;
+                }
+                index++;
+                if (mismatches(input, index, segment)) {
+                    return null;
+                }
+                index += segment.length();
+            }
+        }
+        int pathEndValue = index;
+
+        int queryStartValue = -1;
+        int queryEndValue = -1;
+        if (record.query != null) {
+            if (missingChar(input, index, '?')) {
+                return null;
+            }
+            index++;
+            queryStartValue = index;
+            if (mismatches(input, index, record.query)) {
+                return null;
+            }
+            index += record.query.length();
+            queryEndValue = index;
+        }
+
+        int fragmentStartValue = -1;
+        if (record.fragment != null) {
+            if (missingChar(input, index, '#')) {
+                return null;
+            }
+            index++;
+            fragmentStartValue = index;
+            if (mismatches(input, index, record.fragment)) {
+                return null;
+            }
+            index += record.fragment.length();
+        }
+        if (index != input.length()) {
+            return null;
+        }
+
+        return new Serialization(input, schemeEndValue, usernameStartValue, usernameEndValue,
+                passwordStartValue, passwordEndValue, hostStartValue, hostEndValue, portStartValue, portEndValue,
+                pathStartValue, pathEndValue, queryStartValue, queryEndValue, fragmentStartValue, pathPrefixValue);
+    }
+
+    /// Serializes a URL record and stores component indexes into the serialized string.
+    private static Serialization serialize(UrlRecord record) {
+        StringBuilder output = new StringBuilder();
+        output.append(record.scheme);
+        int schemeEndValue = output.length();
+        output.append(':');
+
+        int usernameStartValue = -1;
+        int usernameEndValue = -1;
+        int passwordStartValue = -1;
+        int passwordEndValue = -1;
+        int hostStartValue = -1;
+        int hostEndValue = -1;
+        int portStartValue = -1;
+        int portEndValue = -1;
+
+        if (record.host != null) {
+            output.append("//");
+            if (!record.username.isEmpty() || !record.password.isEmpty()) {
+                usernameStartValue = output.length();
+                output.append(record.username);
+                usernameEndValue = output.length();
+                if (!record.password.isEmpty()) {
+                    output.append(':');
+                    passwordStartValue = output.length();
+                    output.append(record.password);
+                    passwordEndValue = output.length();
+                }
+                output.append('@');
+            }
+
+            hostStartValue = output.length();
+            output.append(UrlParser.serializeHost(record.host));
+            hostEndValue = output.length();
+            if (record.port != -1) {
+                output.append(':');
+                portStartValue = output.length();
+                output.append(record.port);
+                portEndValue = output.length();
+            }
+        }
+
+        boolean pathPrefixValue = false;
+        int pathStartValue = output.length();
+        if (record.opaquePath != null) {
+            output.append(record.opaquePath);
+        } else {
+            if (record.host == null && record.path.size() > 1 && record.path.get(0).isEmpty()) {
+                output.append("/.");
+                pathPrefixValue = true;
+                pathStartValue = output.length();
+            }
+            for (String segment : record.path) {
+                output.append('/').append(segment);
+            }
+        }
+        int pathEndValue = output.length();
+
+        int queryStartValue = -1;
+        int queryEndValue = -1;
+        if (record.query != null) {
+            output.append('?');
+            queryStartValue = output.length();
+            output.append(record.query);
+            queryEndValue = output.length();
+        }
+
+        int fragmentStartValue = -1;
+        if (record.fragment != null) {
+            output.append('#');
+            fragmentStartValue = output.length();
+            output.append(record.fragment);
+        }
+
+        return new Serialization(output.toString(), schemeEndValue, usernameStartValue, usernameEndValue,
+                passwordStartValue, passwordEndValue, hostStartValue, hostEndValue, portStartValue, portEndValue,
+                pathStartValue, pathEndValue, queryStartValue, queryEndValue, fragmentStartValue, pathPrefixValue);
     }
 
     /// Returns whether this URL has an opaque path.
@@ -66,18 +333,18 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized host plus port when a port is present.
     private String hostAndPort() {
         String href = href();
-        if (record.hostStart < 0) {
+        if (hostStart < 0) {
             return "";
         }
-        return record.portStart < 0
-                ? href.substring(record.hostStart, record.hostEnd)
-                : href.substring(record.hostStart, record.portEnd);
+        return portStart < 0
+                ? href.substring(hostStart, hostEnd)
+                : href.substring(hostStart, portEnd);
     }
 
     /// Returns the serialized URL without its fragment.
     String hrefWithoutFragment() {
         String href = href();
-        return record.fragmentStart < 0 ? href : href.substring(0, record.fragmentStart - 1);
+        return fragmentStart < 0 ? href : href.substring(0, fragmentStart - 1);
     }
 
     /// Returns whether the scheme equals the supplied lower-case ASCII value.
@@ -118,8 +385,6 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized URL.
     @Override
     public String href() {
-        String href = record.href;
-        assert href != null;
         return href;
     }
 
@@ -173,7 +438,7 @@ public final class WebURLImpl implements WebURL {
         @Nullable String value = username;
         if (value == null) {
             String href = href();
-            value = record.usernameStart < 0 ? "" : href.substring(record.usernameStart, record.usernameEnd);
+            value = usernameStart < 0 ? "" : href.substring(usernameStart, usernameEnd);
             username = value;
         }
         return value;
@@ -182,7 +447,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw username, or `null` when absent.
     @Override
     public @Nullable String getUsername() {
-        return record.usernameStart < 0 ? null : getUsernameOrEmpty();
+        return usernameStart < 0 ? null : getUsernameOrEmpty();
     }
 
     /// Returns the raw password, or the empty string when absent.
@@ -191,7 +456,7 @@ public final class WebURLImpl implements WebURL {
         @Nullable String value = password;
         if (value == null) {
             String href = href();
-            value = record.passwordStart < 0 ? "" : href.substring(record.passwordStart, record.passwordEnd);
+            value = passwordStart < 0 ? "" : href.substring(passwordStart, passwordEnd);
             password = value;
         }
         return value;
@@ -200,7 +465,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw password, or `null` when absent.
     @Override
     public @Nullable String getPassword() {
-        return record.passwordStart < 0 ? null : getPasswordOrEmpty();
+        return passwordStart < 0 ? null : getPasswordOrEmpty();
     }
 
     /// Returns the port value, or `-1` when absent.
@@ -225,7 +490,7 @@ public final class WebURLImpl implements WebURL {
     public String getRawPath() {
         @Nullable String value = rawPath;
         if (value == null) {
-            value = href().substring(record.pathStart, record.pathEnd);
+            value = href().substring(pathStart, pathEnd);
             rawPath = value;
         }
         return value;
@@ -337,43 +602,91 @@ public final class WebURLImpl implements WebURL {
 
         String href = href();
         StringBuilder output = new StringBuilder();
-        output.append(href, 0, record.schemeEnd + 1);
+        output.append(href, 0, schemeEnd + 1);
 
         if (hasOpaquePath()) {
-            appendRfc2396Encoded(output, href, record.pathStart, record.pathEnd, WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href, pathStart, pathEnd, WebURLImpl::isRfc2396Uric);
         } else {
             if (hasHost()) {
                 output.append("//");
-                if (record.usernameStart >= 0) {
-                    appendRfc2396Encoded(output, href, record.usernameStart, record.usernameEnd,
+                if (usernameStart >= 0) {
+                    appendRfc2396Encoded(output, href, usernameStart, usernameEnd,
                             WebURLImpl::isRfc2396UserInfo);
-                    if (record.passwordStart >= 0) {
+                    if (passwordStart >= 0) {
                         output.append(':');
-                        appendRfc2396Encoded(output, href, record.passwordStart, record.passwordEnd,
+                        appendRfc2396Encoded(output, href, passwordStart, passwordEnd,
                                 WebURLImpl::isRfc2396UserInfo);
                     }
                     output.append('@');
                 }
-                appendRfc2396Encoded(output, href, record.hostStart, record.hostEnd, WebURLImpl::isRfc2396Host);
-                if (record.portStart >= 0) {
-                    output.append(':').append(href, record.portStart, record.portEnd);
+                appendRfc2396Encoded(output, href, hostStart, hostEnd, WebURLImpl::isRfc2396Host);
+                if (portStart >= 0) {
+                    output.append(':').append(href, portStart, portEnd);
                 }
-            } else if (record.pathPrefix) {
+            } else if (pathPrefix) {
                 output.append("/.");
             }
-            appendRfc2396Encoded(output, href, record.pathStart, record.pathEnd, WebURLImpl::isRfc2396Path);
+            appendRfc2396Encoded(output, href, pathStart, pathEnd, WebURLImpl::isRfc2396Path);
         }
 
-        if (record.queryStart >= 0) {
+        if (queryStart >= 0) {
             output.append('?');
-            appendRfc2396Encoded(output, href, record.queryStart, record.queryEnd, WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href, queryStart, queryEnd, WebURLImpl::isRfc2396Uric);
         }
-        if (record.fragmentStart >= 0) {
+        if (fragmentStart >= 0) {
             output.append('#');
-            appendRfc2396Encoded(output, href, record.fragmentStart, href.length(), WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href, fragmentStart, href.length(), WebURLImpl::isRfc2396Uric);
         }
         String value = output.toString();
         rfc2396String = value;
+        return value;
+    }
+
+    /// Returns whether a character is absent or differs from the expected value.
+    private static boolean missingChar(String input, int index, char expected) {
+        return index < 0 || index >= input.length() || input.charAt(index) != expected;
+    }
+
+    /// Returns whether input does not contain value at the given index.
+    private static boolean mismatches(String input, int index, String value) {
+        return index < 0
+                || index + value.length() > input.length()
+                || !input.regionMatches(index, value, 0, value.length());
+    }
+
+    /// Matches a non-negative decimal integer and returns the end index, or `-1`.
+    private static int matchDecimal(String input, int index, int value) {
+        int length = decimalLength(value);
+        if (index + length > input.length()) {
+            return -1;
+        }
+        int divisor = pow10(length - 1);
+        for (int current = value; divisor > 0; divisor /= 10) {
+            int digit = current / divisor;
+            if (input.charAt(index) != (char) ('0' + digit)) {
+                return -1;
+            }
+            index++;
+            current %= divisor;
+        }
+        return index;
+    }
+
+    /// Returns the decimal digit length of a non-negative integer.
+    private static int decimalLength(int value) {
+        int length = 1;
+        for (int current = value; current >= 10; current /= 10) {
+            length++;
+        }
+        return length;
+    }
+
+    /// Returns ten raised to the given non-negative exponent.
+    private static int pow10(int exponent) {
+        int value = 1;
+        for (int i = 0; i < exponent; i++) {
+            value *= 10;
+        }
         return value;
     }
 
@@ -449,6 +762,45 @@ public final class WebURLImpl implements WebURL {
     private interface Rfc2396CharPredicate {
         /// Returns whether the character may appear without escaping.
         boolean test(int c);
+    }
+
+    /// Serialized URL text plus indexes into that text.
+    ///
+    /// @param href serialized WHATWG URL
+    /// @param schemeEnd index of the colon after the scheme
+    /// @param usernameStart start index of the username, or `-1` when credentials are absent
+    /// @param usernameEnd end index of the username, or `-1` when credentials are absent
+    /// @param passwordStart start index of the password, or `-1` when absent
+    /// @param passwordEnd end index of the password, or `-1` when absent
+    /// @param hostStart start index of the host, or `-1` when absent
+    /// @param hostEnd end index of the host, or `-1` when absent
+    /// @param portStart start index of the port, or `-1` when absent
+    /// @param portEnd end index of the port, or `-1` when absent
+    /// @param pathStart start index of the logical path
+    /// @param pathEnd end index of the logical path
+    /// @param queryStart start index of the query, or `-1` when absent
+    /// @param queryEnd end index of the query, or `-1` when absent
+    /// @param fragmentStart start index of the fragment, or `-1` when absent
+    /// @param pathPrefix whether href contains the extra `/.` prefix before the logical path
+    @NotNullByDefault
+    private record Serialization(
+            String href,
+            int schemeEnd,
+            int usernameStart,
+            int usernameEnd,
+            int passwordStart,
+            int passwordEnd,
+            int hostStart,
+            int hostEnd,
+            int portStart,
+            int portEnd,
+            int pathStart,
+            int pathEnd,
+            int queryStart,
+            int queryEnd,
+            int fragmentStart,
+            boolean pathPrefix
+    ) {
     }
 
 }
