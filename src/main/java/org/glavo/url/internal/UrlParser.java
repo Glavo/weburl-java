@@ -16,6 +16,7 @@
 package org.glavo.url.internal;
 
 import org.glavo.url.WebURLParseException;
+import org.glavo.url.internal.idna.UTS46;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +132,7 @@ public final class UrlParser {
         String domain = containsPercent(input)
                 ? Encoding.utf8DecodeWithoutBom(PercentEncoding.percentDecodeString(input))
                 : input;
-        String asciiDomain = domainToAscii(domain, false);
+        String asciiDomain = domainToAscii(domain);
 
         if (endsInANumber(asciiDomain)) {
             return UrlHost.ipv4(parseIpv4(asciiDomain));
@@ -167,11 +168,8 @@ public final class UrlParser {
     }
 
     /// Converts a domain to ASCII.
-    private static String domainToAscii(
-            String domain,
-            boolean strict
-    ) {
-        if (!strict && isAsciiOnly(domain) && !containsPunycodeLabel(domain)) {
+    private static String domainToAscii(String domain) {
+        if (isAsciiOnly(domain) && !containsPunycodeLabel(domain)) {
             String result = containsAsciiUppercase(domain) ? domain.toLowerCase(Locale.ROOT) : domain;
             if (result.isEmpty()) {
                 throw new WebURLParseException.DomainToASCII();
@@ -182,19 +180,18 @@ public final class UrlParser {
             return result;
         }
 
-        String result = IDNAProcessor.toAscii(domain, strict);
-        if (result == null) {
+        UTS46.Result result = UTS46.toAsciiForUrl(domain, false);
+        if (result.error()) {
             throw new WebURLParseException.DomainToASCII();
         }
-        if (!strict) {
-            if (result.isEmpty()) {
-                throw new WebURLParseException.DomainToASCII();
-            }
-            if (containsForbiddenDomainCodePoint(result)) {
-                throw new WebURLParseException.DomainInvalidCodePoint();
-            }
+
+        if (result.value().isEmpty()) {
+            throw new WebURLParseException.DomainToASCII();
         }
-        return result;
+        if (containsForbiddenDomainCodePoint(result.value())) {
+            throw new WebURLParseException.DomainInvalidCodePoint();
+        }
+        return result.value();
     }
 
     /// Returns whether a string contains a percent sign.
