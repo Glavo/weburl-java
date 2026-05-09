@@ -47,7 +47,7 @@ public final class UrlParser {
             @Nullable WebURLImpl url,
             @Nullable State stateOverride
     ) {
-        return basicParse(input, baseUrl, url, stateOverride, IDNAProfile.UTS_46);
+        return basicParse(input, baseUrl, url, stateOverride, IDNAProfile.defaultProfile());
     }
 
     /// Runs the basic URL parser with a configured IDNA profile.
@@ -72,7 +72,7 @@ public final class UrlParser {
             @Nullable WebURLImpl url,
             @Nullable State stateOverride
     ) {
-        return basicParseRequired(input, baseUrl, url, stateOverride, IDNAProfile.UTS_46);
+        return basicParseRequired(input, baseUrl, url, stateOverride, IDNAProfile.defaultProfile());
     }
 
     /// Runs the basic URL parser with a configured IDNA profile and throws when parsing fails.

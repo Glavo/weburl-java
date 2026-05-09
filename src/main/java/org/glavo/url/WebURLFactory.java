@@ -25,8 +25,8 @@ import java.util.Objects;
 /// A reusable, immutable factory for WHATWG URLs.
 ///
 /// A factory combines the URL Standard basic URL parser with a small set of caller-controlled creation
-/// settings. The standard factory returned by `standard()` uses UTS #46 IDNA processing; it is the factory used
-/// by the static parsing methods on `WebURL`.
+/// settings. The standard factory returned by `standard()` uses the default IDNA profile; it is the factory
+/// used by the static parsing methods on `WebURL`.
 ///
 /// A factory does not store a base URL. `parse(String)`, `tryParse(String)`, and `canParse(String)` parse only
 /// absolute URL inputs. Overloads that accept a base URL use the supplied base only for that call.
@@ -36,7 +36,7 @@ import java.util.Objects;
 @NotNullByDefault
 public final class WebURLFactory {
     /// The standard factory used by `WebURL` static parsing methods.
-    private static final WebURLFactory STANDARD = new WebURLFactory(IDNAProfile.UTS_46);
+    private static final WebURLFactory STANDARD = new WebURLFactory(IDNAProfile.defaultProfile());
 
     /// The configured IDNA profile.
     private final IDNAProfile idnaProfile;
@@ -48,7 +48,7 @@ public final class WebURLFactory {
 
     /// Returns the standard URL factory.
     ///
-    /// The standard factory uses `IDNAProfile.UTS_46`. It parses only absolute URLs unless a base is
+    /// The standard factory uses `IDNAProfile.defaultProfile()`. It parses only absolute URLs unless a base is
     /// supplied to an overload that accepts one. This method always returns the same immutable factory instance.
     ///
     /// @return the standard factory
@@ -58,11 +58,11 @@ public final class WebURLFactory {
 
     /// Returns a new factory builder.
     ///
-    /// The builder initially uses `IDNAProfile.UTS_46`.
+    /// The builder initially uses `IDNAProfile.defaultProfile()`.
     ///
     /// @return a new mutable builder
     public static Builder builder() {
-        return new Builder(IDNAProfile.UTS_46);
+        return new Builder(IDNAProfile.defaultProfile());
     }
 
     /// Returns the configured IDNA profile.
@@ -242,7 +242,7 @@ public final class WebURLFactory {
 
     /// A mutable builder for `WebURLFactory`.
     ///
-    /// A new builder starts with the same configuration as `standard()`: `IDNAProfile.UTS_46`. Builder
+    /// A new builder starts with the same configuration as `standard()`: `IDNAProfile.defaultProfile()`. Builder
     /// methods mutate and return this builder so calls can be chained.
     @NotNullByDefault
     public static final class Builder {

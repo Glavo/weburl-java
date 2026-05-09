@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 /// path parsing, query parsing, or fragment parsing. It also does not expose or require a particular
 /// implementation provider as part of the public API.
 ///
-/// `WebURLFactory.standard()` and the static parsing methods on `WebURL` use `UTS_46`.
+/// `WebURLFactory.standard()` and the static parsing methods on `WebURL` use `defaultProfile()`.
 @NotNullByDefault
 public enum IDNAProfile {
     /// Uses the original IDNA 2003 standards.
@@ -44,10 +44,20 @@ public enum IDNAProfile {
     ///
     /// This profile follows [Unicode Technical Standard #46](https://www.unicode.org/reports/tr46/) and the
     /// [WHATWG URL Standard IDNA algorithm](https://url.spec.whatwg.org/#idna). It uses the URL Standard's
-    /// non-transitional domain-to-ASCII settings, including bidi and joiner checks, and is the profile used by
-    /// `WebURLFactory.standard()` and the static parsing methods on `WebURL`.
+    /// non-transitional domain-to-ASCII settings, including bidi and joiner checks.
     UTS_46,
     ;
+
+    /// Returns the default IDNA profile for the current runtime.
+    ///
+    /// The default profile is inferred from the IDNA processing capabilities available to this module. It
+    /// prefers `UTS_46`, the profile used by the URL Standard. If `UTS_46` is not available, it falls back to
+    /// `IDNA_2003`, which provides compatibility IDNA processing.
+    ///
+    /// @return the inferred default IDNA profile
+    public static IDNAProfile defaultProfile() {
+        return UTS_46.isAvailable() ? UTS_46 : IDNA_2003;
+    }
 
     /// Returns whether this profile can be used in the current runtime.
     ///

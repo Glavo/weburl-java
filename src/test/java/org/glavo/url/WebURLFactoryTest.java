@@ -34,9 +34,23 @@ public final class WebURLFactoryTest {
         WebURLFactory factory = WebURLFactory.standard();
 
         assertSame(factory, WebURLFactory.standard());
-        assertEquals(IDNAProfile.UTS_46, factory.idnaProfile());
+        assertEquals(IDNAProfile.defaultProfile(), factory.idnaProfile());
+        assertEquals(IDNAProfile.defaultProfile(), WebURLFactory.builder().build().idnaProfile());
         assertEquals(WebURL.of("https://example.com/a").href(), factory.parse("https://example.com/a").href());
         assertFalse(factory.canParse("../relative"));
+    }
+
+    /// Tests default IDNA profile inference.
+    @Test
+    public void infersDefaultIDNAProfile() {
+        IDNAProfile defaultProfile = IDNAProfile.defaultProfile();
+
+        assertTrue(defaultProfile.isAvailable());
+        if (IDNAProfile.UTS_46.isAvailable()) {
+            assertEquals(IDNAProfile.UTS_46, defaultProfile);
+        } else {
+            assertEquals(IDNAProfile.IDNA_2003, defaultProfile);
+        }
     }
 
     /// Tests explicit base URL arguments.
