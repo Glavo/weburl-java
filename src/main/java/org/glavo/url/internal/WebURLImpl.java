@@ -63,21 +63,6 @@ public final class WebURLImpl implements WebURL {
         this.record = record;
     }
 
-    /// Creates an immutable URL from parsed components.
-    WebURLImpl(
-            String scheme,
-            String username,
-            String password,
-            @Nullable UrlHost host,
-            int port,
-            List<String> path,
-            @Nullable String opaquePath,
-            @Nullable String query,
-            @Nullable String fragment
-    ) {
-        this(new UrlRecord(scheme, username, password, host, port, path, opaquePath, query, fragment));
-    }
-
     /// Returns a component-only mutable copy of the owned URL record.
     UrlRecord mutableRecord() {
         return record.copy();
