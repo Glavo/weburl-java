@@ -25,7 +25,7 @@ import java.util.Objects;
 /// Internal parsing helpers used by `WebURL` static factory methods.
 @NotNullByDefault
 public final class WebURLParsing {
-    /// The scheme used for browser address inputs without an explicit scheme.
+    /// The scheme used for browser-style inputs without an explicit scheme.
     private static final String ADDRESS_SCHEME = "https";
 
     /// Creates no instances.
@@ -78,26 +78,26 @@ public final class WebURLParsing {
         return tryParse(input, base) != null;
     }
 
-    /// Parses a browser address input and returns the parsed URL.
-    public static WebURL parseAddress(String input) {
+    /// Parses a browser-style URL input and returns the parsed URL.
+    public static WebURL parseBrowserInput(String input) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
         if (addressInput != null) {
-            return parseRequired(addressInput, null, "Invalid address: " + input);
+            return parseRequired(addressInput, null, "Invalid browser input: " + input);
         }
-        return parseRequired(input, null, "Invalid address: " + input);
+        return parseRequired(input, null, "Invalid browser input: " + input);
     }
 
-    /// Parses a browser address input and returns `null` on failure.
-    public static @Nullable WebURL tryParseAddress(String input) {
+    /// Parses a browser-style URL input and returns `null` on failure.
+    public static @Nullable WebURL tryParseBrowserInput(String input) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
         return parseNullable(addressInput == null ? input : addressInput, null);
     }
 
-    /// Returns whether a browser address input can be parsed.
-    public static boolean canParseAddress(String input) {
-        return tryParseAddress(input) != null;
+    /// Returns whether a browser-style URL input can be parsed.
+    public static boolean canParseBrowserInput(String input) {
+        return tryParseBrowserInput(input) != null;
     }
 
     /// Parses an input string and throws when parsing fails.
@@ -135,7 +135,7 @@ public final class WebURLParsing {
         return parseNullable(base, null);
     }
 
-    /// Converts a browser address input to an absolute URL input, or returns `null` for standard URL input.
+    /// Converts a browser-style URL input to an absolute URL input, or returns `null` for standard URL input.
     private static @Nullable String toAddressUrlInput(String input) {
         String text = removeTabsAndNewlines(trimControlChars(input));
         if (text.isEmpty()) {
@@ -180,7 +180,7 @@ public final class WebURLParsing {
         return colon < 0 ? hostPort : hostPort.substring(0, colon);
     }
 
-    /// Returns whether a host string is recognized as a browser address host.
+    /// Returns whether a host string is recognized as a browser-style input host.
     private static boolean isAddressHost(String host) {
         return host.startsWith("[")
                 || host.equalsIgnoreCase("localhost")

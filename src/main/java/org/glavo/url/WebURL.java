@@ -135,41 +135,41 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
         return WebURLParsing.canParse(input, base);
     }
 
-    /// Parses a browser address input and returns the parsed URL.
+    /// Parses a browser-style URL input and returns the parsed URL.
     ///
     /// This method accepts standard absolute URL strings and browser address bar style URL inputs such as bare
     /// domain names, `//`-prefixed authorities, `localhost` with a port, IP addresses, and bracketed IPv6
     /// addresses. Inputs without an explicit scheme are completed with `https`.
     ///
     /// This method does not implement search fallback. Inputs that are neither URL strings nor recognized
-    /// browser address inputs fail instead of being interpreted as search terms.
+    /// browser inputs fail instead of being interpreted as search terms.
     ///
-    /// @param input the browser address input string
+    /// @param input the browser-style URL input string
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails
-    static WebURL parseAddress(String input) {
-        return WebURLParsing.parseAddress(input);
+    static WebURL parseBrowserInput(String input) {
+        return WebURLParsing.parseBrowserInput(input);
     }
 
-    /// Parses a browser address input and returns `null` on failure.
+    /// Parses a browser-style URL input and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parseAddress(String)`, except failures are represented by
-    /// `null` instead of an exception.
+    /// This method has the same parser behavior as `parseBrowserInput(String)`, except failures are represented
+    /// by `null` instead of an exception.
     ///
-    /// @param input the browser address input string
+    /// @param input the browser-style URL input string
     /// @return the parsed URL, or `null` if parsing fails
-    static @Nullable WebURL tryParseAddress(String input) {
-        return WebURLParsing.tryParseAddress(input);
+    static @Nullable WebURL tryParseBrowserInput(String input) {
+        return WebURLParsing.tryParseBrowserInput(input);
     }
 
-    /// Returns whether a browser address input can be parsed.
+    /// Returns whether a browser-style URL input can be parsed.
     ///
-    /// This method has the same parser behavior as `parseAddress(String)`, except it returns a boolean result.
+    /// This method has the same parser behavior as `parseBrowserInput(String)`, except it returns a boolean result.
     ///
-    /// @param input the browser address input string
+    /// @param input the browser-style URL input string
     /// @return `true` if parsing succeeds, otherwise `false`
-    static boolean canParseAddress(String input) {
-        return WebURLParsing.canParseAddress(input);
+    static boolean canParseBrowserInput(String input) {
+        return WebURLParsing.canParseBrowserInput(input);
     }
 
     /// Returns the complete serialized URL.

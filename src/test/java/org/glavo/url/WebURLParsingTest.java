@@ -45,25 +45,25 @@ public final class WebURLParsingTest {
         assertEquals("https://example.net/z", WebURL.parse("/z", "https://example.net/base").href());
     }
 
-    /// Tests browser address parsing.
+    /// Tests browser-style URL input parsing.
     @Test
     public void parsesBrowserAddresses() {
-        assertEquals("https://www.glavo.site/", WebURL.parseAddress("www.glavo.site").href());
-        assertEquals("https://www.glavo.site/path?q=1#f", WebURL.parseAddress("www.glavo.site/path?q=1#f").href());
-        assertEquals("https://www.glavo.site/path", WebURL.parseAddress("//www.glavo.site/path").href());
-        assertEquals("https://localhost:8080/path", WebURL.parseAddress("localhost:8080/path").href());
-        assertEquals("https://127.0.0.1:3000/", WebURL.parseAddress("127.0.0.1:3000").href());
-        assertEquals("https://[::1]:8080/", WebURL.parseAddress("[::1]:8080").href());
+        assertEquals("https://www.glavo.site/", WebURL.parseBrowserInput("www.glavo.site").href());
+        assertEquals("https://www.glavo.site/path?q=1#f", WebURL.parseBrowserInput("www.glavo.site/path?q=1#f").href());
+        assertEquals("https://www.glavo.site/path", WebURL.parseBrowserInput("//www.glavo.site/path").href());
+        assertEquals("https://localhost:8080/path", WebURL.parseBrowserInput("localhost:8080/path").href());
+        assertEquals("https://127.0.0.1:3000/", WebURL.parseBrowserInput("127.0.0.1:3000").href());
+        assertEquals("https://[::1]:8080/", WebURL.parseBrowserInput("[::1]:8080").href());
         assertEquals("https://xn--r8jz45g.xn--zckzah/",
-                WebURL.parseAddress("例え.テスト").href());
-        assertEquals("data:text/plain,hi", WebURL.parseAddress("data:text/plain,hi").href());
+                WebURL.parseBrowserInput("例え.テスト").href());
+        assertEquals("data:text/plain,hi", WebURL.parseBrowserInput("data:text/plain,hi").href());
 
         assertFalse(WebURL.canParse("www.glavo.site"));
-        assertTrue(WebURL.canParseAddress("www.glavo.site"));
-        assertNull(WebURL.tryParseAddress("not a url"));
-        assertThrows(WebURLParseException.class, () -> WebURL.parseAddress("not a url"));
+        assertTrue(WebURL.canParseBrowserInput("www.glavo.site"));
+        assertNull(WebURL.tryParseBrowserInput("not a url"));
+        assertThrows(WebURLParseException.class, () -> WebURL.parseBrowserInput("not a url"));
         assertThrows(WebURLParseException.PortInvalid.class,
-                () -> WebURL.parseAddress("www.glavo.site:abc"));
+                () -> WebURL.parseBrowserInput("www.glavo.site:abc"));
     }
 
     /// Tests parse and canParse failure handling.
