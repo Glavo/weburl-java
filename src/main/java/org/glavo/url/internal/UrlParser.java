@@ -693,7 +693,7 @@ public final class UrlParser {
         /// Input pointer.
         private int pointer;
         /// Parsed input string.
-        private String input;
+        private final String input;
         /// Base URL.
         private final @Nullable WebURLImpl base;
         /// State override.
