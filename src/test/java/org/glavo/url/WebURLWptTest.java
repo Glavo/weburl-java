@@ -50,7 +50,21 @@ public final class WebURLWptTest {
     /// Tests URL parsing and getters against WPT `urltestdata.json`.
     @TestFactory
     public List<DynamicTest> parsesWptUrlTestData() throws IOException {
-        return urlTestDataTests("urltestdata.json");
+        JsonArray data = readArray("urltestdata.json");
+        List<DynamicTest> tests = new ArrayList<>();
+
+        for (int i = 0; i < data.size(); i++) {
+            JsonElement element = data.get(i);
+            if (!element.isJsonObject()) {
+                continue;
+            }
+
+            JsonObject testCase = element.getAsJsonObject();
+            String displayName = "urltestdata.json" + "[" + i + "] " + displayString(testCase.get("input").getAsString());
+            tests.add(DynamicTest.dynamicTest(displayName, () -> assertUrlTestData(testCase)));
+        }
+
+        return tests;
     }
 
     /// Tests URL setters against WPT `setters_tests.json`.
@@ -72,25 +86,6 @@ public final class WebURLWptTest {
                         + displayString(testCase.get("href").getAsString());
                 tests.add(DynamicTest.dynamicTest(displayName, () -> assertSetterTest(attribute, testCase)));
             }
-        }
-
-        return tests;
-    }
-
-    /// Creates dynamic tests from a WPT URL test data JSON array.
-    private static List<DynamicTest> urlTestDataTests(String resourceName) throws IOException {
-        JsonArray data = readArray(resourceName);
-        List<DynamicTest> tests = new ArrayList<>();
-
-        for (int i = 0; i < data.size(); i++) {
-            JsonElement element = data.get(i);
-            if (!element.isJsonObject()) {
-                continue;
-            }
-
-            JsonObject testCase = element.getAsJsonObject();
-            String displayName = resourceName + "[" + i + "] " + displayString(testCase.get("input").getAsString());
-            tests.add(DynamicTest.dynamicTest(displayName, () -> assertUrlTestData(testCase)));
         }
 
         return tests;
