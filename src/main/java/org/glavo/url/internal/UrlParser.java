@@ -682,7 +682,7 @@ public final class UrlParser {
         /// Returns whether the buffer is empty.
         boolean isEmpty() {
             @Nullable StringBuilder builderValue = builder;
-            return builderValue == null ? start == end : builderValue.length() == 0;
+            return builderValue == null ? start == end : builderValue.isEmpty();
         }
 
         /// Returns the UTF-16 length of the buffer.
