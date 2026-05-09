@@ -33,17 +33,17 @@ public final class WebURLParsing {
     }
 
     /// Parses an input string and returns the parsed URL.
-    public static WebURL parseURL(String input) {
+    public static WebURL parse(String input) {
         return parseRequired(input, null, "Invalid URL: " + input);
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
-    public static WebURL parseURL(String input, String base) {
+    public static WebURL parse(String input, String base) {
         return parseRequired(input, parseBaseRequired(base), "Invalid URL: " + input);
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
-    public static WebURL parseURL(String input, WebURL base) {
+    public static WebURL parse(String input, WebURL base) {
         return parseRequired(input, implementation(base), "Invalid URL: " + input);
     }
 

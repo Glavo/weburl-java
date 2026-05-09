@@ -46,8 +46,8 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param input the URL input string
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails
-    static WebURL parseURL(String input) {
-        return WebURLParsing.parseURL(input);
+    static WebURL parse(String input) {
+        return WebURLParsing.parse(input);
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
@@ -58,8 +58,8 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param base the base URL string
     /// @return the parsed URL
     /// @throws WebURLParseException when either input fails
-    static WebURL parseURL(String input, String base) {
-        return WebURLParsing.parseURL(input, base);
+    static WebURL parse(String input, String base) {
+        return WebURLParsing.parse(input, base);
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
@@ -70,13 +70,13 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param base the base URL
     /// @return the parsed URL
     /// @throws WebURLParseException when parsing fails
-    static WebURL parseURL(String input, WebURL base) {
-        return WebURLParsing.parseURL(input, base);
+    static WebURL parse(String input, WebURL base) {
+        return WebURLParsing.parse(input, base);
     }
 
     /// Parses an absolute input string and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parseURL(String)`, except failures are represented by `null`
+    /// This method has the same parser behavior as `parse(String)`, except failures are represented by `null`
     /// instead of an exception.
     ///
     /// @param input the URL input string
@@ -87,7 +87,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Parses an input string against a base URL string and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parseURL(String, String)`, except failures are represented by
+    /// This method has the same parser behavior as `parse(String, String)`, except failures are represented by
     /// `null` instead of an exception.
     ///
     /// @param input the URL input string
@@ -99,7 +99,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Parses an input string against a base URL and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parseURL(String, WebURL)`, except failures are represented by
+    /// This method has the same parser behavior as `parse(String, WebURL)`, except failures are represented by
     /// `null` instead of an exception.
     ///
     /// @param input the URL input string

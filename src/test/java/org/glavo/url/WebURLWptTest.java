@@ -83,7 +83,7 @@ public final class WebURLWptTest {
             return;
         }
 
-        WebURL url = base == null ? WebURL.parseURL(input) : WebURL.parseURL(input, base);
+        WebURL url = base == null ? WebURL.parse(input) : WebURL.parse(input, base);
         assertExpectedUrlFields(url, testCase);
     }
 

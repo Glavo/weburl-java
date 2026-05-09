@@ -79,7 +79,7 @@ public class URIComparisonBenchmark {
         public String input = DEFAULT_INPUT;
 
         /// Parsed `WebURL` instance used by accessor benchmarks.
-        private WebURL webURL = WebURL.parseURL(DEFAULT_INPUT);
+        private WebURL webURL = WebURL.parse(DEFAULT_INPUT);
 
         /// Parsed JDK `URI` instance used by accessor benchmarks.
         private URI javaURI = URI.create(DEFAULT_INPUT);
@@ -87,7 +87,7 @@ public class URIComparisonBenchmark {
         /// Parses the current parameter value before benchmark invocation.
         @Setup
         public void parse() throws URISyntaxException {
-            webURL = WebURL.parseURL(input);
+            webURL = WebURL.parse(input);
             javaURI = new URI(input);
         }
     }
@@ -95,7 +95,7 @@ public class URIComparisonBenchmark {
     /// Parses a URL with `WebURL`.
     @Benchmark
     public WebURL parseWebURL(URLInput input) {
-        return WebURL.parseURL(input.input);
+        return WebURL.parse(input.input);
     }
 
     /// Parses a URL with JDK `URI`.
