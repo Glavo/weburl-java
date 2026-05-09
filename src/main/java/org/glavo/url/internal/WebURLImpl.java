@@ -20,18 +20,36 @@ import org.glavo.url.WebURLParseException;
 import org.glavo.url.WebURLSearchParams;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
-/// Internal implementation of `WebURL`.
+/// Internal immutable implementation of `WebURL`.
 @NotNullByDefault
 public final class WebURLImpl implements WebURL {
-    /// The internal URL record.
-    private final UrlRecord url;
+    /// URL scheme without the trailing colon.
+    final String scheme;
+    /// Percent-encoded username.
+    final String username;
+    /// Percent-encoded password.
+    final String password;
+    /// URL host, or `null` when absent.
+    final @Nullable UrlHost host;
+    /// URL port, or `-1` when absent or defaulted.
+    final int port;
+    /// Non-opaque immutable path segments.
+    final @Unmodifiable List<String> path;
+    /// Opaque path, or `null` when the URL has a path segment list.
+    final @Nullable String opaquePath;
+    /// Percent-encoded query, or `null` when absent.
+    final @Nullable String query;
+    /// Percent-encoded fragment, or `null` when absent.
+    final @Nullable String fragment;
     /// The immutable query parameter object.
     private final WebURLSearchParams searchParams;
 
@@ -53,29 +71,23 @@ public final class WebURLImpl implements WebURL {
     ///
     /// Throws `WebURLParseException` when the input cannot be parsed against the base URL.
     public static WebURL of(String input, WebURL base) {
-        return new WebURLImpl(input, record(base));
+        return new WebURLImpl(input, implementation(base));
     }
 
     /// Parses a URL and returns `null` on failure.
     public static @Nullable WebURL parse(String input) {
-        UrlRecord parsed = UrlParser.basicParse(input, null, null, null);
-        return parsed == null ? null : new WebURLImpl(parsed);
+        return UrlParser.basicParse(input, null, null, null);
     }
 
     /// Parses a URL against a base URL string and returns `null` on failure.
     public static @Nullable WebURL parse(String input, String base) {
-        UrlRecord parsedBase = UrlParser.basicParse(base, null, null, null);
-        if (parsedBase == null) {
-            return null;
-        }
-        UrlRecord parsed = UrlParser.basicParse(input, parsedBase, null, null);
-        return parsed == null ? null : new WebURLImpl(parsed);
+        WebURLImpl parsedBase = UrlParser.basicParse(base, null, null, null);
+        return parsedBase == null ? null : UrlParser.basicParse(input, parsedBase, null, null);
     }
 
     /// Parses a URL against a base URL and returns `null` on failure.
     public static @Nullable WebURL parse(String input, WebURL base) {
-        UrlRecord parsed = UrlParser.basicParse(input, record(base), null, null);
-        return parsed == null ? null : new WebURLImpl(parsed);
+        return UrlParser.basicParse(input, implementation(base), null, null);
     }
 
     /// Returns whether an input can be parsed as a URL.
@@ -85,49 +97,80 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns whether an input can be parsed against a base URL string.
     public static boolean canParse(String input, String base) {
-        UrlRecord parsedBase = UrlParser.basicParse(base, null, null, null);
+        WebURLImpl parsedBase = UrlParser.basicParse(base, null, null, null);
         return parsedBase != null && UrlParser.basicParse(input, parsedBase, null, null) != null;
     }
 
     /// Returns whether an input can be parsed against a base URL.
     public static boolean canParse(String input, WebURL base) {
-        return UrlParser.basicParse(input, record(base), null, null) != null;
+        return UrlParser.basicParse(input, implementation(base), null, null) != null;
     }
 
-    /// Creates a URL from an input string and an optional base record.
-    private WebURLImpl(String input, @Nullable UrlRecord base) {
+    /// Creates a URL from an input string and an optional base URL.
+    private WebURLImpl(String input, @Nullable WebURLImpl base) {
         UrlParser.ParseResult result = UrlParser.basicParseResult(input, base, null, null);
-        UrlRecord parsed = result.url();
+        WebURLImpl parsed = result.url();
         if (parsed == null) {
             throw parseExceptionOrIllegalArgument(result.error(), "Invalid URL: " + input);
         }
 
-        this.url = parsed;
-        this.searchParams = WebURLSearchParamsImpl.fromQueryInternal(parsed.query == null ? "" : parsed.query);
+        this.scheme = parsed.scheme;
+        this.username = parsed.username;
+        this.password = parsed.password;
+        this.host = parsed.host;
+        this.port = parsed.port;
+        this.path = parsed.path;
+        this.opaquePath = parsed.opaquePath;
+        this.query = parsed.query;
+        this.fragment = parsed.fragment;
+        this.searchParams = parsed.searchParams;
     }
 
-    /// Creates a URL from a parsed record.
-    private WebURLImpl(UrlRecord url) {
-        this.url = url;
-        this.searchParams = WebURLSearchParamsImpl.fromQueryInternal(url.query == null ? "" : url.query);
+    /// Creates an immutable URL from parsed components.
+    WebURLImpl(
+            String scheme,
+            String username,
+            String password,
+            @Nullable UrlHost host,
+            int port,
+            List<String> path,
+            @Nullable String opaquePath,
+            @Nullable String query,
+            @Nullable String fragment
+    ) {
+        this.scheme = scheme;
+        this.username = username;
+        this.password = password;
+        this.host = host;
+        this.port = port;
+        this.path = List.copyOf(path);
+        this.opaquePath = opaquePath;
+        this.query = query;
+        this.fragment = fragment;
+        this.searchParams = WebURLSearchParamsImpl.fromQueryInternal(query == null ? "" : query);
+    }
+
+    /// Returns whether this URL has an opaque path.
+    boolean hasOpaquePath() {
+        return opaquePath != null;
     }
 
     /// Returns the serialized URL.
     @Override
     public String href() {
-        return UrlParser.serializeUrl(url);
+        return UrlParser.serializeUrl(this);
     }
 
     /// Returns the serialized origin.
     @Override
     public String origin() {
-        return UrlParser.serializeOrigin(url);
+        return UrlParser.serializeOrigin(this);
     }
 
     /// Returns the protocol, including the trailing colon.
     @Override
     public String protocol() {
-        return url.scheme + ":";
+        return scheme + ":";
     }
 
     /// Returns a URL with the protocol updated when the URL Standard permits the change.
@@ -139,51 +182,47 @@ public final class WebURLImpl implements WebURL {
     /// Returns the username.
     @Override
     public String username() {
-        return url.username;
+        return username;
     }
 
     /// Returns a URL with the username updated when the URL can have credentials.
     @Override
     public WebURL withUsername(String value) {
-        if (UrlParser.cannotHaveAUsernamePasswordPort(url)) {
+        if (UrlParser.cannotHaveAUsernamePasswordPort(this)) {
             return this;
         }
-        UrlRecord copy = url.clone();
-        UrlParser.setTheUsername(copy, value);
-        return new WebURLImpl(copy);
+        return copy(UrlParser.percentEncodeUserInfo(value), password, host, port, path, opaquePath, query, fragment);
     }
 
     /// Returns the password.
     @Override
     public String password() {
-        return url.password;
+        return password;
     }
 
     /// Returns a URL with the password updated when the URL can have credentials.
     @Override
     public WebURL withPassword(String value) {
-        if (UrlParser.cannotHaveAUsernamePasswordPort(url)) {
+        if (UrlParser.cannotHaveAUsernamePasswordPort(this)) {
             return this;
         }
-        UrlRecord copy = url.clone();
-        UrlParser.setThePassword(copy, value);
-        return new WebURLImpl(copy);
+        return copy(username, UrlParser.percentEncodeUserInfo(value), host, port, path, opaquePath, query, fragment);
     }
 
     /// Returns the host, including the port when present.
     @Override
     public String host() {
-        if (url.host == null) {
+        if (host == null) {
             return "";
         }
-        String host = UrlParser.serializeHost(url.host);
-        return url.port == -1 ? host : host + ":" + url.port;
+        String serializedHost = UrlParser.serializeHost(host);
+        return port == -1 ? serializedHost : serializedHost + ":" + port;
     }
 
     /// Returns a URL with the host updated when the URL has a non-opaque path.
     @Override
     public WebURL withHost(String value) {
-        if (url.hasOpaquePath()) {
+        if (hasOpaquePath()) {
             return this;
         }
         return withStateOverride(value, UrlParser.State.HOST);
@@ -192,13 +231,13 @@ public final class WebURLImpl implements WebURL {
     /// Returns the hostname.
     @Override
     public String hostname() {
-        return url.host == null ? "" : UrlParser.serializeHost(url.host);
+        return host == null ? "" : UrlParser.serializeHost(host);
     }
 
     /// Returns a URL with the hostname updated when the URL has a non-opaque path.
     @Override
     public WebURL withHostname(String value) {
-        if (url.hasOpaquePath()) {
+        if (hasOpaquePath()) {
             return this;
         }
         return withStateOverride(value, UrlParser.State.HOSTNAME);
@@ -207,59 +246,52 @@ public final class WebURLImpl implements WebURL {
     /// Returns the port as a string.
     @Override
     public String port() {
-        return url.port == -1 ? "" : Integer.toString(url.port);
+        return port == -1 ? "" : Integer.toString(port);
     }
 
     /// Returns a URL with the port updated when the URL can have a port.
     @Override
     public WebURL withPort(String value) {
-        if (UrlParser.cannotHaveAUsernamePasswordPort(url)) {
+        if (UrlParser.cannotHaveAUsernamePasswordPort(this)) {
             return this;
         }
-        UrlRecord copy = url.clone();
         if (value.isEmpty()) {
-            copy.port = -1;
-            return new WebURLImpl(copy);
-        } else {
-            return withStateOverride(value, UrlParser.State.PORT);
+            return copy(username, password, host, -1, path, opaquePath, query, fragment);
         }
+        return withStateOverride(value, UrlParser.State.PORT);
     }
 
     /// Returns the serialized pathname.
     @Override
     public String pathname() {
-        return UrlParser.serializePath(url);
+        return UrlParser.serializePath(this);
     }
 
     /// Returns a URL with the pathname updated when the URL has a non-opaque path.
     @Override
     public WebURL withPathname(String value) {
-        if (url.hasOpaquePath()) {
+        if (hasOpaquePath()) {
             return this;
         }
-        UrlRecord copy = url.clone();
-        copy.path = new java.util.ArrayList<>();
-        copy.opaquePath = null;
+        WebURLImpl copy = copy(username, password, host, port, List.of(), null, query, fragment);
         return parseIntoCopyOrThis(value, copy, UrlParser.State.PATH_START);
     }
 
     /// Returns the search string, including the leading question mark when non-empty.
     @Override
     public String search() {
-        return url.query == null || url.query.isEmpty() ? "" : "?" + url.query;
+        return query == null || query.isEmpty() ? "" : "?" + query;
     }
 
     /// Returns a URL with the search string updated.
     @Override
     public WebURL withSearch(String value) {
-        UrlRecord copy = url.clone();
         if (value.isEmpty()) {
-            copy.query = null;
-            return new WebURLImpl(copy);
+            return copy(username, password, host, port, path, opaquePath, null, fragment);
         }
 
         String input = value.charAt(0) == '?' ? value.substring(1) : value;
-        copy.query = "";
+        WebURLImpl copy = copy(username, password, host, port, path, opaquePath, "", fragment);
         return parseIntoCopyOrThis(input, copy, UrlParser.State.QUERY);
     }
 
@@ -272,29 +304,26 @@ public final class WebURLImpl implements WebURL {
     /// Returns a URL with the query replaced by serialized search parameters.
     @Override
     public WebURL withSearchParams(WebURLSearchParams value) {
-        UrlRecord copy = url.clone();
-        String query = value.toString();
-        copy.query = query.isEmpty() ? null : query;
-        return new WebURLImpl(copy);
+        String serializedQuery = value.toString();
+        return copy(username, password, host, port, path, opaquePath,
+                serializedQuery.isEmpty() ? null : serializedQuery, fragment);
     }
 
     /// Returns the hash string, including the leading number sign when non-empty.
     @Override
     public String hash() {
-        return url.fragment == null || url.fragment.isEmpty() ? "" : "#" + url.fragment;
+        return fragment == null || fragment.isEmpty() ? "" : "#" + fragment;
     }
 
     /// Returns a URL with the hash string updated.
     @Override
     public WebURL withHash(String value) {
-        UrlRecord copy = url.clone();
         if (value.isEmpty()) {
-            copy.fragment = null;
-            return new WebURLImpl(copy);
+            return copy(username, password, host, port, path, opaquePath, query, null);
         }
 
         String input = value.charAt(0) == '#' ? value.substring(1) : value;
-        copy.fragment = "";
+        WebURLImpl copy = copy(username, password, host, port, path, opaquePath, query, "");
         return parseIntoCopyOrThis(input, copy, UrlParser.State.FRAGMENT);
     }
 
@@ -302,15 +331,15 @@ public final class WebURLImpl implements WebURL {
     @Override
     public URI toURI() {
         try {
-            if (url.hasOpaquePath()) {
-                return new URI(url.scheme, uriSchemeSpecificPart(), uriFragment());
+            if (hasOpaquePath()) {
+                return new URI(scheme, uriSchemeSpecificPart(), uriFragment());
             }
 
             URI serverUri = serverUri();
             if (serverUri != null) {
                 return serverUri;
             }
-            return new URI(url.scheme, uriAuthority(), uriPath(), uriQuery(), uriFragment());
+            return new URI(scheme, uriAuthority(), uriPath(), uriQuery(), uriFragment());
         } catch (URISyntaxException exception) {
             throw new AssertionError("Failed to construct Java URI from parsed URL", exception);
         }
@@ -334,23 +363,37 @@ public final class WebURLImpl implements WebURL {
         return href();
     }
 
+    /// Creates a URL copy with replacement components.
+    private WebURLImpl copy(
+            String username,
+            String password,
+            @Nullable UrlHost host,
+            int port,
+            List<String> path,
+            @Nullable String opaquePath,
+            @Nullable String query,
+            @Nullable String fragment
+    ) {
+        return new WebURLImpl(scheme, username, password, host, port, path, opaquePath, query, fragment);
+    }
+
     /// Attempts to construct a Java URI with a server authority.
     private @Nullable URI serverUri() {
-        if (url.host == null) {
+        if (host == null) {
             return null;
         }
 
-        String host = url.host.javaServerHost();
-        if (host == null) {
+        String javaServerHost = host.javaServerHost();
+        if (javaServerHost == null) {
             return null;
         }
 
         try {
             return new URI(
-                    url.scheme,
+                    scheme,
                     uriUserInfo(),
-                    host,
-                    url.port,
+                    javaServerHost,
+                    port,
                     uriPath(),
                     uriQuery(),
                     uriFragment());
@@ -361,63 +404,63 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the Java URI authority component.
     private @Nullable String uriAuthority() {
-        if (url.host == null) {
+        if (host == null) {
             return null;
         }
 
         StringBuilder authority = new StringBuilder();
-        if (!url.username.isEmpty() || !url.password.isEmpty()) {
-            authority.append(uriComponent(url.username));
-            if (!url.password.isEmpty()) {
-                authority.append(':').append(uriComponent(url.password));
+        if (!username.isEmpty() || !password.isEmpty()) {
+            authority.append(uriComponent(username));
+            if (!password.isEmpty()) {
+                authority.append(':').append(uriComponent(password));
             }
             authority.append('@');
         }
-        authority.append(uriComponent(UrlParser.serializeHost(url.host)));
-        if (url.port != -1) {
-            authority.append(':').append(url.port);
+        authority.append(uriComponent(UrlParser.serializeHost(host)));
+        if (port != -1) {
+            authority.append(':').append(port);
         }
         return authority.toString();
     }
 
     /// Returns the Java URI user-info component.
     private @Nullable String uriUserInfo() {
-        if (url.username.isEmpty() && url.password.isEmpty()) {
+        if (username.isEmpty() && password.isEmpty()) {
             return null;
         }
 
-        StringBuilder userInfo = new StringBuilder(uriComponent(url.username));
-        if (!url.password.isEmpty()) {
-            userInfo.append(':').append(uriComponent(url.password));
+        StringBuilder userInfo = new StringBuilder(uriComponent(username));
+        if (!password.isEmpty()) {
+            userInfo.append(':').append(uriComponent(password));
         }
         return userInfo.toString();
     }
 
     /// Returns the Java URI path component.
     private String uriPath() {
-        String path = UrlParser.serializePath(url);
-        if (url.host == null && url.path.size() > 1 && url.path.get(0).isEmpty()) {
-            path = "/." + path;
+        String serializedPath = UrlParser.serializePath(this);
+        if (host == null && path.size() > 1 && path.get(0).isEmpty()) {
+            serializedPath = "/." + serializedPath;
         }
-        return uriComponent(path);
+        return uriComponent(serializedPath);
     }
 
     /// Returns the Java URI query component.
     private @Nullable String uriQuery() {
-        return url.query == null ? null : uriComponent(url.query);
+        return query == null ? null : uriComponent(query);
     }
 
     /// Returns the Java URI fragment component.
     private @Nullable String uriFragment() {
-        return url.fragment == null ? null : uriComponent(url.fragment);
+        return fragment == null ? null : uriComponent(fragment);
     }
 
     /// Returns the Java URI scheme-specific part for an opaque URL.
     private String uriSchemeSpecificPart() {
         StringBuilder schemeSpecificPart =
-                new StringBuilder(uriComponent(url.opaquePath == null ? "" : url.opaquePath));
-        if (url.query != null) {
-            schemeSpecificPart.append('?').append(uriComponent(url.query));
+                new StringBuilder(uriComponent(opaquePath == null ? "" : opaquePath));
+        if (query != null) {
+            schemeSpecificPart.append('?').append(uriComponent(query));
         }
         return schemeSpecificPart.toString();
     }
@@ -427,27 +470,26 @@ public final class WebURLImpl implements WebURL {
         return new String(PercentEncoding.percentDecodeString(component), StandardCharsets.UTF_8);
     }
 
-    /// Returns the internal URL record for a `WebURL`.
-    private static UrlRecord record(WebURL url) {
-        return ((WebURLImpl) url).url;
+    /// Returns the implementation object for a `WebURL`.
+    private static WebURLImpl implementation(WebURL url) {
+        return (WebURLImpl) url;
     }
 
     /// Runs a state override on a copy of this URL.
     private WebURL withStateOverride(String input, UrlParser.State state) {
-        UrlRecord copy = url.clone();
-        return parseIntoCopyOrThis(input, copy, state);
+        return parseIntoCopyOrThis(input, this, state);
     }
 
-    /// Parses into a copied record and returns a new URL, or this URL on parser failure.
-    private WebURL parseIntoCopyOrThis(String input, UrlRecord copy, UrlParser.State state) {
-        UrlRecord parsed = UrlParser.basicParse(input, null, copy, state);
-        return parsed == null ? this : new WebURLImpl(copy);
+    /// Parses into a copied URL and returns a new URL, or this URL on parser failure.
+    private WebURL parseIntoCopyOrThis(String input, WebURLImpl copy, UrlParser.State state) {
+        WebURLImpl parsed = UrlParser.basicParse(input, null, copy, state);
+        return parsed == null ? this : parsed;
     }
 
     /// Parses a base URL string.
-    private static UrlRecord parseBase(String base) {
+    private static WebURLImpl parseBase(String base) {
         UrlParser.ParseResult result = UrlParser.basicParseResult(base, null, null, null);
-        UrlRecord parsedBase = result.url();
+        WebURLImpl parsedBase = result.url();
         if (parsedBase == null) {
             throw parseExceptionOrIllegalArgument(result.error(), "Invalid base URL: " + base);
         }
