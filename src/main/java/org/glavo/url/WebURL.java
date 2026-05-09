@@ -160,11 +160,17 @@ public sealed interface WebURL permits WebURLImpl {
     /// @return the serialized origin, or `null` as a string for an opaque origin
     String origin();
 
-    /// Returns the scheme component.
+    /// Returns the scheme component without its delimiter.
     ///
     /// The scheme identifies the URL's parsing and serialization rules, such as `http`, `https`, `file`,
-    /// or a non-special scheme such as `data`. It is normalized to lower case during parsing and never
-    /// includes the trailing colon that separates the scheme from the rest of the URL.
+    /// or a non-special scheme such as `data`. It is the canonical URL Standard scheme name: it starts with
+    /// an ASCII letter, contains only ASCII letters, ASCII digits, plus (`+`), hyphen (`-`), and period
+    /// (`.`), and is normalized to lower case during parsing.
+    ///
+    /// The scheme is the same logical component exposed by {@link #protocol()}, but without the trailing
+    /// colon delimiter. For every URL, `protocol()` is exactly `scheme() + ":"`. Use this method when the
+    /// scheme name itself is needed for comparison, dispatch, or Java-style terminology; use
+    /// {@link #protocol()} when matching the WHATWG `URL.protocol` attribute.
     ///
     /// @return the scheme component without the trailing colon
     String scheme();
@@ -172,9 +178,11 @@ public sealed interface WebURL permits WebURLImpl {
     /// Returns a URL with the scheme component updated.
     ///
     /// The supplied value is interpreted as a URL scheme name. A trailing colon is accepted for consistency
-    /// with {@link #withProtocol(String)}, but it is not part of the logical scheme value. The change is
-    /// parsed through the URL Standard scheme state and is ignored when the URL Standard forbids the
-    /// transition, for example between special and non-special schemes in cases that would change URL shape.
+    /// with {@link #withProtocol(String)}, but it is not part of the logical scheme value. This method and
+    /// {@link #withProtocol(String)} update the same component and differ only in the preferred spelling of
+    /// their input. The change is parsed through the URL Standard scheme state and is ignored when the URL
+    /// Standard forbids the transition, for example between special and non-special schemes in cases that
+    /// would change URL shape.
     ///
     /// @param value the new scheme value, with or without a trailing colon
     /// @return the updated URL, or this URL when the update is not permitted
@@ -182,8 +190,13 @@ public sealed interface WebURL permits WebURLImpl {
 
     /// Returns the protocol component.
     ///
-    /// The protocol is the URL scheme followed by a trailing colon. The scheme itself is normalized to lower
-    /// case during parsing.
+    /// The protocol is the Web API view of the URL scheme: the lower-case scheme name followed by the
+    /// trailing colon delimiter. It is not a separate parsed field. For every URL, this method returns exactly
+    /// `scheme() + ":"`.
+    ///
+    /// The name follows the WHATWG `URL.protocol` attribute, where values are serialized with the colon
+    /// included, such as `https:` or `data:`. The delimiter belongs to this serialized protocol view, not to
+    /// the logical scheme returned by {@link #scheme()}.
     ///
     /// @return the protocol, including the trailing colon
     String protocol();
@@ -191,8 +204,10 @@ public sealed interface WebURL permits WebURLImpl {
     /// Returns a URL with the protocol component updated.
     ///
     /// The supplied value is interpreted like assignment to the WHATWG `URL.protocol` attribute. A trailing
-    /// colon may be supplied but is not required. The change is ignored when the URL Standard forbids the
-    /// transition, for example between special and non-special schemes in cases that would change URL shape.
+    /// colon may be supplied but is not required. This method and {@link #withScheme(String)} update the same
+    /// component; this method is named for callers that model the value as a Web API protocol string. The
+    /// change is ignored when the URL Standard forbids the transition, for example between special and
+    /// non-special schemes in cases that would change URL shape.
     ///
     /// @param value the new protocol value
     /// @return the updated URL, or this URL when the update is not permitted
