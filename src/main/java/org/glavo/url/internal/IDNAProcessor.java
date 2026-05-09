@@ -15,8 +15,8 @@
  */
 package org.glavo.url.internal;
 
-import com.ibm.icu.text.IDNA;
 import org.glavo.url.IDNAProfile;
+import org.glavo.url.internal.idna.UTS46;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,44 +28,24 @@ import java.util.Locale;
 public final class IDNAProcessor {
     /// The JDK `java.net.IDN` processor.
     private static final Processor JDK_PROCESSOR = new JdkProcessor();
-    /// The ICU4J processor, or `null` when ICU4J is not available.
-    private static final @Nullable Processor ICU_PROCESSOR = createIcuProcessor();
 
     /// Creates no instances.
     private IDNAProcessor() {
     }
 
-    /// Attempts to create the ICU processor.
-    private static @Nullable Processor createIcuProcessor() {
-        try {
-            return IcuProcessor.create();
-        } catch (RuntimeException | LinkageError ignored) {
-            return null;
-        }
-    }
-
     /// Returns whether a configured IDNA profile is available.
     public static boolean isAvailable(IDNAProfile profile) {
-        return switch (profile) {
-            case UTS_46 -> ICU_PROCESSOR != null;
-            case IDNA_2003 -> true;
-        };
+        return true;
     }
 
     /// Converts a domain name to ASCII, returning `null` on failure.
     static @Nullable String toAscii(String domain, boolean strict, IDNAProfile profile) {
-        Processor processor = processor(profile);
-        if (processor == null) {
-            throw new IllegalStateException("UTS #46 IDNA processing is not available");
-        }
-        return processor.toAscii(domain, strict);
-    }
-
-    /// Selects the processor for a configured profile.
-    private static @Nullable Processor processor(IDNAProfile profile) {
         return switch (profile) {
-            case UTS_46 -> ICU_PROCESSOR;
-            case IDNA_2003 -> JDK_PROCESSOR;
+            case UTS_46 -> {
+                UTS46.Result result = UTS46.toAsciiForUrl(domain, strict);
+                yield result.error() ? null : result.value();
+            }
+            case IDNA_2003 -> JDK_PROCESSOR.toAscii(domain, strict);
         };
     }
 
@@ -74,42 +54,6 @@ public final class IDNAProcessor {
     private interface Processor {
         /// Converts a domain name to ASCII.
         @Nullable String toAscii(String domain, boolean strict);
-    }
-
-    /// ICU4J processor.
-    @NotNullByDefault
-    private static final class IcuProcessor implements Processor {
-        /// ICU IDNA instance.
-        private final IDNA idna;
-
-        /// Creates a processor from an ICU IDNA instance.
-        private IcuProcessor(IDNA idna) {
-            this.idna = idna;
-        }
-
-        /// Creates the ICU processor.
-        static Processor create() {
-            int options = IDNA.CHECK_BIDI
-                    | IDNA.CHECK_CONTEXTJ
-                    | IDNA.NONTRANSITIONAL_TO_ASCII;
-            return new IcuProcessor(IDNA.getUTS46Instance(options));
-        }
-
-        /// Converts a domain through ICU.
-        @Override
-        public @Nullable String toAscii(String domain, boolean strict) {
-            try {
-                IDNA.Info info = new IDNA.Info();
-                StringBuilder output = new StringBuilder();
-                idna.nameToASCII(domain, output, info);
-                if (info.hasErrors()) {
-                    return null;
-                }
-                return output.toString().toLowerCase(Locale.ROOT);
-            } catch (RuntimeException | LinkageError ignored) {
-                return null;
-            }
-        }
     }
 
     /// JDK fallback processor.

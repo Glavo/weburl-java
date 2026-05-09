@@ -1,4 +1,9 @@
 import org.gradle.kotlin.dsl.sourceSets
+import org.gradle.language.jvm.tasks.ProcessResources
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
+import java.io.File
+import java.nio.charset.StandardCharsets
 
 plugins {
     id("java-library")
@@ -44,7 +49,6 @@ configurations.named(benchmarkSourceSet.runtimeOnlyConfigurationName) {
 
 dependencies {
     compileOnly("org.jetbrains:annotations:26.1.0")
-    compileOnly("com.ibm.icu:icu4j:78.3")
 
     testImplementation("com.google.code.gson:gson:2.11.0")
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
@@ -106,6 +110,67 @@ val idnaDownloadTasks = idnaResources.map {
 
 tasks.register("downloadIdnaResources") {
     dependsOn(idnaDownloadTasks)
+}
+
+val idnaAuxiliaryResources = listOf(
+    "DerivedBidiClass",
+    "DerivedCombiningClass",
+    "DerivedGeneralCategory",
+    "DerivedJoiningType"
+)
+
+val idnaAuxiliaryDownloadTasks = idnaAuxiliaryResources.map {
+    tasks.register<de.undercouch.gradle.tasks.download.Download>("downloadUnicode-$it") {
+        src("https://www.unicode.org/Public/$unicodeVersion/ucd/extracted/$it.txt")
+        dest(downloadDir.map { dir -> dir.file("unicode/$it.txt") })
+        overwrite(false)
+    }
+}
+
+val generatedIdnaResourcesDir = layout.buildDirectory.dir("generated/resources/idna/main")
+val generatedIdnaDataFile =
+    generatedIdnaResourcesDir.map { it.file("org/glavo/url/internal/idna/IdnaData.bin") }
+
+val generateIdnaData = tasks.register("generateIdnaData") {
+    dependsOn(tasks.named("downloadIdna-IdnaMappingTable"))
+    dependsOn(idnaAuxiliaryDownloadTasks)
+
+    val mappingFile = downloadDir.map { it.file("idna/IdnaMappingTable.txt") }
+    val bidiClassFile = downloadDir.map { it.file("unicode/DerivedBidiClass.txt") }
+    val combiningClassFile = downloadDir.map { it.file("unicode/DerivedCombiningClass.txt") }
+    val generalCategoryFile = downloadDir.map { it.file("unicode/DerivedGeneralCategory.txt") }
+    val joiningTypeFile = downloadDir.map { it.file("unicode/DerivedJoiningType.txt") }
+
+    inputs.file(mappingFile)
+    inputs.file(bidiClassFile)
+    inputs.file(combiningClassFile)
+    inputs.file(generalCategoryFile)
+    inputs.file(joiningTypeFile)
+    outputs.file(generatedIdnaDataFile)
+
+    doLast {
+        generateIdnaBinary(
+            mappingFile.get().asFile,
+            bidiClassFile.get().asFile,
+            combiningClassFile.get().asFile,
+            generalCategoryFile.get().asFile,
+            joiningTypeFile.get().asFile,
+            generatedIdnaDataFile.get().asFile
+        )
+    }
+}
+
+mainSourceSet.resources.srcDir(generatedIdnaResourcesDir)
+
+tasks.named<ProcessResources>(mainSourceSet.processResourcesTaskName) {
+    dependsOn(generateIdnaData)
+}
+
+tasks.named<ProcessResources>("processTestResources") {
+    dependsOn(tasks.named("downloadIdna-IdnaTestV2"))
+    from(downloadDir.map { it.file("idna/IdnaTestV2.txt") }) {
+        into("org/glavo/url/internal/idna")
+    }
 }
 
 val wptCommit = "ebf8e3069ec4ac6498826bf9066419e46b0f4ac5"
@@ -195,4 +260,339 @@ publishing.publications.create<MavenPublication>("maven") {
             url.set("https://github.com/Glavo/weburl-java")
         }
     }
+}
+
+private data class CodePointRange(val start: Int, val end: Int)
+
+private data class IdnaMappingRange(
+    val start: Int,
+    val end: Int,
+    val status: Int,
+    val mapping: String
+)
+
+private data class BinaryIdnaMappingRange(
+    val start: Int,
+    val end: Int,
+    val status: Int,
+    val mappingOffset: Int,
+    val mappingLength: Int
+)
+
+private data class JoiningTypeRange(
+    val start: Int,
+    val end: Int,
+    val joiningType: Int
+)
+
+private data class BidiClassRange(
+    val start: Int,
+    val end: Int,
+    val bidiClass: Int
+)
+
+private val IDNA_DATA_MAGIC = 0x49444E41
+private val IDNA_DATA_VERSION = 2
+
+private val IDNA_STATUS_DISALLOWED = 0
+private val IDNA_STATUS_VALID = 1
+private val IDNA_STATUS_IGNORED = 2
+private val IDNA_STATUS_MAPPED = 3
+private val IDNA_STATUS_DEVIATION = 4
+
+private val JOINING_TYPE_LEFT = 1
+private val JOINING_TYPE_RIGHT = 2
+private val JOINING_TYPE_DUAL = 3
+private val JOINING_TYPE_TRANSPARENT = 4
+
+private val BIDI_CLASS_LEFT_TO_RIGHT = 1
+private val BIDI_CLASS_RIGHT_TO_LEFT = 2
+private val BIDI_CLASS_ARABIC_LETTER = 3
+private val BIDI_CLASS_EUROPEAN_NUMBER = 4
+private val BIDI_CLASS_EUROPEAN_SEPARATOR = 5
+private val BIDI_CLASS_EUROPEAN_TERMINATOR = 6
+private val BIDI_CLASS_ARABIC_NUMBER = 7
+private val BIDI_CLASS_COMMON_SEPARATOR = 8
+private val BIDI_CLASS_BOUNDARY_NEUTRAL = 9
+private val BIDI_CLASS_OTHER_NEUTRAL = 10
+private val BIDI_CLASS_NONSPACING_MARK = 11
+
+private fun generateIdnaBinary(
+    mappingFile: File,
+    bidiClassFile: File,
+    combiningClassFile: File,
+    generalCategoryFile: File,
+    joiningTypeFile: File,
+    outputFile: File
+) {
+    val mappingRanges = parseIdnaMappingRanges(mappingFile)
+    val viramaRanges = parseViramaRanges(combiningClassFile)
+    val markRanges = parseMarkRanges(generalCategoryFile)
+    val bidiClassRanges = parseBidiClassRanges(bidiClassFile)
+    val joiningTypeRanges = parseJoiningTypeRanges(joiningTypeFile)
+
+    val mappingPool = ByteArrayOutputStream()
+    val mappingOffsets = LinkedHashMap<String, Int>()
+    val binaryMappingRanges = mappingRanges.map { range ->
+        if (range.mapping.isEmpty()) {
+            BinaryIdnaMappingRange(range.start, range.end, range.status, -1, 0)
+        } else {
+            val offset = mappingOffsets.getOrPut(range.mapping) {
+                val currentOffset = mappingPool.size()
+                mappingPool.write(range.mapping.toByteArray(StandardCharsets.UTF_8))
+                currentOffset
+            }
+            val length = range.mapping.toByteArray(StandardCharsets.UTF_8).size
+            BinaryIdnaMappingRange(range.start, range.end, range.status, offset, length)
+        }
+    }
+
+    outputFile.parentFile.mkdirs()
+    DataOutputStream(outputFile.outputStream().buffered()).use { output ->
+        output.writeInt(IDNA_DATA_MAGIC)
+        output.writeInt(IDNA_DATA_VERSION)
+
+        output.writeInt(binaryMappingRanges.size)
+        for (range in binaryMappingRanges) {
+            output.writeInt(range.start)
+            output.writeInt(range.end)
+            output.writeByte(range.status)
+            output.writeInt(range.mappingOffset)
+            output.writeShort(range.mappingLength)
+        }
+
+        val mappingPoolBytes = mappingPool.toByteArray()
+        output.writeInt(mappingPoolBytes.size)
+        output.write(mappingPoolBytes)
+
+        output.writeInt(viramaRanges.size)
+        for (range in viramaRanges) {
+            output.writeInt(range.start)
+            output.writeInt(range.end)
+        }
+
+        output.writeInt(markRanges.size)
+        for (range in markRanges) {
+            output.writeInt(range.start)
+            output.writeInt(range.end)
+        }
+
+        output.writeInt(bidiClassRanges.size)
+        for (range in bidiClassRanges) {
+            output.writeInt(range.start)
+            output.writeInt(range.end)
+            output.writeByte(range.bidiClass)
+        }
+
+        output.writeInt(joiningTypeRanges.size)
+        for (range in joiningTypeRanges) {
+            output.writeInt(range.start)
+            output.writeInt(range.end)
+            output.writeByte(range.joiningType)
+        }
+    }
+}
+
+private fun parseIdnaMappingRanges(file: File): List<IdnaMappingRange> {
+    val ranges = ArrayList<IdnaMappingRange>()
+    file.forEachLine(StandardCharsets.UTF_8) { line ->
+        val data = line.substringBefore('#').trim()
+        if (data.isEmpty()) {
+            return@forEachLine
+        }
+
+        val fields = data.split(';').map { it.trim() }
+        if (fields.size < 2) {
+            return@forEachLine
+        }
+
+        val range = parseCodePointRange(fields[0])
+        val status = when (fields[1]) {
+            "valid" -> IDNA_STATUS_VALID
+            "ignored" -> IDNA_STATUS_IGNORED
+            "mapped" -> IDNA_STATUS_MAPPED
+            "deviation" -> IDNA_STATUS_DEVIATION
+            "disallowed" -> IDNA_STATUS_DISALLOWED
+            else -> error("Unknown IDNA status '${fields[1]}' in $file")
+        }
+        val mapping = if (fields.size >= 3) parseCodePointSequence(fields[2]) else ""
+        ranges += IdnaMappingRange(range.start, range.end, status, mapping)
+    }
+    return ranges
+}
+
+private fun parseViramaRanges(file: File): List<CodePointRange> {
+    val ranges = ArrayList<CodePointRange>()
+    file.forEachLine(StandardCharsets.UTF_8) { line ->
+        val data = line.substringBefore('#').trim()
+        if (data.isEmpty()) {
+            return@forEachLine
+        }
+
+        val fields = data.split(';').map { it.trim() }
+        if (fields.size >= 2 && fields[1] == "9") {
+            ranges += parseCodePointRange(fields[0])
+        }
+    }
+    return mergeRanges(ranges)
+}
+
+private fun parseMarkRanges(file: File): List<CodePointRange> {
+    val ranges = ArrayList<CodePointRange>()
+    file.forEachLine(StandardCharsets.UTF_8) { line ->
+        val data = line.substringBefore('#').trim()
+        if (data.isEmpty()) {
+            return@forEachLine
+        }
+
+        val fields = data.split(';').map { it.trim() }
+        if (fields.size >= 2 && fields[1] in setOf("Mn", "Mc", "Me")) {
+            ranges += parseCodePointRange(fields[0])
+        }
+    }
+    return mergeRanges(ranges)
+}
+
+private fun parseBidiClassRanges(file: File): List<BidiClassRange> {
+    val ranges = ArrayList<BidiClassRange>()
+    file.forEachLine(StandardCharsets.UTF_8) { line ->
+        val data = line.substringBefore('#').trim()
+        if (data.isEmpty()) {
+            return@forEachLine
+        }
+
+        val fields = data.split(';').map { it.trim() }
+        if (fields.size < 2) {
+            return@forEachLine
+        }
+
+        val bidiClass = when (fields[1]) {
+            "L" -> BIDI_CLASS_LEFT_TO_RIGHT
+            "R" -> BIDI_CLASS_RIGHT_TO_LEFT
+            "AL" -> BIDI_CLASS_ARABIC_LETTER
+            "EN" -> BIDI_CLASS_EUROPEAN_NUMBER
+            "ES" -> BIDI_CLASS_EUROPEAN_SEPARATOR
+            "ET" -> BIDI_CLASS_EUROPEAN_TERMINATOR
+            "AN" -> BIDI_CLASS_ARABIC_NUMBER
+            "CS" -> BIDI_CLASS_COMMON_SEPARATOR
+            "BN" -> BIDI_CLASS_BOUNDARY_NEUTRAL
+            "ON" -> BIDI_CLASS_OTHER_NEUTRAL
+            "NSM" -> BIDI_CLASS_NONSPACING_MARK
+            else -> return@forEachLine
+        }
+        val range = parseCodePointRange(fields[0])
+        ranges += BidiClassRange(range.start, range.end, bidiClass)
+    }
+    return mergeBidiClassRanges(ranges)
+}
+
+private fun parseJoiningTypeRanges(file: File): List<JoiningTypeRange> {
+    val ranges = ArrayList<JoiningTypeRange>()
+    file.forEachLine(StandardCharsets.UTF_8) { line ->
+        val data = line.substringBefore('#').trim()
+        if (data.isEmpty()) {
+            return@forEachLine
+        }
+
+        val fields = data.split(';').map { it.trim() }
+        if (fields.size < 2) {
+            return@forEachLine
+        }
+
+        val type = when (fields[1]) {
+            "L" -> JOINING_TYPE_LEFT
+            "R" -> JOINING_TYPE_RIGHT
+            "D" -> JOINING_TYPE_DUAL
+            "T" -> JOINING_TYPE_TRANSPARENT
+            else -> return@forEachLine
+        }
+        val range = parseCodePointRange(fields[0])
+        ranges += JoiningTypeRange(range.start, range.end, type)
+    }
+    return mergeJoiningTypeRanges(ranges)
+}
+
+private fun parseCodePointRange(value: String): CodePointRange {
+    val delimiter = value.indexOf("..")
+    if (delimiter < 0) {
+        val codePoint = value.toInt(16)
+        return CodePointRange(codePoint, codePoint)
+    }
+    val start = value.substring(0, delimiter).toInt(16)
+    val end = value.substring(delimiter + 2).toInt(16)
+    return CodePointRange(start, end)
+}
+
+private fun parseCodePointSequence(value: String): String {
+    if (value.isBlank()) {
+        return ""
+    }
+
+    val output = StringBuilder()
+    for (item in value.trim().split(Regex("\\s+"))) {
+        if (item.isNotEmpty()) {
+            output.appendCodePoint(item.toInt(16))
+        }
+    }
+    return output.toString()
+}
+
+private fun mergeRanges(input: List<CodePointRange>): List<CodePointRange> {
+    if (input.isEmpty()) {
+        return input
+    }
+
+    val output = ArrayList<CodePointRange>()
+    val sorted = input.sortedWith(compareBy<CodePointRange> { it.start }.thenBy { it.end })
+    var current = sorted.first()
+    for (range in sorted.drop(1)) {
+        if (current.end + 1 == range.start) {
+            current = CodePointRange(current.start, range.end)
+        } else {
+            output += current
+            current = range
+        }
+    }
+    output += current
+    return output
+}
+
+private fun mergeJoiningTypeRanges(input: List<JoiningTypeRange>): List<JoiningTypeRange> {
+    if (input.isEmpty()) {
+        return input
+    }
+
+    val output = ArrayList<JoiningTypeRange>()
+    val sorted = input.sortedWith(compareBy<JoiningTypeRange> { it.start }.thenBy { it.end })
+    var current = sorted.first()
+    for (range in sorted.drop(1)) {
+        if (current.end + 1 == range.start && current.joiningType == range.joiningType) {
+            current = JoiningTypeRange(current.start, range.end, current.joiningType)
+        } else {
+            output += current
+            current = range
+        }
+    }
+    output += current
+    return output
+}
+
+private fun mergeBidiClassRanges(input: List<BidiClassRange>): List<BidiClassRange> {
+    if (input.isEmpty()) {
+        return input
+    }
+
+    val output = ArrayList<BidiClassRange>()
+    val sorted = input.sortedWith(compareBy<BidiClassRange> { it.start }.thenBy { it.end })
+    var current = sorted.first()
+    for (range in sorted.drop(1)) {
+        if (current.end + 1 == range.start && current.bidiClass == range.bidiClass) {
+            current = BidiClassRange(current.start, range.end, current.bidiClass)
+        } else {
+            output += current
+            current = range
+        }
+    }
+    output += current
+    return output
 }

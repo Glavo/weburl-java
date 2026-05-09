@@ -15,7 +15,6 @@
  */
 
 module org.glavo.url {
-    requires static com.ibm.icu;
     requires static org.jetbrains.annotations;
 
     exports org.glavo.url;
