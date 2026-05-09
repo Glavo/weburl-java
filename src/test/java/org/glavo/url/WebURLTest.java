@@ -16,13 +16,17 @@
 package org.glavo.url;
 
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -108,6 +112,38 @@ public final class WebURLTest {
         assertSame(url.search(), url.search());
         assertSame(url.hash(), url.hash());
         assertSame(url.toRFC2396String(), url.toRFC2396String());
+    }
+
+    /// Tests equality, hash code, and natural ordering by serialized URL.
+    @Test
+    public void comparesBySerializedUrl() {
+        WebURL canonical = WebURL.parseURL("https://example.com/a");
+        WebURL normalized = WebURL.parseURL("HTTPS://EXAMPLE.COM:443/a");
+        WebURL different = WebURL.parseURL("https://example.com/b");
+
+        assertEquals(canonical, normalized);
+        assertEquals(canonical.hashCode(), normalized.hashCode());
+        assertEquals(0, canonical.compareTo(normalized));
+
+        assertNotEquals(canonical, different);
+        Object serialized = canonical.href();
+        assertNotEquals(serialized, canonical);
+        assertNotEquals(nullObject(), canonical);
+        assertTrue(canonical.compareTo(different) < 0);
+        assertTrue(different.compareTo(canonical) > 0);
+
+        List<WebURL> urls = new ArrayList<>(List.of(
+                WebURL.parseURL("https://example.org/"),
+                different,
+                canonical
+        ));
+        urls.sort(null);
+
+        assertEquals(List.of(
+                canonical,
+                different,
+                WebURL.parseURL("https://example.org/")
+        ), urls);
     }
 
     /// Tests URL getters and setters.
@@ -323,5 +359,10 @@ public final class WebURLTest {
         assertEquals("non-special:#fragment", emptyOpaqueWithFragment.toRFC2396String());
         assertThrows(IllegalStateException.class, emptyOpaque::toURI);
         assertThrows(IllegalStateException.class, emptyOpaqueWithFragment::toURI);
+    }
+
+    /// Returns a nullable object for equality contract assertions.
+    private static @Nullable Object nullObject() {
+        return null;
     }
 }

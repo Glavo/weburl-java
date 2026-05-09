@@ -40,8 +40,12 @@ import java.net.URL;
 ///
 /// Use `WebURLFactory` when URL creation should be configured with an explicit IDNA profile or other factory
 /// settings. The static methods on this interface use `WebURLFactory.defaultFactory()`.
+///
+/// Equality, hash code, and natural ordering are defined by the complete WHATWG URL serialization returned by
+/// `href()`. Two URL objects are equal when their serialized URLs are equal, and `compareTo(WebURL)` orders
+/// URLs by the lexicographic order of those serialized strings.
 @NotNullByDefault
-public sealed interface WebURL permits WebURLImpl {
+public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// Parses an absolute input string and returns the parsed URL.
     ///
     /// The input is parsed by the WHATWG basic URL parser with no base URL. Relative inputs therefore fail.
@@ -438,6 +442,37 @@ public sealed interface WebURL permits WebURLImpl {
     /// @return a Java `URL` representing this URL
     /// @throws MalformedURLException when Java has no URL handler for the scheme or rejects the URL
     URL toURL() throws MalformedURLException;
+
+    /// Compares this URL with another URL by serialized URL string.
+    ///
+    /// The comparison is equivalent to `this.href().compareTo(other.href())`. It is consistent with
+    /// `equals(Object)`: if this method returns zero, the two URL objects are equal according to this
+    /// interface's equality contract.
+    ///
+    /// @param other the URL to compare with this URL
+    /// @return a negative integer, zero, or a positive integer as this URL's serialized form is less than,
+    /// equal to, or greater than the other URL's serialized form
+    @Override
+    int compareTo(WebURL other);
+
+    /// Compares this URL with another object for equality.
+    ///
+    /// A URL is equal to another `WebURL` when both objects have the same complete WHATWG URL serialization.
+    /// Objects that do not implement `WebURL`, including Java `null`, are not equal to a URL.
+    ///
+    /// @param obj the object to compare with this URL, or `null`
+    /// @return `true` if the object is a `WebURL` with the same serialized URL, otherwise `false`
+    @Override
+    boolean equals(@Nullable Object obj);
+
+    /// Returns the hash code of this URL.
+    ///
+    /// The hash code is the hash code of the complete WHATWG URL serialization returned by `href()`, so equal
+    /// URLs have equal hash codes.
+    ///
+    /// @return the serialized URL hash code
+    @Override
+    int hashCode();
 
     /// Returns the serialized URL.
     ///

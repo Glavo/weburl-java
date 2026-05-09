@@ -441,6 +441,24 @@ public final class WebURLImpl implements WebURL {
         return toURI().toURL();
     }
 
+    /// Compares this URL with another URL by serialized URL string.
+    @Override
+    public int compareTo(WebURL other) {
+        return hrefValue().compareTo(other.href());
+    }
+
+    /// Compares this URL with another object for serialized URL equality.
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        return obj instanceof WebURL other && hrefValue().equals(other.href());
+    }
+
+    /// Returns the serialized URL hash code.
+    @Override
+    public int hashCode() {
+        return hrefValue().hashCode();
+    }
+
     /// Returns the serialized URL.
     @Override
     public String toString() {
