@@ -28,6 +28,12 @@ import org.jetbrains.annotations.NotNullByDefault;
 /// `WebURLFactory.standard()` and the static parsing methods on `WebURL` use `UTS_46`.
 @NotNullByDefault
 public enum IDNAProfile {
+    /// Uses the JDK `java.net.IDN` implementation, which is based on IDNA 2003.
+    ///
+    /// This profile has no runtime dependencies outside `java.base`. It may differ from the URL Standard's
+    /// UTS #46 non-transitional processing for some names, but it is always available on a Java runtime.
+    IDNA_2003,
+
     /// Uses UTS #46 non-transitional processing.
     ///
     /// This is the profile used by the URL Standard and by `WebURL` static parsing methods. It requires the
@@ -35,12 +41,7 @@ public enum IDNAProfile {
     /// ASCII domains that do not contain punycode labels use the parser's ASCII fast path and do not load
     /// ICU4J.
     UTS_46,
-
-    /// Uses the JDK `java.net.IDN` implementation, which is based on IDNA 2003.
-    ///
-    /// This profile has no runtime dependencies outside `java.base`. It may differ from the URL Standard's
-    /// UTS #46 non-transitional processing for some names, but it is always available on a Java runtime.
-    IDNA_2003;
+    ;
 
     /// Returns whether this profile can be used in the current runtime.
     ///
