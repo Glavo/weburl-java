@@ -52,6 +52,18 @@ final class PercentEncoding {
         return percentDecodeBytes(Encoding.utf8Encode(input));
     }
 
+    /// Decodes valid percent triplets in a URL component as UTF-8.
+    static String percentDecodeUtf8(String input) {
+        for (int i = 0; i < input.length(); i++) {
+            if (input.charAt(i) == '%' && i + 2 < input.length()
+                    && Infra.isAsciiHex(input.charAt(i + 1))
+                    && Infra.isAsciiHex(input.charAt(i + 2))) {
+                return Encoding.utf8Decode(percentDecodeString(input));
+            }
+        }
+        return input;
+    }
+
     /// Percent-encodes one Unicode code point with the given byte predicate.
     static String utf8PercentEncodeCodePoint(int codePoint, BytePredicate percentEncodePredicate) {
         if (codePoint >= 0 && codePoint <= 0x7f) {

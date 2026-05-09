@@ -106,10 +106,13 @@ public final class WebURLTest {
         assertSame(url.getUsernameOrEmpty(), url.getUsernameOrEmpty());
         assertSame(url.getPassword(), url.getPassword());
         assertSame(url.getPasswordOrEmpty(), url.getPasswordOrEmpty());
+        assertSame(url.getPath(), url.getPath());
         assertSame(url.getRawPath(), url.getRawPath());
         assertSame(url.getRawPathOrEmpty(), url.getRawPathOrEmpty());
+        assertSame(url.getQuery(), url.getQuery());
         assertSame(url.getRawQuery(), url.getRawQuery());
         assertSame(url.getRawQueryOrEmpty(), url.getRawQueryOrEmpty());
+        assertSame(url.getFragment(), url.getFragment());
         assertSame(url.getRawFragment(), url.getRawFragment());
         assertSame(url.getRawFragmentOrEmpty(), url.getRawFragmentOrEmpty());
         assertSame(url.toRFC2396String(), url.toRFC2396String());
@@ -153,6 +156,38 @@ public final class WebURLTest {
         WebURL emptyUsername = WebURL.parseURL("https://:pass@example.com/");
         assertEquals("", emptyUsername.getUsername());
         assertEquals("pass", emptyUsername.getPassword());
+    }
+
+    /// Tests Java-style decoded component getters.
+    @Test
+    public void readsJavaStyleDecodedComponents() {
+        WebURL url = WebURL.parseURL(
+                "https://example.com/a%20b/%E8%B7%AF%E5%BE%84?plus=a+b&encoded=a%2Bb&space=a%20b#frag%23ment%20x");
+
+        assertEquals("/a b/路径", url.getPath());
+        assertEquals("plus=a+b&encoded=a+b&space=a b", url.getQuery());
+        assertEquals("frag#ment x", url.getFragment());
+
+        WebURL absentComponents = WebURL.parseURL("https://example.com/path");
+        assertNull(absentComponents.getQuery());
+        assertNull(absentComponents.getFragment());
+
+        assertEquals("", WebURL.parseURL("https://example.com/path?").getQuery());
+        assertEquals("", WebURL.parseURL("https://example.com/path#").getFragment());
+    }
+
+    /// Tests decoded component getters preserve invalid percent triplets literally.
+    @Test
+    public void preservesInvalidPercentTripletsInDecodedComponents() {
+        WebURL url = WebURL.parseURL("http://example.com/%zz?x=%zz#%zz");
+        URI uri = url.toURI();
+
+        assertEquals("/%zz", url.getPath());
+        assertEquals("x=%zz", url.getQuery());
+        assertEquals("%zz", url.getFragment());
+        assertEquals(uri.getPath(), url.getPath());
+        assertEquals(uri.getQuery(), url.getQuery());
+        assertEquals(uri.getFragment(), url.getFragment());
     }
 
     /// Tests equality, hash code, and natural ordering by serialized URL.

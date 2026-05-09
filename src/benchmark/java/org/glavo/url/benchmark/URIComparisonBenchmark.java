@@ -141,10 +141,13 @@ public class URIComparisonBenchmark {
         blackhole.consume(webURL.getPassword());
         blackhole.consume(webURL.getPasswordOrEmpty());
         blackhole.consume(webURL.getPort());
+        blackhole.consume(webURL.getPath());
         blackhole.consume(webURL.getRawPath());
         blackhole.consume(webURL.getRawPathOrEmpty());
+        blackhole.consume(webURL.getQuery());
         blackhole.consume(webURL.getRawQuery());
         blackhole.consume(webURL.getRawQueryOrEmpty());
+        blackhole.consume(webURL.getFragment());
         blackhole.consume(webURL.getRawFragment());
         blackhole.consume(webURL.getRawFragmentOrEmpty());
     }
@@ -160,8 +163,11 @@ public class URIComparisonBenchmark {
         blackhole.consume(javaURI.getRawUserInfo());
         blackhole.consume(javaURI.getHost());
         blackhole.consume(javaURI.getPort());
+        blackhole.consume(javaURI.getPath());
         blackhole.consume(javaURI.getRawPath());
+        blackhole.consume(javaURI.getQuery());
         blackhole.consume(javaURI.getRawQuery());
+        blackhole.consume(javaURI.getFragment());
         blackhole.consume(javaURI.getRawFragment());
     }
 }

@@ -37,8 +37,14 @@ public final class WebURLImpl implements WebURL {
     private @Nullable String username;
     /// Cached password string, or `null` until requested.
     private @Nullable String password;
+    /// Cached decoded path string, or `null` until requested.
+    private @Nullable String path;
     /// Cached raw path string, or `null` until requested.
     private @Nullable String rawPath;
+    /// Cached decoded query string, or `null` until requested or when absent.
+    private @Nullable String query;
+    /// Cached decoded fragment string, or `null` until requested or when absent.
+    private @Nullable String fragment;
     /// Cached RFC 2396 URI string, or `null` until requested.
     private @Nullable String rfc2396String;
     /// Creates an immutable URL from a completed URL record.
@@ -203,6 +209,17 @@ public final class WebURLImpl implements WebURL {
         return record.port;
     }
 
+    /// Returns the decoded path.
+    @Override
+    public String getPath() {
+        @Nullable String value = path;
+        if (value == null) {
+            value = PercentEncoding.percentDecodeUtf8(getRawPathOrEmpty());
+            path = value;
+        }
+        return value;
+    }
+
     /// Returns the raw path, or the empty string when absent.
     @Override
     public String getRawPathOrEmpty() {
@@ -220,6 +237,21 @@ public final class WebURLImpl implements WebURL {
         return getRawPathOrEmpty();
     }
 
+    /// Returns the decoded query, or `null` when absent.
+    @Override
+    public @Nullable String getQuery() {
+        if (record.query == null) {
+            return null;
+        }
+
+        @Nullable String value = query;
+        if (value == null) {
+            value = PercentEncoding.percentDecodeUtf8(record.query);
+            query = value;
+        }
+        return value;
+    }
+
     /// Returns the raw query, or `null` when absent.
     @Override
     public @Nullable String getRawQuery() {
@@ -231,6 +263,21 @@ public final class WebURLImpl implements WebURL {
     public String getRawQueryOrEmpty() {
         @Nullable String query = record.query;
         return query == null ? "" : query;
+    }
+
+    /// Returns the decoded fragment, or `null` when absent.
+    @Override
+    public @Nullable String getFragment() {
+        if (record.fragment == null) {
+            return null;
+        }
+
+        @Nullable String value = fragment;
+        if (value == null) {
+            value = PercentEncoding.percentDecodeUtf8(record.fragment);
+            fragment = value;
+        }
+        return value;
     }
 
     /// Returns the raw fragment, or `null` when absent.

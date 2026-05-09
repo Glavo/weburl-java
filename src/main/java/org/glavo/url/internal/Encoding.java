@@ -31,6 +31,11 @@ final class Encoding {
         return input.getBytes(StandardCharsets.UTF_8);
     }
 
+    /// Decodes UTF-8 bytes.
+    static String utf8Decode(byte[] bytes) {
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
     /// Decodes UTF-8 bytes, ignoring an initial byte order mark when present.
     static String utf8DecodeWithoutBom(byte[] bytes) {
         int offset = bytes.length >= 3

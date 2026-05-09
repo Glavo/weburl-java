@@ -27,8 +27,8 @@ import java.net.URL;
 ///
 /// A URL has a `scheme` and either an opaque path or a hierarchical structure made from an optional
 /// authority, a path, an optional query, and an optional fragment. Component getters use Java `URI`-style
-/// naming and return normalized raw component strings: percent-encoding is preserved, and optional components
-/// return `null` when absent.
+/// naming. Raw component getters return normalized component strings with percent-encoding preserved, while
+/// decoded component getters decode percent triplets as UTF-8. Optional components return `null` when absent.
 ///
 /// The serialized form returned by `href()`, `toString()`, and `toJSON()` is the WHATWG URL serialization.
 /// It is not identical to Java `URI` syntax for all inputs; use `toURI()` to obtain a Java `URI` value.
@@ -253,6 +253,18 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the normalized port, or `-1` when absent
     int getPort();
 
+    /// Returns the decoded path component.
+    ///
+    /// This method is the Java `URI`-style getter for the decoded URL path. It is equivalent to
+    /// {@link #getRawPath()} with valid percent triplets decoded as UTF-8. It does not apply
+    /// `application/x-www-form-urlencoded` rules and therefore does not treat plus (`+`) as a space.
+    ///
+    /// Invalid or incomplete percent triplets are left unchanged. `WebURL` currently always has a path string,
+    /// so this method never returns `null`.
+    ///
+    /// @return the decoded path component
+    String getPath();
+
     /// Returns the raw path component.
     ///
     /// This method is the Java `URI`-style getter for the URL path. It returns the normalized, percent-encoded
@@ -268,6 +280,18 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// @return the raw path component, or the empty string when absent
     String getRawPathOrEmpty();
+
+    /// Returns the decoded query component.
+    ///
+    /// This method is the Java `URI`-style getter for the decoded URL query. It is equivalent to
+    /// {@link #getRawQuery()} with valid percent triplets decoded as UTF-8. It does not include the leading
+    /// question mark and does not apply `application/x-www-form-urlencoded` rules, so plus (`+`) remains plus.
+    ///
+    /// The result is `null` when the query component is absent. An empty query component is returned as the
+    /// empty string.
+    ///
+    /// @return the decoded query component, or `null` when absent
+    @Nullable String getQuery();
 
     /// Returns the raw query component.
     ///
@@ -285,6 +309,18 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// @return the raw query component, or the empty string when absent
     String getRawQueryOrEmpty();
+
+    /// Returns the decoded fragment component.
+    ///
+    /// This method is the Java `URI`-style getter for the decoded URL fragment. It is equivalent to
+    /// {@link #getRawFragment()} with valid percent triplets decoded as UTF-8. It does not include the leading
+    /// number sign.
+    ///
+    /// The result is `null` when the fragment component is absent. An empty fragment component is returned as
+    /// the empty string.
+    ///
+    /// @return the decoded fragment component, or `null` when absent
+    @Nullable String getFragment();
 
     /// Returns the raw fragment component.
     ///
