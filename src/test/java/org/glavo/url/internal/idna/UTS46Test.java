@@ -15,6 +15,7 @@
  */
 package org.glavo.url.internal.idna;
 
+import com.ibm.icu.text.IDNA;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.DynamicTest;
@@ -35,6 +36,26 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public final class UTS46Test {
     /// Resource name copied from the Unicode IDNA test data.
     private static final String TEST_RESOURCE_NAME = "IdnaTestV2.txt";
+    /// ICU4J UTS #46 processor for non-transitional ToUnicode.
+    private static final IDNA ICU_TO_UNICODE = IDNA.getUTS46Instance(
+            IDNA.CHECK_BIDI
+                    | IDNA.CHECK_CONTEXTJ
+                    | IDNA.USE_STD3_RULES
+                    | IDNA.NONTRANSITIONAL_TO_UNICODE
+    );
+    /// ICU4J UTS #46 processor for non-transitional ToASCII.
+    private static final IDNA ICU_TO_ASCII_N = IDNA.getUTS46Instance(
+            IDNA.CHECK_BIDI
+                    | IDNA.CHECK_CONTEXTJ
+                    | IDNA.USE_STD3_RULES
+                    | IDNA.NONTRANSITIONAL_TO_ASCII
+    );
+    /// ICU4J UTS #46 processor for transitional ToASCII.
+    private static final IDNA ICU_TO_ASCII_T = IDNA.getUTS46Instance(
+            IDNA.CHECK_BIDI
+                    | IDNA.CHECK_CONTEXTJ
+                    | IDNA.USE_STD3_RULES
+    );
 
     /// Tests UTS #46 ToUnicode and ToASCII operations against `IdnaTestV2.txt`.
     @TestFactory
@@ -63,6 +84,8 @@ public final class UTS46Test {
         );
         assertEquals(testCase.toUnicode(), toUnicode.value(), "toUnicode");
         assertEquals(testCase.toUnicodeError(), toUnicode.error(), "toUnicode error");
+        IcuResult icuToUnicode = icuToUnicode(testCase.source());
+        assertMatchesIcu("toUnicode", toUnicode, icuToUnicode, testCase.toUnicodeError());
 
         UTS46.Result toAsciiN = UTS46.toAscii(
                 testCase.source(),
@@ -76,6 +99,8 @@ public final class UTS46Test {
         );
         assertEquals(testCase.toAsciiN(), toAsciiN.value(), "toAsciiN");
         assertEquals(testCase.toAsciiNError(), toAsciiN.error(), "toAsciiN error");
+        IcuResult icuToAsciiN = icuToAsciiN(testCase.source());
+        assertMatchesIcu("toAsciiN", toAsciiN, icuToAsciiN, testCase.toAsciiNError());
 
         UTS46.Result toAsciiT = UTS46.toAscii(
                 testCase.source(),
@@ -89,6 +114,47 @@ public final class UTS46Test {
         );
         assertEquals(testCase.toAsciiT(), toAsciiT.value(), "toAsciiT");
         assertEquals(testCase.toAsciiTError(), toAsciiT.error(), "toAsciiT error");
+        IcuResult icuToAsciiT = icuToAsciiT(testCase.source());
+        assertMatchesIcu("toAsciiT", toAsciiT, icuToAsciiT, testCase.toAsciiTError());
+    }
+
+    /// Asserts that this implementation matches ICU4J when ICU4J returns a successful conversion.
+    private static void assertMatchesIcu(
+            String operation,
+            UTS46.Result actual,
+            IcuResult icu,
+            boolean expectedError
+    ) {
+        if (!expectedError) {
+            assertEquals(false, icu.error(), "ICU " + operation + " error");
+        }
+        if (!icu.error()) {
+            assertEquals(icu.value(), actual.value(), "ICU " + operation);
+        }
+    }
+
+    /// Converts a domain to Unicode with ICU4J.
+    private static IcuResult icuToUnicode(String source) {
+        StringBuilder output = new StringBuilder(source.length());
+        IDNA.Info info = new IDNA.Info();
+        ICU_TO_UNICODE.nameToUnicode(source, output, info);
+        return new IcuResult(output.toString(), info.hasErrors());
+    }
+
+    /// Converts a domain to non-transitional ASCII with ICU4J.
+    private static IcuResult icuToAsciiN(String source) {
+        StringBuilder output = new StringBuilder(source.length());
+        IDNA.Info info = new IDNA.Info();
+        ICU_TO_ASCII_N.nameToASCII(source, output, info);
+        return new IcuResult(output.toString(), info.hasErrors());
+    }
+
+    /// Converts a domain to transitional ASCII with ICU4J.
+    private static IcuResult icuToAsciiT(String source) {
+        StringBuilder output = new StringBuilder(source.length());
+        IDNA.Info info = new IDNA.Info();
+        ICU_TO_ASCII_T.nameToASCII(source, output, info);
+        return new IcuResult(output.toString(), info.hasErrors());
     }
 
     /// Reads all usable test cases from the Unicode IDNA test resource.
@@ -245,5 +311,12 @@ public final class UTS46Test {
             String toAsciiT,
             boolean toAsciiTError
     ) {
+    }
+
+    /// ICU4J conversion result.
+    ///
+    /// @param value the converted domain name
+    /// @param error whether ICU4J reported any IDNA error
+    private record IcuResult(String value, boolean error) {
     }
 }
