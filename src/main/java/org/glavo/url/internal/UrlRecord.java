@@ -23,9 +23,9 @@ import java.util.List;
 
 /// Mutable internal representation of WHATWG URL components.
 ///
-/// Parser runs mutate this object directly. This class stores only logical URL record components. The parser
-/// finalization step computes serialized URL text and string indexes before creating the immutable public URL
-/// object.
+/// Parser and builder-style operations mutate this object directly. This class stores only logical URL record
+/// components while a URL is being built. The finalization step copies these values into `WebURLImpl`, computes
+/// serialized URL text and component indexes, and does not retain this mutable object.
 @NotNullByDefault
 final class UrlRecord {
     /// URL scheme without the trailing colon.

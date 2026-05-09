@@ -18,6 +18,7 @@ package org.glavo.url.internal;
 import org.glavo.url.WebURL;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -29,8 +30,20 @@ import java.util.List;
 /// Internal immutable implementation of `WebURL`.
 @NotNullByDefault
 public final class WebURLImpl implements WebURL {
-    /// Frozen URL record owned by this immutable URL.
-    private final UrlRecord record;
+    /// URL scheme without the trailing colon.
+    private final String scheme;
+    /// URL host, or `null` when absent.
+    private final @Nullable UrlHost urlHost;
+    /// URL port, or `-1` when absent or defaulted.
+    private final int port;
+    /// Immutable non-opaque path segments.
+    private final @Unmodifiable List<String> pathSegments;
+    /// Opaque path, or `null` when the URL has a path segment list.
+    private final @Nullable String opaquePath;
+    /// Percent-encoded query, or `null` when absent.
+    private final @Nullable String rawQueryValue;
+    /// Percent-encoded fragment, or `null` when absent.
+    private final @Nullable String rawFragmentValue;
     /// Serialized WHATWG URL.
     private final String href;
     /// Index of the colon after the scheme.
@@ -113,7 +126,13 @@ public final class WebURLImpl implements WebURL {
             int fragmentStart,
             boolean pathPrefix
     ) {
-        this.record = record;
+        this.scheme = record.scheme;
+        this.urlHost = record.host;
+        this.port = record.port;
+        this.pathSegments = List.copyOf(record.path);
+        this.opaquePath = record.opaquePath;
+        this.rawQueryValue = record.query;
+        this.rawFragmentValue = record.fragment;
         this.href = href;
         this.schemeEnd = schemeEnd;
         this.usernameStart = usernameStart;
@@ -134,12 +153,12 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns whether this URL has an opaque path.
     boolean hasOpaquePath() {
-        return record.opaquePath != null;
+        return opaquePath != null;
     }
 
     /// Returns whether this URL has a host.
     boolean hasHost() {
-        return record.host != null;
+        return urlHost != null;
     }
 
     /// Returns the serialized host plus port when a port is present.
@@ -161,37 +180,37 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns whether the scheme equals the supplied lower-case ASCII value.
     boolean schemeEquals(String value) {
-        return record.scheme.equals(value);
+        return scheme.equals(value);
     }
 
     /// Returns the port value, or `-1` when absent.
     int portValue() {
-        return record.port;
+        return port;
     }
 
     /// Returns the host value for parser state.
     @Nullable UrlHost hostValue() {
-        return record.host;
+        return urlHost;
     }
 
     /// Returns a mutable copy of the non-opaque path segments.
     List<String> pathSegments() {
-        return new ArrayList<>(record.path);
+        return new ArrayList<>(pathSegments);
     }
 
     /// Returns the first path segment, or `null` when absent.
     @Nullable String firstPathSegment() {
-        return record.opaquePath != null || record.path.isEmpty() ? null : record.path.get(0);
+        return opaquePath != null || pathSegments.isEmpty() ? null : pathSegments.get(0);
     }
 
     /// Returns the opaque path value, or `null` for a non-opaque path.
     @Nullable String opaquePathValue() {
-        return record.opaquePath;
+        return opaquePath;
     }
 
     /// Returns the query value, or `null` when absent.
     @Nullable String queryValue() {
-        return record.query;
+        return rawQueryValue;
     }
 
     /// Returns the serialized URL.
@@ -209,7 +228,7 @@ public final class WebURLImpl implements WebURL {
         }
 
         String value;
-        switch (record.scheme) {
+        switch (scheme) {
             case "blob":
                 @Nullable WebURLImpl pathUrl = UrlParser.parseUrl(getRawPath());
                 if (pathUrl == null || (!pathUrl.schemeEquals("http") && !pathUrl.schemeEquals("https"))) {
@@ -226,7 +245,7 @@ public final class WebURLImpl implements WebURL {
                 if (!hasHost()) {
                     value = "null";
                 } else {
-                    value = record.scheme + "://" + hostAndPort();
+                    value = scheme + "://" + hostAndPort();
                 }
                 break;
             case "file":
@@ -241,7 +260,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the scheme.
     @Override
     public String getScheme() {
-        return record.scheme;
+        return scheme;
     }
 
     /// Returns the decoded username, or `null` when absent.
@@ -392,7 +411,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the port value, or `-1` when absent.
     @Override
     public int getPort() {
-        return record.port;
+        return port;
     }
 
     /// Returns the decoded path.
@@ -420,13 +439,13 @@ public final class WebURLImpl implements WebURL {
     /// Returns the decoded query, or `null` when absent.
     @Override
     public @Nullable String getQuery() {
-        if (record.query == null) {
+        if (rawQueryValue == null) {
             return null;
         }
 
         @Nullable String value = query;
         if (value == null) {
-            value = PercentEncoding.percentDecodeUtf8(record.query);
+            value = PercentEncoding.percentDecodeUtf8(rawQueryValue);
             query = value;
         }
         return value;
@@ -435,26 +454,26 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw query, or `null` when absent.
     @Override
     public @Nullable String getRawQuery() {
-        return record.query;
+        return rawQueryValue;
     }
 
     /// Returns the raw query, or the empty string when absent.
     @Override
     public String getRawQueryOrEmpty() {
-        @Nullable String query = record.query;
-        return query == null ? "" : query;
+        @Nullable String value = rawQueryValue;
+        return value == null ? "" : value;
     }
 
     /// Returns the decoded fragment, or `null` when absent.
     @Override
     public @Nullable String getFragment() {
-        if (record.fragment == null) {
+        if (rawFragmentValue == null) {
             return null;
         }
 
         @Nullable String value = fragment;
         if (value == null) {
-            value = PercentEncoding.percentDecodeUtf8(record.fragment);
+            value = PercentEncoding.percentDecodeUtf8(rawFragmentValue);
             fragment = value;
         }
         return value;
@@ -463,14 +482,14 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw fragment, or `null` when absent.
     @Override
     public @Nullable String getRawFragment() {
-        return record.fragment;
+        return rawFragmentValue;
     }
 
     /// Returns the raw fragment, or the empty string when absent.
     @Override
     public String getRawFragmentOrEmpty() {
-        @Nullable String fragment = record.fragment;
-        return fragment == null ? "" : fragment;
+        @Nullable String value = rawFragmentValue;
+        return value == null ? "" : value;
     }
 
     /// Returns the serialized URL as a Java `URI`.
