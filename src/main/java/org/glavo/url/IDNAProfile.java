@@ -20,33 +20,40 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 /// IDNA processing profile for domain host parsing.
 ///
-/// The URL Standard's domain-to-ASCII operation is observable in the serialized hostname for any URL whose
-/// host contains non-ASCII domain labels or punycode labels. Profile selection affects only domain hosts.
-/// It does not affect opaque hosts, IPv4 parsing, IPv6 parsing, path parsing, query parsing, or fragment
-/// parsing.
+/// An IDNA profile defines the standards and processing rules used to convert a Unicode domain name to its
+/// ASCII form during host parsing. The selected profile is observable in the serialized hostname for any URL
+/// whose host contains non-ASCII domain labels or punycode labels.
+///
+/// Profile selection affects only domain hosts. It does not affect opaque hosts, IPv4 parsing, IPv6 parsing,
+/// path parsing, query parsing, or fragment parsing. It also does not expose or require a particular
+/// implementation provider as part of the public API.
 ///
 /// `WebURLFactory.standard()` and the static parsing methods on `WebURL` use `UTS_46`.
 @NotNullByDefault
 public enum IDNAProfile {
-    /// Uses the JDK `java.net.IDN` implementation, which is based on IDNA 2003.
+    /// Uses the original IDNA 2003 standards.
     ///
-    /// This profile has no runtime dependencies outside `java.base`. It may differ from the URL Standard's
-    /// UTS #46 non-transitional processing for some names, but it is always available on a Java runtime.
+    /// This profile follows [RFC 3490](https://www.rfc-editor.org/rfc/rfc3490), with
+    /// [Nameprep, RFC 3491](https://www.rfc-editor.org/rfc/rfc3491), and
+    /// [Punycode, RFC 3492](https://www.rfc-editor.org/rfc/rfc3492). It is provided for compatibility with
+    /// software and data that expect IDNA 2003 processing and may differ from the URL Standard profile for
+    /// some domain names.
     IDNA_2003,
 
-    /// Uses UTS #46 non-transitional processing.
+    /// Uses Unicode IDNA Compatibility Processing with the URL Standard profile.
     ///
-    /// This is the profile used by the URL Standard and by `WebURL` static parsing methods. It requires the
-    /// optional ICU4J IDNA classes to be visible at runtime when a domain actually needs IDNA processing.
-    /// ASCII domains that do not contain punycode labels use the parser's ASCII fast path and do not load
-    /// ICU4J.
+    /// This profile follows [Unicode Technical Standard #46](https://www.unicode.org/reports/tr46/) and the
+    /// [WHATWG URL Standard IDNA algorithm](https://url.spec.whatwg.org/#idna). It uses the URL Standard's
+    /// non-transitional domain-to-ASCII settings, including bidi and joiner checks, and is the profile used by
+    /// `WebURLFactory.standard()` and the static parsing methods on `WebURL`.
     UTS_46,
     ;
 
     /// Returns whether this profile can be used in the current runtime.
     ///
-    /// `IDNA_2003` is always available. `UTS_46` is available only when the ICU4J IDNA classes can be loaded
-    /// and invoked by this module.
+    /// Availability is a runtime property of the selected profile. A profile can be selected for parsing only
+    /// when this method returns `true`; otherwise parsing a domain that requires that profile fails with
+    /// `IllegalStateException`.
     ///
     /// @return `true` if this profile can be selected for full IDNA processing
     public boolean isAvailable() {
