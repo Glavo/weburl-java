@@ -106,6 +106,7 @@ public final class WebURLTest {
         assertSame(url.getRawUsernameOrEmpty(), url.getRawUsernameOrEmpty());
         assertSame(url.getRawPassword(), url.getRawPassword());
         assertSame(url.getRawPasswordOrEmpty(), url.getRawPasswordOrEmpty());
+        assertSame(url.getHost(), url.getHost());
         assertSame(url.getPath(), url.getPath());
         assertSame(url.getRawPath(), url.getRawPath());
         assertSame(url.getQuery(), url.getQuery());
@@ -127,6 +128,7 @@ public final class WebURLTest {
         assertEquals("user", url.getRawUsernameOrEmpty());
         assertEquals("pass", url.getRawPassword());
         assertEquals("pass", url.getRawPasswordOrEmpty());
+        assertEquals("example.com", url.getHost());
         assertEquals(8080, url.getPort());
         assertEquals("/a%2Fb", url.getRawPath());
         assertEquals("x=a%26b", url.getRawQuery());
@@ -139,6 +141,7 @@ public final class WebURLTest {
         assertEquals("", absentComponents.getRawUsernameOrEmpty());
         assertNull(absentComponents.getRawPassword());
         assertEquals("", absentComponents.getRawPasswordOrEmpty());
+        assertEquals("example.com", absentComponents.getHost());
         assertEquals(-1, absentComponents.getPort());
         assertEquals("/path", absentComponents.getRawPath());
         assertNull(absentComponents.getRawQuery());
@@ -223,8 +226,13 @@ public final class WebURLTest {
     @Test
     public void parsesHosts() {
         assertEquals("http://127.0.0.1/", WebURL.parseURL("http://127.1").href());
+        assertEquals("127.0.0.1", WebURL.parseURL("http://127.1").getHost());
         assertEquals("http://[2001:db8::1]/", WebURL.parseURL("http://[2001:db8::1]/").href());
+        assertEquals("[2001:db8::1]", WebURL.parseURL("http://[2001:db8::1]/").getHost());
         assertEquals("https://xn--bcher-kva.example/", WebURL.parseURL("https://bücher.example/").href());
+        assertEquals("xn--bcher-kva.example", WebURL.parseURL("https://bücher.example/").getHost());
+        assertEquals("", WebURL.parseURL("file:///C:/demo").getHost());
+        assertNull(WebURL.parseURL("data:text/plain,hi").getHost());
     }
 
     /// Tests file URL origin behavior.

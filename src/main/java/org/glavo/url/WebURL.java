@@ -252,6 +252,19 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the raw password component, or the empty string when absent
     String getRawPasswordOrEmpty();
 
+    /// Returns the host component.
+    ///
+    /// This method is the Java `URI`-style getter for the URL host. The returned value is the normalized
+    /// serialized host without user information or port. Domain hosts are returned after URL Standard domain
+    /// processing, so Unicode domain labels are represented in ASCII form. IPv4 hosts are returned in dotted
+    /// decimal form. IPv6 hosts are returned in their compressed form enclosed in square brackets.
+    ///
+    /// The result is `null` when the URL record has no host component, such as for most opaque URLs. A URL with
+    /// an explicitly empty host returns the empty string.
+    ///
+    /// @return the host component, or `null` when absent
+    @Nullable String getHost();
+
     /// Returns the port component as an integer.
     ///
     /// This method follows the Java `URI` convention of returning `-1` when no port is stored in the URL

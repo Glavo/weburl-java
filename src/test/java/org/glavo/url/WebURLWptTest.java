@@ -146,25 +146,19 @@ public final class WebURLWptTest {
 
     /// Returns the WHATWG host field from public URI-style URL components.
     private static String host(WebURL url) {
-        @Nullable String host = hostFromHref(url);
-        return host == null ? "" : host;
+        @Nullable String host = url.getHost();
+        if (host == null) {
+            return "";
+        }
+
+        int port = url.getPort();
+        return port < 0 ? host : host + ":" + port;
     }
 
     /// Returns the WHATWG hostname field from public URI-style URL components.
     private static String hostname(WebURL url) {
-        String host = host(url);
-        if (host.startsWith("[")) {
-            int end = host.indexOf(']');
-            return end < 0 ? host : host.substring(0, end + 1);
-        }
-
-        int port = url.getPort();
-        if (port < 0) {
-            return host;
-        }
-
-        String suffix = ":" + port;
-        return host.endsWith(suffix) ? host.substring(0, host.length() - suffix.length()) : host;
+        @Nullable String host = url.getHost();
+        return host == null ? "" : host;
     }
 
     /// Returns the WHATWG port field from public URI-style URL components.
@@ -183,31 +177,6 @@ public final class WebURLWptTest {
     private static String hash(WebURL url) {
         @Nullable String fragment = url.getRawFragment();
         return fragment == null || fragment.isEmpty() ? "" : "#" + fragment;
-    }
-
-    /// Extracts the serialized host plus port from the URL serialization.
-    private static @Nullable String hostFromHref(WebURL url) {
-        String href = url.href();
-        int authorityStart = url.getScheme().length() + 1;
-        if (authorityStart + 1 >= href.length()
-                || href.charAt(authorityStart) != '/'
-                || href.charAt(authorityStart + 1) != '/') {
-            return null;
-        }
-
-        authorityStart += 2;
-        int authorityEnd = href.length();
-        for (int index = authorityStart; index < href.length(); index++) {
-            char c = href.charAt(index);
-            if (c == '/' || c == '?' || c == '#') {
-                authorityEnd = index;
-                break;
-            }
-        }
-
-        String authority = href.substring(authorityStart, authorityEnd);
-        int userInfoEnd = authority.lastIndexOf('@');
-        return userInfoEnd < 0 ? authority : authority.substring(userInfoEnd + 1);
     }
 
     /// Tries to parse a URL with an optional base.
