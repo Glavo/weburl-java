@@ -31,8 +31,8 @@ import java.util.Objects;
 /// A factory does not store a base URL. `parse(String)`, `tryParse(String)`, and `canParse(String)` parse only
 /// absolute URL inputs. Overloads that accept a base URL use the supplied base only for that call.
 ///
-/// The factory object is immutable and thread-safe. `Builder` is mutable and is intended to be confined to
-/// the thread or construction scope that creates a factory.
+/// The factory object is immutable and thread-safe. Configuration methods whose names start with `with`
+/// return either this factory or a new factory with the requested setting.
 @NotNullByDefault
 public final class WebURLFactory {
     /// The default factory used by `WebURL` static parsing methods.
@@ -56,15 +56,6 @@ public final class WebURLFactory {
         return DEFAULT;
     }
 
-    /// Returns a new factory builder.
-    ///
-    /// The builder initially uses `IDNAProfile.defaultProfile()`.
-    ///
-    /// @return a new mutable builder
-    public static Builder builder() {
-        return new Builder(IDNAProfile.defaultProfile());
-    }
-
     /// Returns the configured IDNA profile.
     ///
     /// The profile controls how Unicode domain labels are converted to ASCII during domain host parsing.
@@ -73,6 +64,20 @@ public final class WebURLFactory {
     /// @return the configured IDNA profile
     public IDNAProfile idnaProfile() {
         return idnaProfile;
+    }
+
+    /// Returns a factory with the supplied IDNA profile.
+    ///
+    /// If the supplied profile is the same as this factory's profile, this method returns this factory.
+    /// Otherwise it returns a new immutable factory. The returned factory uses the supplied profile for
+    /// domain-to-ASCII conversion in all parsing methods, including overloads that first parse an explicit
+    /// base URL string.
+    ///
+    /// @param idnaProfile the IDNA profile
+    /// @return a factory configured with the supplied IDNA profile
+    public WebURLFactory withIDNAProfile(IDNAProfile idnaProfile) {
+        IDNAProfile newProfile = Objects.requireNonNull(idnaProfile, "idnaProfile");
+        return this.idnaProfile == newProfile ? this : new WebURLFactory(newProfile);
     }
 
     /// Parses an input string and returns the parsed URL.
@@ -191,15 +196,6 @@ public final class WebURLFactory {
         return tryParse(input, base) != null;
     }
 
-    /// Returns a mutable builder initialized from this factory.
-    ///
-    /// Changes to the returned builder do not affect this factory.
-    ///
-    /// @return a new mutable builder containing this factory's settings
-    public Builder toBuilder() {
-        return new Builder(idnaProfile);
-    }
-
     /// Parses an input string and throws when parsing fails.
     private WebURL parseRequired(String input, @Nullable WebURLImpl base, String message) {
         Objects.requireNonNull(input, "input");
@@ -238,46 +234,5 @@ public final class WebURLFactory {
     /// Returns the implementation object for a `WebURL`.
     private static WebURLImpl implementation(WebURL url) {
         return (WebURLImpl) Objects.requireNonNull(url, "url");
-    }
-
-    /// A mutable builder for `WebURLFactory`.
-    ///
-    /// A new builder starts with the same configuration as `defaultFactory()`: `IDNAProfile.defaultProfile()`. Builder
-    /// methods mutate and return this builder so calls can be chained.
-    @NotNullByDefault
-    public static final class Builder {
-        /// The configured IDNA profile for the factory being built.
-        private IDNAProfile idnaProfile;
-
-        /// Creates a builder initialized from factory settings.
-        private Builder(IDNAProfile idnaProfile) {
-            this.idnaProfile = idnaProfile;
-        }
-
-        /// Returns the configured IDNA profile.
-        ///
-        /// @return the configured IDNA profile
-        public IDNAProfile idnaProfile() {
-            return idnaProfile;
-        }
-
-        /// Sets the IDNA profile.
-        ///
-        /// The profile affects domain-to-ASCII conversion for all parsing methods on factories created by this
-        /// builder, including overloads that first parse an explicit base URL string.
-        ///
-        /// @param idnaProfile the IDNA profile
-        /// @return this builder
-        public Builder idnaProfile(IDNAProfile idnaProfile) {
-            this.idnaProfile = Objects.requireNonNull(idnaProfile, "idnaProfile");
-            return this;
-        }
-
-        /// Creates an immutable factory from the current builder state.
-        ///
-        /// @return a configured immutable factory
-        public WebURLFactory build() {
-            return new WebURLFactory(idnaProfile);
-        }
     }
 }

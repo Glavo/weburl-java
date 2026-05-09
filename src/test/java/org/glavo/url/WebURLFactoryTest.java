@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,7 +36,7 @@ public final class WebURLFactoryTest {
 
         assertSame(factory, WebURLFactory.defaultFactory());
         assertEquals(IDNAProfile.defaultProfile(), factory.idnaProfile());
-        assertEquals(IDNAProfile.defaultProfile(), WebURLFactory.builder().build().idnaProfile());
+        assertSame(factory, factory.withIDNAProfile(IDNAProfile.defaultProfile()));
         assertEquals(WebURL.of("https://example.com/a").href(), factory.parse("https://example.com/a").href());
         assertFalse(factory.canParse("../relative"));
     }
@@ -89,9 +90,7 @@ public final class WebURLFactoryTest {
     /// Tests IDNA 2003 profile selection with the dependency-free JDK implementation.
     @Test
     public void parsesWithIDNA2003Profile() {
-        WebURLFactory factory = WebURLFactory.builder()
-                .idnaProfile(IDNAProfile.IDNA_2003)
-                .build();
+        WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.IDNA_2003);
 
         assertEquals(IDNAProfile.IDNA_2003, factory.idnaProfile());
         assertEquals("https://xn--bcher-kva.example/", factory.parse("https://bücher.example/").href());
@@ -101,9 +100,7 @@ public final class WebURLFactoryTest {
     /// Tests UTS #46 availability handling.
     @Test
     public void handlesUts46Availability() {
-        WebURLFactory factory = WebURLFactory.builder()
-                .idnaProfile(IDNAProfile.UTS_46)
-                .build();
+        WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.UTS_46);
 
         if (IDNAProfile.UTS_46.isAvailable()) {
             assertEquals("https://xn--bcher-kva.example/", factory.parse("https://bücher.example/").href());
@@ -113,16 +110,17 @@ public final class WebURLFactoryTest {
         }
     }
 
-    /// Tests factory copy helpers.
+    /// Tests immutable factory derivation.
     @Test
-    public void copiesFactoryConfiguration() {
-        WebURLFactory factory = WebURLFactory.builder()
-                .idnaProfile(IDNAProfile.IDNA_2003)
-                .build();
+    public void derivesFactoryConfiguration() {
+        WebURLFactory factory = WebURLFactory.defaultFactory().withIDNAProfile(IDNAProfile.IDNA_2003);
+        WebURLFactory copied = factory.withIDNAProfile(IDNAProfile.IDNA_2003);
+        WebURLFactory changed = factory.withIDNAProfile(IDNAProfile.UTS_46);
 
-        WebURLFactory copied = factory.toBuilder().build();
-
+        assertSame(factory, copied);
+        assertNotSame(factory, changed);
         assertEquals(IDNAProfile.IDNA_2003, copied.idnaProfile());
+        assertEquals(IDNAProfile.UTS_46, changed.idnaProfile());
         assertFalse(copied.canParse("../c"));
         assertEquals("https://example.net/d",
                 copied.parse("../d", WebURL.of("https://example.net/base/")).href());
