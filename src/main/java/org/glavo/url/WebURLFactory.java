@@ -20,41 +20,36 @@ import org.glavo.url.internal.WebURLImpl;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
 import java.util.Objects;
 
 /// A reusable, immutable factory for WHATWG URLs.
 ///
-/// A factory combines the URL Standard basic URL parser with a small set of caller-controlled creation
-/// settings. The default factory returned by `defaultFactory()` uses the default IDNA profile; it is the factory
-/// used by the static parsing methods on `WebURL`.
+/// A factory combines the URL Standard basic URL parser with caller-controlled creation settings. The default
+/// factory returned by `defaultFactory()` uses the default IDNA profile; it is the factory used by the static
+/// parsing methods on `WebURL`.
 ///
 /// A factory does not store a base URL. `parseURL(String)`, `tryParseURL(String)`, and
 /// `canParseURL(String)` parse only absolute URL inputs. Overloads that accept a base URL use the supplied
 /// base only for that call. `parseAddress(String)`, `tryParseAddress(String)`, and
 /// `canParseAddress(String)` additionally accept browser address bar style URL inputs such as bare domain
-/// names and host-port pairs.
+/// names and host-port pairs, completing them with the `https` scheme.
 ///
 /// The factory object is immutable and thread-safe. Configuration methods whose names start with `with`
 /// return either this factory or a new factory with the requested setting.
 @NotNullByDefault
 public final class WebURLFactory {
-    /// The default scheme used for browser address inputs without an explicit scheme.
-    private static final String DEFAULT_ADDRESS_SCHEME = "https";
+    /// The scheme used for browser address inputs without an explicit scheme.
+    private static final String ADDRESS_SCHEME = "https";
 
     /// The default factory used by `WebURL` static parsing methods.
-    private static final WebURLFactory DEFAULT =
-            new WebURLFactory(IDNAProfile.defaultProfile(), DEFAULT_ADDRESS_SCHEME);
+    private static final WebURLFactory DEFAULT = new WebURLFactory(IDNAProfile.defaultProfile());
 
     /// The configured IDNA profile.
     private final IDNAProfile idnaProfile;
-    /// The default scheme used when parsing browser address inputs without an explicit scheme.
-    private final String addressDefaultScheme;
 
     /// Creates a factory from validated factory settings.
-    private WebURLFactory(IDNAProfile idnaProfile, String addressDefaultScheme) {
+    private WebURLFactory(IDNAProfile idnaProfile) {
         this.idnaProfile = idnaProfile;
-        this.addressDefaultScheme = addressDefaultScheme;
     }
 
     /// Returns the default URL factory.
@@ -77,17 +72,6 @@ public final class WebURLFactory {
         return idnaProfile;
     }
 
-    /// Returns the default scheme used for browser address inputs.
-    ///
-    /// This scheme is prepended when `parseAddress(String)` accepts a browser address input that does not
-    /// already contain an explicit URL scheme, for example `www.example.com` or `localhost:8080`. The returned
-    /// scheme is normalized to lower case and does not include a trailing colon.
-    ///
-    /// @return the default browser address scheme
-    public String addressDefaultScheme() {
-        return addressDefaultScheme;
-    }
-
     /// Returns a factory with the supplied IDNA profile.
     ///
     /// If the supplied profile is the same as this factory's profile, this method returns this factory.
@@ -103,22 +87,7 @@ public final class WebURLFactory {
         if (!newProfile.isAvailable()) {
             throw new UnsupportedOperationException("IDNA profile is not available: " + newProfile);
         }
-        return this.idnaProfile == newProfile ? this : new WebURLFactory(newProfile, addressDefaultScheme);
-    }
-
-    /// Returns a factory with the supplied default browser address scheme.
-    ///
-    /// The scheme is used by `parseAddress(String)`, `tryParseAddress(String)`, and
-    /// `canParseAddress(String)` when a browser address input omits an explicit scheme. The supplied value
-    /// must be a valid URL scheme name. A trailing colon is accepted but is not stored. The value is normalized
-    /// to lower case.
-    ///
-    /// @param scheme the default browser address scheme, with or without a trailing colon
-    /// @return a factory configured with the supplied default browser address scheme
-    /// @throws IllegalArgumentException when the supplied value is not a valid URL scheme
-    public WebURLFactory withAddressDefaultScheme(String scheme) {
-        String newScheme = normalizeScheme(scheme);
-        return addressDefaultScheme.equals(newScheme) ? this : new WebURLFactory(idnaProfile, newScheme);
+        return this.idnaProfile == newProfile ? this : new WebURLFactory(newProfile);
     }
 
     /// Parses an input string and returns the parsed URL.
@@ -238,9 +207,9 @@ public final class WebURLFactory {
     ///
     /// This method first recognizes address-bar style URL inputs that are not absolute URL strings, such as
     /// `www.example.com`, `example.com/path`, `//example.com/path`, `localhost:8080`, `127.0.0.1:3000`, and
-    /// `[::1]:8080`. Such inputs are converted to absolute URL strings by prepending
-    /// `addressDefaultScheme()`. Inputs with an explicit URL scheme, such as `https://example.com/`,
-    /// `data:text/plain,hi`, or `mailto:user@example.com`, are parsed as standard URLs.
+    /// `[::1]:8080`. Such inputs are converted to absolute URL strings by prepending `https`. Inputs with an
+    /// explicit URL scheme, such as `https://example.com/`, `data:text/plain,hi`, or
+    /// `mailto:user@example.com`, are parsed as standard URLs.
     ///
     /// This method does not implement search fallback. Inputs that are neither URL strings nor recognized
     /// browser address inputs fail instead of being interpreted as search terms.
@@ -325,7 +294,7 @@ public final class WebURLFactory {
             return null;
         }
         if (text.startsWith("//") || text.startsWith("\\\\")) {
-            return addressDefaultScheme + ":" + text;
+            return ADDRESS_SCHEME + ":" + text;
         }
         if (text.charAt(0) == '/' || text.charAt(0) == '\\' || text.charAt(0) == '?' || text.charAt(0) == '#') {
             return null;
@@ -337,7 +306,7 @@ public final class WebURLFactory {
         if (schemeEnd >= 0 && !isAddressHost(authority.substring(0, schemeEnd))) {
             return null;
         }
-        return isAddressAuthority(authority) ? addressDefaultScheme + "://" + text : null;
+        return isAddressAuthority(authority) ? ADDRESS_SCHEME + "://" + text : null;
     }
 
     /// Returns whether a string is a browser-address authority.
@@ -415,22 +384,6 @@ public final class WebURLFactory {
             }
         }
         return colon;
-    }
-
-    /// Normalizes and validates a URL scheme.
-    private static String normalizeScheme(String scheme) {
-        Objects.requireNonNull(scheme, "scheme");
-        int end = scheme.endsWith(":") ? scheme.length() - 1 : scheme.length();
-        if (end <= 0 || !isAsciiAlpha(scheme.charAt(0))) {
-            throw new IllegalArgumentException("Invalid URL scheme: " + scheme);
-        }
-        for (int i = 1; i < end; i++) {
-            char c = scheme.charAt(i);
-            if (!isAsciiAlphanumeric(c) && c != '+' && c != '-' && c != '.') {
-                throw new IllegalArgumentException("Invalid URL scheme: " + scheme);
-            }
-        }
-        return scheme.substring(0, end).toLowerCase(Locale.ROOT);
     }
 
     /// Trims leading and trailing C0 controls and spaces.

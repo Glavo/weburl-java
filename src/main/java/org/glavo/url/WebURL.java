@@ -142,7 +142,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// This method uses `WebURLFactory.defaultFactory().parseAddress(input)`. It accepts standard absolute
     /// URL strings and browser address bar style URL inputs such as bare domain names, `//`-prefixed
     /// authorities, `localhost` with a port, IP addresses, and bracketed IPv6 addresses. Inputs without an
-    /// explicit scheme are completed with the default factory's address scheme.
+    /// explicit scheme are completed with `https`.
     ///
     /// This method does not implement search fallback. Inputs that are neither URL strings nor recognized
     /// browser address inputs fail instead of being interpreted as search terms.

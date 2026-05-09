@@ -36,7 +36,6 @@ public final class WebURLFactoryTest {
 
         assertSame(factory, WebURLFactory.defaultFactory());
         assertEquals(IDNAProfile.defaultProfile(), factory.idnaProfile());
-        assertEquals("https", factory.addressDefaultScheme());
         assertSame(factory, factory.withIDNAProfile(IDNAProfile.defaultProfile()));
         assertEquals(WebURL.parseURL("https://example.com/a").href(), factory.parseURL("https://example.com/a").href());
         assertEquals(WebURL.parseAddress("example.com").href(), factory.parseAddress("example.com").href());
@@ -98,18 +97,6 @@ public final class WebURLFactoryTest {
         assertThrows(WebURLParseException.class, () -> factory.parseAddress("not a url"));
         assertThrows(WebURLParseException.PortInvalid.class,
                 () -> factory.parseAddress("www.glavo.site:abc"));
-    }
-
-    /// Tests browser address default scheme configuration.
-    @Test
-    public void configuresAddressDefaultScheme() {
-        WebURLFactory factory = WebURLFactory.defaultFactory().withAddressDefaultScheme("HTTP:");
-
-        assertEquals("http", factory.addressDefaultScheme());
-        assertSame(factory, factory.withAddressDefaultScheme("http"));
-        assertEquals("http://www.glavo.site/", factory.parseAddress("www.glavo.site").href());
-        assertThrows(IllegalArgumentException.class,
-                () -> factory.withAddressDefaultScheme("1https"));
     }
 
     /// Tests parseURL and canParseURL failure handling through a factory.
