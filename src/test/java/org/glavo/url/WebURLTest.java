@@ -103,20 +103,16 @@ public final class WebURLTest {
         assertSame(url.origin(), url.origin());
         assertSame(url.scheme(), url.scheme());
         assertSame(url.getScheme(), url.getScheme());
-        assertSame(url.protocol(), url.protocol());
-        assertSame(url.username(), url.username());
         assertSame(url.getUsername(), url.getUsername());
-        assertSame(url.password(), url.password());
+        assertSame(url.getUsernameOrEmpty(), url.getUsernameOrEmpty());
         assertSame(url.getPassword(), url.getPassword());
-        assertSame(url.host(), url.host());
-        assertSame(url.hostname(), url.hostname());
-        assertSame(url.port(), url.port());
-        assertSame(url.pathname(), url.pathname());
+        assertSame(url.getPasswordOrEmpty(), url.getPasswordOrEmpty());
         assertSame(url.getRawPath(), url.getRawPath());
-        assertSame(url.search(), url.search());
+        assertSame(url.getRawPathOrEmpty(), url.getRawPathOrEmpty());
         assertSame(url.getRawQuery(), url.getRawQuery());
-        assertSame(url.hash(), url.hash());
+        assertSame(url.getRawQueryOrEmpty(), url.getRawQueryOrEmpty());
         assertSame(url.getRawFragment(), url.getRawFragment());
+        assertSame(url.getRawFragmentOrEmpty(), url.getRawFragmentOrEmpty());
         assertSame(url.toRFC2396String(), url.toRFC2396String());
     }
 
@@ -127,19 +123,29 @@ public final class WebURLTest {
 
         assertEquals("https", url.getScheme());
         assertEquals("user", url.getUsername());
+        assertEquals("user", url.getUsernameOrEmpty());
         assertEquals("pass", url.getPassword());
+        assertEquals("pass", url.getPasswordOrEmpty());
         assertEquals(8080, url.getPort());
         assertEquals("/a%2Fb", url.getRawPath());
+        assertEquals("/a%2Fb", url.getRawPathOrEmpty());
         assertEquals("x=a%26b", url.getRawQuery());
+        assertEquals("x=a%26b", url.getRawQueryOrEmpty());
         assertEquals("frag%23ment", url.getRawFragment());
+        assertEquals("frag%23ment", url.getRawFragmentOrEmpty());
 
         WebURL absentComponents = WebURL.parseURL("https://example.com/path");
         assertNull(absentComponents.getUsername());
+        assertEquals("", absentComponents.getUsernameOrEmpty());
         assertNull(absentComponents.getPassword());
+        assertEquals("", absentComponents.getPasswordOrEmpty());
         assertEquals(-1, absentComponents.getPort());
         assertEquals("/path", absentComponents.getRawPath());
+        assertEquals("/path", absentComponents.getRawPathOrEmpty());
         assertNull(absentComponents.getRawQuery());
+        assertEquals("", absentComponents.getRawQueryOrEmpty());
         assertNull(absentComponents.getRawFragment());
+        assertEquals("", absentComponents.getRawFragmentOrEmpty());
 
         assertEquals(-1, WebURL.parseURL("https://example.com:443/path").getPort());
         assertEquals("", WebURL.parseURL("https://example.com/path?").getRawQuery());
@@ -187,11 +193,10 @@ public final class WebURLTest {
     public void updatesComponentsWithSetters() {
         WebURL url = WebURL.parseURL("https://user:pass@example.com:443/a/b?x=1#f");
         assertEquals("https://example.com", url.origin());
-        assertEquals("https", url.scheme());
-        assertEquals("https:", url.protocol());
-        assertEquals("", url.port());
-        assertEquals("user", url.username());
-        assertEquals("pass", url.password());
+        assertEquals("https", url.getScheme());
+        assertEquals(-1, url.getPort());
+        assertEquals("user", url.getUsername());
+        assertEquals("pass", url.getPassword());
 
         WebURL updated = url
                 .withProtocol("http")
@@ -204,8 +209,8 @@ public final class WebURLTest {
 
         assertEquals("https://user:pass@example.com/a/b?x=1#f", url.href());
         assertEquals("http://a%20b:p%40ss@example.org:8080/c%20d?q=a%20b&x=1#frag%20ment", updated.href());
-        assertEquals("?q=a%20b&x=1", updated.search());
-        assertEquals("#frag%20ment", updated.hash());
+        assertEquals("q=a%20b&x=1", updated.getRawQuery());
+        assertEquals("frag%20ment", updated.getRawFragment());
         assertEquals("a b", updated.searchParams().get("q"));
     }
 
@@ -227,7 +232,7 @@ public final class WebURLTest {
         assertEquals("https://example.test/?a=3&b=x+y", updated.href());
 
         WebURL withoutSearch = updated.withSearch("");
-        assertEquals("", withoutSearch.search());
+        assertNull(withoutSearch.getRawQuery());
         assertEquals(2, params.size());
     }
 

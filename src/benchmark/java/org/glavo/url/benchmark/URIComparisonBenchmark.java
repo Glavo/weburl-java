@@ -135,15 +135,18 @@ public class URIComparisonBenchmark {
         blackhole.consume(webURL.href());
         blackhole.consume(webURL.origin());
         blackhole.consume(webURL.scheme());
-        blackhole.consume(webURL.protocol());
-        blackhole.consume(webURL.username());
-        blackhole.consume(webURL.password());
-        blackhole.consume(webURL.host());
-        blackhole.consume(webURL.hostname());
-        blackhole.consume(webURL.port());
-        blackhole.consume(webURL.pathname());
-        blackhole.consume(webURL.search());
-        blackhole.consume(webURL.hash());
+        blackhole.consume(webURL.getScheme());
+        blackhole.consume(webURL.getUsername());
+        blackhole.consume(webURL.getUsernameOrEmpty());
+        blackhole.consume(webURL.getPassword());
+        blackhole.consume(webURL.getPasswordOrEmpty());
+        blackhole.consume(webURL.getPort());
+        blackhole.consume(webURL.getRawPath());
+        blackhole.consume(webURL.getRawPathOrEmpty());
+        blackhole.consume(webURL.getRawQuery());
+        blackhole.consume(webURL.getRawQueryOrEmpty());
+        blackhole.consume(webURL.getRawFragment());
+        blackhole.consume(webURL.getRawFragmentOrEmpty());
     }
 
     /// Reads raw public components from an already parsed JDK `URI`.

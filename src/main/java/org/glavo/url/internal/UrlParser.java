@@ -104,7 +104,7 @@ public final class UrlParser {
 
     /// Serializes a URL path.
     public static String serializePath(WebURLImpl url) {
-        return url.pathname();
+        return url.getRawPathOrEmpty();
     }
 
     /// Serializes a URL origin.
@@ -987,8 +987,8 @@ public final class UrlParser {
                 recordValidationError(new WebURLParseException.InvalidReverseSolidus());
                 state = State.RELATIVE_SLASH;
             } else {
-                record.username = base.username();
-                record.password = base.password();
+                record.username = base.getUsernameOrEmpty();
+                record.password = base.getPasswordOrEmpty();
                 record.host = base.hostValue();
                 record.port = base.portValue();
                 record.path = base.pathSegments();
@@ -1025,8 +1025,8 @@ public final class UrlParser {
             } else if (c == '/') {
                 state = State.AUTHORITY;
             } else {
-                record.username = base.username();
-                record.password = base.password();
+                record.username = base.getUsernameOrEmpty();
+                record.password = base.getPasswordOrEmpty();
                 record.host = base.hostValue();
                 record.port = base.portValue();
                 state = State.PATH;

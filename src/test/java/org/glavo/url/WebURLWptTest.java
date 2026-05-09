@@ -179,28 +179,94 @@ public final class WebURLWptTest {
             case "origin":
                 return url.origin();
             case "protocol":
-                return url.protocol();
+                return url.getScheme() + ":";
             case "username":
-                return url.username();
+                return url.getUsernameOrEmpty();
             case "password":
-                return url.password();
+                return url.getPasswordOrEmpty();
             case "host":
-                return url.host();
+                return host(url);
             case "hostname":
-                return url.hostname();
+                return hostname(url);
             case "port":
-                return url.port();
+                return port(url);
             case "pathname":
-                return url.pathname();
+                return url.getRawPathOrEmpty();
             case "search":
-                return url.search();
+                return search(url);
             case "searchParams":
                 return url.searchParams().toString();
             case "hash":
-                return url.hash();
+                return hash(url);
             default:
                 throw new AssertionError("Unsupported URL field: " + fieldName);
         }
+    }
+
+    /// Returns the WHATWG host field from public URI-style URL components.
+    private static String host(WebURL url) {
+        @Nullable String host = hostFromHref(url);
+        return host == null ? "" : host;
+    }
+
+    /// Returns the WHATWG hostname field from public URI-style URL components.
+    private static String hostname(WebURL url) {
+        String host = host(url);
+        if (host.startsWith("[")) {
+            int end = host.indexOf(']');
+            return end < 0 ? host : host.substring(0, end + 1);
+        }
+
+        int port = url.getPort();
+        if (port < 0) {
+            return host;
+        }
+
+        String suffix = ":" + port;
+        return host.endsWith(suffix) ? host.substring(0, host.length() - suffix.length()) : host;
+    }
+
+    /// Returns the WHATWG port field from public URI-style URL components.
+    private static String port(WebURL url) {
+        int port = url.getPort();
+        return port < 0 ? "" : Integer.toString(port);
+    }
+
+    /// Returns the WHATWG search field from public URI-style URL components.
+    private static String search(WebURL url) {
+        @Nullable String query = url.getRawQuery();
+        return query == null || query.isEmpty() ? "" : "?" + query;
+    }
+
+    /// Returns the WHATWG hash field from public URI-style URL components.
+    private static String hash(WebURL url) {
+        @Nullable String fragment = url.getRawFragment();
+        return fragment == null || fragment.isEmpty() ? "" : "#" + fragment;
+    }
+
+    /// Extracts the serialized host plus port from the URL serialization.
+    private static @Nullable String hostFromHref(WebURL url) {
+        String href = url.href();
+        int authorityStart = url.getScheme().length() + 1;
+        if (authorityStart + 1 >= href.length()
+                || href.charAt(authorityStart) != '/'
+                || href.charAt(authorityStart + 1) != '/') {
+            return null;
+        }
+
+        authorityStart += 2;
+        int authorityEnd = href.length();
+        for (int index = authorityStart; index < href.length(); index++) {
+            char c = href.charAt(index);
+            if (c == '/' || c == '?' || c == '#') {
+                authorityEnd = index;
+                break;
+            }
+        }
+
+        String authority = href.substring(authorityStart, authorityEnd);
+        int userInfoEnd = authority.lastIndexOf('@');
+        return userInfoEnd < 0 ? authority : authority.substring(userInfoEnd + 1);
     }
 
     /// Tries to parse a URL with an optional base.

@@ -34,24 +34,12 @@ public final class WebURLImpl implements WebURL {
     private final UrlRecord record;
     /// Cached origin string, or `null` until requested.
     private @Nullable String origin;
-    /// Cached protocol string, or `null` until requested.
-    private @Nullable String protocol;
     /// Cached username string, or `null` until requested.
     private @Nullable String username;
     /// Cached password string, or `null` until requested.
     private @Nullable String password;
-    /// Cached host string, or `null` until requested.
-    private @Nullable String host;
-    /// Cached hostname string, or `null` until requested.
-    private @Nullable String hostname;
-    /// Cached port string, or `null` until requested.
-    private @Nullable String port;
-    /// Cached pathname string, or `null` until requested.
-    private @Nullable String pathname;
-    /// Cached search string, or `null` until requested.
-    private @Nullable String search;
-    /// Cached hash string, or `null` until requested.
-    private @Nullable String hash;
+    /// Cached raw path string, or `null` until requested.
+    private @Nullable String rawPath;
     /// Cached RFC 2396 URI string, or `null` until requested.
     private @Nullable String rfc2396String;
     /// Cached immutable query parameter object, or `null` until requested.
@@ -81,6 +69,17 @@ public final class WebURLImpl implements WebURL {
     /// Returns whether this URL has a host that serializes to an empty string.
     boolean hasEmptyHost() {
         return record.host != null && record.host.isEmpty();
+    }
+
+    /// Returns the serialized host plus port when a port is present.
+    private String hostAndPort() {
+        String href = href();
+        if (record.hostStart < 0) {
+            return "";
+        }
+        return record.portStart < 0
+                ? href.substring(record.hostStart, record.hostEnd)
+                : href.substring(record.hostStart, record.portEnd);
     }
 
     /// Returns the serialized URL without its fragment.
@@ -148,7 +147,7 @@ public final class WebURLImpl implements WebURL {
         String value;
         switch (record.scheme) {
             case "blob":
-                @Nullable WebURLImpl pathUrl = UrlParser.parseUrl(pathname());
+                @Nullable WebURLImpl pathUrl = UrlParser.parseUrl(getRawPathOrEmpty());
                 if (pathUrl == null || (!pathUrl.schemeEquals("http") && !pathUrl.schemeEquals("https"))) {
                     value = "null";
                 } else {
@@ -163,7 +162,7 @@ public final class WebURLImpl implements WebURL {
                 if (!hasHost()) {
                     value = "null";
                 } else {
-                    value = record.scheme + "://" + host();
+                    value = record.scheme + "://" + hostAndPort();
                 }
                 break;
             case "file":
@@ -193,26 +192,15 @@ public final class WebURLImpl implements WebURL {
         return withSchemeOverride(value);
     }
 
-    /// Returns the protocol, including the trailing colon.
-    @Override
-    public String protocol() {
-        @Nullable String value = protocol;
-        if (value == null) {
-            value = href().substring(0, record.schemeEnd + 1);
-            protocol = value;
-        }
-        return value;
-    }
-
     /// Returns a URL with the protocol updated when the URL Standard permits the change.
     @Override
     public WebURL withProtocol(String value) {
         return withSchemeOverride(value);
     }
 
-    /// Returns the username.
+    /// Returns the raw username, or the empty string when absent.
     @Override
-    public String username() {
+    public String getUsernameOrEmpty() {
         @Nullable String value = username;
         if (value == null) {
             String href = href();
@@ -225,7 +213,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw username, or `null` when absent.
     @Override
     public @Nullable String getUsername() {
-        return record.usernameStart < 0 ? null : username();
+        return record.usernameStart < 0 ? null : getUsernameOrEmpty();
     }
 
     /// Returns a URL with the username updated when the URL can have credentials.
@@ -239,9 +227,9 @@ public final class WebURLImpl implements WebURL {
         return new WebURLImpl(copy);
     }
 
-    /// Returns the password.
+    /// Returns the raw password, or the empty string when absent.
     @Override
-    public String password() {
+    public String getPasswordOrEmpty() {
         @Nullable String value = password;
         if (value == null) {
             String href = href();
@@ -254,7 +242,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw password, or `null` when absent.
     @Override
     public @Nullable String getPassword() {
-        return record.passwordStart < 0 ? null : password();
+        return record.passwordStart < 0 ? null : getPasswordOrEmpty();
     }
 
     /// Returns a URL with the password updated when the URL can have credentials.
@@ -268,24 +256,6 @@ public final class WebURLImpl implements WebURL {
         return new WebURLImpl(copy);
     }
 
-    /// Returns the host, including the port when present.
-    @Override
-    public String host() {
-        @Nullable String value = host;
-        if (value == null) {
-            String href = href();
-            if (record.hostStart < 0) {
-                value = "";
-            } else {
-                value = record.portStart < 0
-                        ? href.substring(record.hostStart, record.hostEnd)
-                        : href.substring(record.hostStart, record.portEnd);
-            }
-            host = value;
-        }
-        return value;
-    }
-
     /// Returns a URL with the host updated when the URL has a non-opaque path.
     @Override
     public WebURL withHost(String value) {
@@ -295,18 +265,6 @@ public final class WebURLImpl implements WebURL {
         return withStateOverride(value, UrlParser.State.HOST);
     }
 
-    /// Returns the hostname.
-    @Override
-    public String hostname() {
-        @Nullable String value = hostname;
-        if (value == null) {
-            String href = href();
-            value = record.hostStart < 0 ? "" : href.substring(record.hostStart, record.hostEnd);
-            hostname = value;
-        }
-        return value;
-    }
-
     /// Returns a URL with the hostname updated when the URL has a non-opaque path.
     @Override
     public WebURL withHostname(String value) {
@@ -314,18 +272,6 @@ public final class WebURLImpl implements WebURL {
             return this;
         }
         return withStateOverride(value, UrlParser.State.HOSTNAME);
-    }
-
-    /// Returns the port as a string.
-    @Override
-    public String port() {
-        @Nullable String value = port;
-        if (value == null) {
-            String href = href();
-            value = record.portStart < 0 ? "" : href.substring(record.portStart, record.portEnd);
-            port = value;
-        }
-        return value;
     }
 
     /// Returns the port value, or `-1` when absent.
@@ -348,13 +294,13 @@ public final class WebURLImpl implements WebURL {
         return withStateOverride(value, UrlParser.State.PORT);
     }
 
-    /// Returns the serialized pathname.
+    /// Returns the raw path, or the empty string when absent.
     @Override
-    public String pathname() {
-        @Nullable String value = pathname;
+    public String getRawPathOrEmpty() {
+        @Nullable String value = rawPath;
         if (value == null) {
             value = href().substring(record.pathStart, record.pathEnd);
-            pathname = value;
+            rawPath = value;
         }
         return value;
     }
@@ -362,7 +308,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw path.
     @Override
     public String getRawPath() {
-        return pathname();
+        return getRawPathOrEmpty();
     }
 
     /// Returns a URL with the pathname updated when the URL has a non-opaque path.
@@ -377,24 +323,17 @@ public final class WebURLImpl implements WebURL {
         return parseIntoCopyOrThis(value, copy, UrlParser.State.PATH_START);
     }
 
-    /// Returns the search string, including the leading question mark when non-empty.
-    @Override
-    public String search() {
-        @Nullable String value = search;
-        if (value == null) {
-            String href = href();
-            value = record.queryStart < 0 || record.queryStart == record.queryEnd
-                    ? ""
-                    : href.substring(record.queryStart - 1, record.queryEnd);
-            search = value;
-        }
-        return value;
-    }
-
     /// Returns the raw query, or `null` when absent.
     @Override
     public @Nullable String getRawQuery() {
         return record.query;
+    }
+
+    /// Returns the raw query, or the empty string when absent.
+    @Override
+    public String getRawQueryOrEmpty() {
+        @Nullable String query = record.query;
+        return query == null ? "" : query;
     }
 
     /// Returns a URL with the search string updated.
@@ -435,24 +374,17 @@ public final class WebURLImpl implements WebURL {
         return new WebURLImpl(copy);
     }
 
-    /// Returns the hash string, including the leading number sign when non-empty.
-    @Override
-    public String hash() {
-        @Nullable String value = hash;
-        if (value == null) {
-            String href = href();
-            value = record.fragmentStart < 0 || record.fragmentStart == href.length()
-                    ? ""
-                    : href.substring(record.fragmentStart - 1);
-            hash = value;
-        }
-        return value;
-    }
-
     /// Returns the raw fragment, or `null` when absent.
     @Override
     public @Nullable String getRawFragment() {
         return record.fragment;
+    }
+
+    /// Returns the raw fragment, or the empty string when absent.
+    @Override
+    public String getRawFragmentOrEmpty() {
+        @Nullable String fragment = record.fragment;
+        return fragment == null ? "" : fragment;
     }
 
     /// Returns a URL with the hash string updated.
