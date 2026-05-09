@@ -138,7 +138,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized origin.
     @Override
     public String origin() {
-        String cached = origin;
+        @Nullable String cached = origin;
         if (cached != null) {
             return cached;
         }
@@ -146,7 +146,7 @@ public final class WebURLImpl implements WebURL {
         String value;
         switch (record.scheme) {
             case "blob":
-                WebURLImpl pathUrl = UrlParser.parseUrl(pathname());
+                @Nullable WebURLImpl pathUrl = UrlParser.parseUrl(pathname());
                 if (pathUrl == null || (!pathUrl.schemeEquals("http") && !pathUrl.schemeEquals("https"))) {
                     value = "null";
                 } else {
@@ -188,7 +188,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the protocol, including the trailing colon.
     @Override
     public String protocol() {
-        String value = protocol;
+        @Nullable String value = protocol;
         if (value == null) {
             value = hrefValue().substring(0, record.schemeEnd + 1);
             protocol = value;
@@ -205,7 +205,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the username.
     @Override
     public String username() {
-        String value = username;
+        @Nullable String value = username;
         if (value == null) {
             String href = hrefValue();
             value = record.usernameStart < 0 ? "" : href.substring(record.usernameStart, record.usernameEnd);
@@ -228,7 +228,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the password.
     @Override
     public String password() {
-        String value = password;
+        @Nullable String value = password;
         if (value == null) {
             String href = hrefValue();
             value = record.passwordStart < 0 ? "" : href.substring(record.passwordStart, record.passwordEnd);
@@ -251,7 +251,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the host, including the port when present.
     @Override
     public String host() {
-        String value = host;
+        @Nullable String value = host;
         if (value == null) {
             String href = hrefValue();
             if (record.hostStart < 0) {
@@ -278,7 +278,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the hostname.
     @Override
     public String hostname() {
-        String value = hostname;
+        @Nullable String value = hostname;
         if (value == null) {
             String href = hrefValue();
             value = record.hostStart < 0 ? "" : href.substring(record.hostStart, record.hostEnd);
@@ -299,7 +299,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the port as a string.
     @Override
     public String port() {
-        String value = port;
+        @Nullable String value = port;
         if (value == null) {
             String href = hrefValue();
             value = record.portStart < 0 ? "" : href.substring(record.portStart, record.portEnd);
@@ -325,7 +325,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized pathname.
     @Override
     public String pathname() {
-        String value = pathname;
+        @Nullable String value = pathname;
         if (value == null) {
             value = hrefValue().substring(record.pathStart, record.pathEnd);
             pathname = value;
@@ -348,7 +348,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the search string, including the leading question mark when non-empty.
     @Override
     public String search() {
-        String value = search;
+        @Nullable String value = search;
         if (value == null) {
             String href = hrefValue();
             value = record.queryStart < 0 || record.queryStart == record.queryEnd
@@ -376,7 +376,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns immutable search parameters parsed from the current query.
     @Override
     public WebURLSearchParams searchParams() {
-        WebURLSearchParams params = searchParams;
+        @Nullable WebURLSearchParams params = searchParams;
         if (params == null) {
             String href = hrefValue();
             int queryStart = record.queryStart;
@@ -400,7 +400,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the hash string, including the leading number sign when non-empty.
     @Override
     public String hash() {
-        String value = hash;
+        @Nullable String value = hash;
         if (value == null) {
             String href = hrefValue();
             value = record.fragmentStart < 0 || record.fragmentStart == href.length()
@@ -449,7 +449,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the serialized URL from the frozen record.
     private String hrefValue() {
-        String href = record.href;
+        @Nullable String href = record.href;
         if (href == null) {
             throw new AssertionError("URL record is not serialized");
         }
@@ -459,7 +459,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized URL converted to Java's RFC 2396 URI syntax.
     @Override
     public String toRFC2396String() {
-        String cached = rfc2396String;
+        @Nullable String cached = rfc2396String;
         if (cached != null) {
             return cached;
         }
@@ -592,7 +592,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Parses into a copied URL record and returns a new URL, or this URL on parser failure.
     private WebURL parseIntoCopyOrThis(String input, UrlRecord copy, UrlParser.State state) {
-        WebURLImpl parsed = UrlParser.basicParse(input, null, copy, state);
+        @Nullable WebURLImpl parsed = UrlParser.basicParse(input, null, copy, state);
         return parsed == null ? this : parsed;
     }
 }
