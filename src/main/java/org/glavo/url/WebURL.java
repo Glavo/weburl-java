@@ -286,15 +286,6 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the raw query component, or the empty string when absent
     String getRawQueryOrEmpty();
 
-    /// Returns immutable search parameters parsed from the current query.
-    ///
-    /// The returned object is a detached immutable view of the query interpreted as
-    /// `application/x-www-form-urlencoded` data. Mutating operations on that object return a new parameter list
-    /// and do not update this URL.
-    ///
-    /// @return the search parameters in tuple order
-    WebURLSearchParams searchParams();
-
     /// Returns the raw fragment component.
     ///
     /// This method exposes the normalized, percent-encoded fragment stored in the URL record without the leading

@@ -16,7 +16,6 @@
 package org.glavo.url.internal;
 
 import org.glavo.url.WebURL;
-import org.glavo.url.WebURLSearchParams;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +41,6 @@ public final class WebURLImpl implements WebURL {
     private @Nullable String rawPath;
     /// Cached RFC 2396 URI string, or `null` until requested.
     private @Nullable String rfc2396String;
-    /// Cached immutable query parameter object, or `null` until requested.
-    private @Nullable WebURLSearchParams searchParams;
-
     /// Creates an immutable URL from a completed URL record.
     WebURLImpl(UrlRecord record) {
         record.ensureHref();
@@ -235,21 +231,6 @@ public final class WebURLImpl implements WebURL {
     public String getRawQueryOrEmpty() {
         @Nullable String query = record.query;
         return query == null ? "" : query;
-    }
-
-    /// Returns immutable search parameters parsed from the current query.
-    @Override
-    public WebURLSearchParams searchParams() {
-        @Nullable WebURLSearchParams params = searchParams;
-        if (params == null) {
-            String href = href();
-            int queryStart = record.queryStart;
-            int queryEnd = record.queryEnd;
-            params = WebURLSearchParamsImpl.fromQueryInternal(
-                    queryStart < 0 ? "" : href.substring(queryStart, queryEnd));
-            searchParams = params;
-        }
-        return params;
     }
 
     /// Returns the raw fragment, or `null` when absent.

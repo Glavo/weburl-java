@@ -55,28 +55,19 @@ final class PercentEncoding {
     /// Percent-encodes one Unicode code point with the given byte predicate.
     static String utf8PercentEncodeCodePoint(int codePoint, BytePredicate percentEncodePredicate) {
         if (codePoint >= 0 && codePoint <= 0x7f) {
-            int value = codePoint;
-            return percentEncodePredicate.test(value)
-                    ? percentEncoded(value)
-                    : Character.toString((char) value);
+            return percentEncodePredicate.test(codePoint)
+                    ? percentEncoded(codePoint)
+                    : Character.toString((char) codePoint);
         }
-        return utf8PercentEncodeString(new String(Character.toChars(codePoint)), percentEncodePredicate, false);
+        return utf8PercentEncodeString(new String(Character.toChars(codePoint)), percentEncodePredicate);
     }
 
     /// Percent-encodes a string with the given byte predicate.
     static String utf8PercentEncodeString(String input, BytePredicate percentEncodePredicate) {
-        return utf8PercentEncodeString(input, percentEncodePredicate, false);
-    }
-
-    /// Percent-encodes a string with the given byte predicate and optional space-to-plus conversion.
-    static String utf8PercentEncodeString(String input, BytePredicate percentEncodePredicate, boolean spaceAsPlus) {
         for (int index = 0; index < input.length(); ) {
             int codePoint = input.codePointAt(index);
-            if (codePoint == ' ' && spaceAsPlus) {
-                return utf8PercentEncodeString(input, percentEncodePredicate, spaceAsPlus, index);
-            }
             if (codePoint > 0x7f || percentEncodePredicate.test(codePoint)) {
-                return utf8PercentEncodeString(input, percentEncodePredicate, spaceAsPlus, index);
+                return utf8PercentEncodeString(input, percentEncodePredicate, index);
             }
             index += Character.charCount(codePoint);
         }
@@ -87,16 +78,13 @@ final class PercentEncoding {
     private static String utf8PercentEncodeString(
             String input,
             BytePredicate percentEncodePredicate,
-            boolean spaceAsPlus,
             int start
     ) {
         StringBuilder output = new StringBuilder(input.length());
         output.append(input, 0, start);
         for (int index = start; index < input.length(); ) {
             int codePoint = input.codePointAt(index);
-            if (spaceAsPlus && codePoint == ' ') {
-                output.append('+');
-            } else if (codePoint <= 0x7f) {
+            if (codePoint <= 0x7f) {
                 if (percentEncodePredicate.test(codePoint)) {
                     appendPercentEncoded(output, codePoint);
                 } else {
@@ -151,18 +139,6 @@ final class PercentEncoding {
         return isPathPercentEncode(value) || value == '/' || value == ':' || value == ';'
                 || value == '=' || value == '@' || value == '[' || value == '\\' || value == ']'
                 || value == '|';
-    }
-
-    /// Returns whether the byte belongs to the component percent encode set.
-    static boolean isComponentPercentEncode(int value) {
-        return isUserinfoPercentEncode(value) || value == '$' || value == '%' || value == '&'
-                || value == '+' || value == ',';
-    }
-
-    /// Returns whether the byte belongs to the form-urlencoded percent encode set.
-    static boolean isUrlEncodedPercentEncode(int value) {
-        return isComponentPercentEncode(value) || value == '!' || value == '\'' || value == '('
-                || value == ')' || value == '~';
     }
 
     /// Percent-encodes a query string using the special or non-special query encode set.

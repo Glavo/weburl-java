@@ -187,24 +187,6 @@ public final class WebURLTest {
         ), urls);
     }
 
-    /// Tests immutable search parameter operations.
-    @Test
-    public void readsSearchParamsImmutably() {
-        WebURL url = WebURL.parseURL("https://example.test/?a=1&a=2");
-        WebURLSearchParams params = url.searchParams();
-
-        assertEquals(2, params.size());
-        assertEquals("1", params.get("a"));
-        assertEquals(2, params.getAll("a").size());
-
-        WebURLSearchParams appended = params.append("b", "x y");
-        assertEquals("https://example.test/?a=1&a=2", url.href());
-        assertEquals("a=1&a=2", params.toString());
-        assertEquals("a=1&a=2&b=x+y", appended.toString());
-        assertEquals("a=3&b=x+y", appended.set("a", "3").toString());
-        assertEquals(2, params.size());
-    }
-
     /// Tests host parsing and serialization.
     @Test
     public void parsesHosts() {

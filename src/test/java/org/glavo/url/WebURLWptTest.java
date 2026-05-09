@@ -106,7 +106,7 @@ public final class WebURLWptTest {
             if (fieldName.equals("input") || fieldName.equals("base") || fieldName.equals("comment")) {
                 continue;
             }
-            if (fieldName.equals("failure") || fieldName.equals("relativeTo")) {
+            if (fieldName.equals("failure") || fieldName.equals("relativeTo") || fieldName.equals("searchParams")) {
                 continue;
             }
 
@@ -137,8 +137,6 @@ public final class WebURLWptTest {
                 return url.getRawPathOrEmpty();
             case "search":
                 return search(url);
-            case "searchParams":
-                return url.searchParams().toString();
             case "hash":
                 return hash(url);
             default:
