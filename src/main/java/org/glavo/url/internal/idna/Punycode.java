@@ -111,22 +111,24 @@ final class Punycode {
 
     /// Encodes a Unicode label into a Punycode payload without the `xn--` prefix.
     static @Nullable String encode(String input) {
-        int[] codePoints = toCodePointArray(input);
-        if (codePoints == null) {
-            return null;
-        }
-
         StringBuilder output = new StringBuilder(input.length() + 8);
+        int codePointCount = 0;
         int handled = 0;
-        for (int codePoint : codePoints) {
+        for (int index = 0; index < input.length(); ) {
+            int codePoint = checkedCodePointAt(input, index);
+            if (codePoint < 0) {
+                return null;
+            }
             if (codePoint < 0x80) {
                 output.append((char) codePoint);
                 handled++;
             }
+            codePointCount++;
+            index += Character.charCount(codePoint);
         }
 
         int basicCount = handled;
-        if (basicCount > 0 && handled < codePoints.length) {
+        if (basicCount > 0 && handled < codePointCount) {
             output.append(DELIMITER);
         }
 
@@ -134,12 +136,14 @@ final class Punycode {
         int delta = 0;
         int bias = INITIAL_BIAS;
 
-        while (handled < codePoints.length) {
+        while (handled < codePointCount) {
             int minimum = Character.MAX_CODE_POINT;
-            for (int codePoint : codePoints) {
+            for (int index = 0; index < input.length(); ) {
+                int codePoint = input.codePointAt(index);
                 if (codePoint >= n && codePoint < minimum) {
                     minimum = codePoint;
                 }
+                index += Character.charCount(codePoint);
             }
 
             int handledPlusOne = handled + 1;
@@ -149,7 +153,8 @@ final class Punycode {
             delta += (minimum - n) * handledPlusOne;
             n = minimum;
 
-            for (int codePoint : codePoints) {
+            for (int index = 0; index < input.length(); ) {
+                int codePoint = input.codePointAt(index);
                 if (codePoint < n) {
                     if (delta == Integer.MAX_VALUE) {
                         return null;
@@ -170,6 +175,7 @@ final class Punycode {
                     delta = 0;
                     handled++;
                 }
+                index += Character.charCount(codePoint);
             }
 
             if (delta == Integer.MAX_VALUE || n == Character.MAX_CODE_POINT) {
@@ -182,28 +188,19 @@ final class Punycode {
         return output.toString();
     }
 
-    /// Converts a valid Java string to Unicode scalar values.
-    private static int @Nullable [] toCodePointArray(String input) {
-        int[] codePoints = new int[input.codePointCount(0, input.length())];
-        int outputIndex = 0;
-        for (int i = 0; i < input.length(); ) {
-            char c = input.charAt(i);
-            if (Character.isHighSurrogate(c)) {
-                if (i + 1 >= input.length() || !Character.isLowSurrogate(input.charAt(i + 1))) {
-                    return null;
-                }
-            } else if (Character.isLowSurrogate(c)) {
-                return null;
+    /// Returns the code point at an index, or `-1` when the index starts an ill-formed UTF-16 sequence.
+    private static int checkedCodePointAt(String input, int index) {
+        char c = input.charAt(index);
+        if (Character.isHighSurrogate(c)) {
+            if (index + 1 >= input.length()) {
+                return -1;
             }
 
-            int codePoint = input.codePointAt(i);
-            if (!isScalarValue(codePoint)) {
-                return null;
-            }
-            codePoints[outputIndex++] = codePoint;
-            i += Character.charCount(codePoint);
+            char low = input.charAt(index + 1);
+            return Character.isLowSurrogate(low) ? Character.toCodePoint(c, low) : -1;
         }
-        return codePoints;
+
+        return Character.isLowSurrogate(c) ? -1 : c;
     }
 
     /// Returns whether a code point is a Unicode scalar value.
