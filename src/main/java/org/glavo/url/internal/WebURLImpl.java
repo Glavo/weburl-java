@@ -162,6 +162,18 @@ public final class WebURLImpl implements WebURL {
         return UrlParser.serializeOrigin(this);
     }
 
+    /// Returns the scheme.
+    @Override
+    public String scheme() {
+        return scheme;
+    }
+
+    /// Returns a URL with the scheme updated when the URL Standard permits the change.
+    @Override
+    public WebURL withScheme(String value) {
+        return withSchemeOverride(value);
+    }
+
     /// Returns the protocol, including the trailing colon.
     @Override
     public String protocol() {
@@ -171,7 +183,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns a URL with the protocol updated when the URL Standard permits the change.
     @Override
     public WebURL withProtocol(String value) {
-        return withStateOverride(value + ":", UrlParser.State.SCHEME_START);
+        return withSchemeOverride(value);
     }
 
     /// Returns the username.
@@ -484,6 +496,11 @@ public final class WebURLImpl implements WebURL {
     /// Runs a state override on a copy of this URL.
     private WebURL withStateOverride(String input, UrlParser.State state) {
         return parseIntoCopyOrThis(input, this, state);
+    }
+
+    /// Runs the scheme-state override with an input that has the colon delimiter required by the parser.
+    private WebURL withSchemeOverride(String value) {
+        return withStateOverride(value.endsWith(":") ? value : value + ":", UrlParser.State.SCHEME_START);
     }
 
     /// Parses into a copied URL and returns a new URL, or this URL on parser failure.

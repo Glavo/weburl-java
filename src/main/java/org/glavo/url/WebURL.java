@@ -160,6 +160,26 @@ public sealed interface WebURL permits WebURLImpl {
     /// @return the serialized origin, or `null` as a string for an opaque origin
     String origin();
 
+    /// Returns the scheme component.
+    ///
+    /// The scheme identifies the URL's parsing and serialization rules, such as `http`, `https`, `file`,
+    /// or a non-special scheme such as `data`. It is normalized to lower case during parsing and never
+    /// includes the trailing colon that separates the scheme from the rest of the URL.
+    ///
+    /// @return the scheme component without the trailing colon
+    String scheme();
+
+    /// Returns a URL with the scheme component updated.
+    ///
+    /// The supplied value is interpreted as a URL scheme name. A trailing colon is accepted for consistency
+    /// with {@link #withProtocol(String)}, but it is not part of the logical scheme value. The change is
+    /// parsed through the URL Standard scheme state and is ignored when the URL Standard forbids the
+    /// transition, for example between special and non-special schemes in cases that would change URL shape.
+    ///
+    /// @param value the new scheme value, with or without a trailing colon
+    /// @return the updated URL, or this URL when the update is not permitted
+    WebURL withScheme(String value);
+
     /// Returns the protocol component.
     ///
     /// The protocol is the URL scheme followed by a trailing colon. The scheme itself is normalized to lower

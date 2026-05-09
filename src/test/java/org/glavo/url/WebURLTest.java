@@ -84,6 +84,8 @@ public final class WebURLTest {
     public void updatesComponentsWithSetters() {
         WebURL url = WebURL.parse("https://user:pass@example.com:443/a/b?x=1#f");
         assertEquals("https://example.com", url.origin());
+        assertEquals("https", url.scheme());
+        assertEquals("https:", url.protocol());
         assertEquals("", url.port());
         assertEquals("user", url.username());
         assertEquals("pass", url.password());
@@ -191,12 +193,16 @@ public final class WebURLTest {
     public void constrainsProtocolSetter() {
         WebURL special = WebURL.parse("http://example.com:21/");
         assertEquals("ftp://example.com/", special.withProtocol("ftp").href());
+        assertEquals("ftp://example.com/", special.withScheme("ftp").href());
+        assertEquals("ftp://example.com/", special.withProtocol("ftp:").href());
 
         WebURL cannotBecomeNonSpecial = WebURL.parse("http://example.com/");
         assertEquals("http://example.com/", cannotBecomeNonSpecial.withProtocol("foo").href());
+        assertEquals("http://example.com/", cannotBecomeNonSpecial.withScheme("foo").href());
 
         WebURL nonSpecial = WebURL.parse("foo://example.com/path");
         assertEquals("foo://example.com/path", nonSpecial.withProtocol("https").href());
+        assertEquals("foo://example.com/path", nonSpecial.withScheme("https").href());
     }
 
     /// Tests opaque base URL fragment-only parsing and blob origin serialization.
