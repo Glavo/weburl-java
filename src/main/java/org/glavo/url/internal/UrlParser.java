@@ -94,35 +94,7 @@ public final class UrlParser {
 
     /// Serializes a URL, optionally excluding the fragment.
     public static String serializeUrl(WebURLImpl url, boolean excludeFragment) {
-        StringBuilder output = new StringBuilder();
-        output.append(url.scheme).append(':');
-        if (url.host != null) {
-            output.append("//");
-            if (!url.username.isEmpty() || !url.password.isEmpty()) {
-                output.append(url.username);
-                if (!url.password.isEmpty()) {
-                    output.append(':').append(url.password);
-                }
-                output.append('@');
-            }
-            output.append(serializeHost(url.host));
-            if (url.port != -1) {
-                output.append(':').append(url.port);
-            }
-        }
-
-        if (url.host == null && !url.hasOpaquePath() && url.path.length > 1 && url.path[0].isEmpty()) {
-            output.append("/.");
-        }
-        output.append(serializePath(url));
-
-        if (url.query != null) {
-            output.append('?').append(url.query);
-        }
-        if (!excludeFragment && url.fragment != null) {
-            output.append('#').append(url.fragment);
-        }
-        return output.toString();
+        return excludeFragment ? url.hrefWithoutFragment() : url.href();
     }
 
     /// Serializes a URL host.
@@ -132,39 +104,12 @@ public final class UrlParser {
 
     /// Serializes a URL path.
     public static String serializePath(WebURLImpl url) {
-        if (url.hasOpaquePath()) {
-            return url.opaquePath == null ? "" : url.opaquePath;
-        }
-
-        StringBuilder output = new StringBuilder();
-        for (String segment : url.path) {
-            output.append('/').append(segment);
-        }
-        return output.toString();
+        return url.pathname();
     }
 
     /// Serializes a URL origin.
     public static String serializeOrigin(WebURLImpl url) {
-        switch (url.scheme) {
-            case "blob":
-                WebURLImpl pathUrl = parseUrl(serializePath(url));
-                if (pathUrl == null || (!pathUrl.scheme.equals("http") && !pathUrl.scheme.equals("https"))) {
-                    return "null";
-                }
-                return serializeOrigin(pathUrl);
-            case "ftp":
-            case "http":
-            case "https":
-            case "ws":
-            case "wss":
-                if (url.host == null) {
-                    return "null";
-                }
-                return serializeTupleOrigin(url.scheme, url.host, url.port);
-            case "file":
-            default:
-                return "null";
-        }
+        return url.origin();
     }
 
     /// Percent-encodes a userinfo component.
@@ -174,7 +119,7 @@ public final class UrlParser {
 
     /// Returns whether the URL cannot have credentials or a port.
     public static boolean cannotHaveAUsernamePasswordPort(WebURLImpl url) {
-        return url.host == null || url.host.isEmpty() || url.scheme.equals("file");
+        return !url.hasHost() || url.hasEmptyHost() || url.schemeEquals("file");
     }
 
     /// Returns whether the scheme is a special URL scheme.
@@ -240,6 +185,23 @@ public final class UrlParser {
         }
 
         return UrlHost.domain(asciiDomain);
+    }
+
+    /// Reconstructs a host from its serialized form.
+    static UrlHost parseSerializedHost(String input, boolean opaque) {
+        if (input.startsWith("[")) {
+            if (!input.endsWith("]")) {
+                throw new WebURLParseException.IPv6Unclosed();
+            }
+            return UrlHost.ipv6(parseIpv6(input.substring(1, input.length() - 1)));
+        }
+        if (opaque) {
+            return UrlHost.opaque(input);
+        }
+        if (endsInANumber(input)) {
+            return UrlHost.ipv4(parseIpv4(input));
+        }
+        return UrlHost.domain(input);
     }
 
     /// Parses an opaque host.
@@ -742,15 +704,15 @@ public final class UrlParser {
             this.stateOverride = stateOverride;
             this.idnaProfile = idnaProfile;
             if (url != null) {
-                scheme = url.scheme;
-                username = url.username;
-                password = url.password;
-                host = url.host;
-                port = url.port;
-                path = new ArrayList<>(Arrays.asList(url.path));
-                opaquePath = url.opaquePath;
-                query = url.query;
-                fragment = url.fragment;
+                scheme = url.scheme();
+                username = url.username();
+                password = url.password();
+                host = url.hostValue();
+                port = url.portValue();
+                path = url.pathSegments();
+                opaquePath = url.opaquePathValue();
+                query = url.queryValue();
+                fragment = url.fragmentValue();
             }
             this.state = stateOverride == null ? State.SCHEME_START : stateOverride;
 
@@ -956,7 +918,7 @@ public final class UrlParser {
                         recordValidationError(new WebURLParseException.SpecialSchemeMissingFollowingSolidus());
                     }
                     state = State.FILE;
-                } else if (isSpecial() && base != null && base.scheme.equals(scheme)) {
+                } else if (isSpecial() && base != null && base.schemeEquals(scheme)) {
                     state = State.SPECIAL_RELATIVE_OR_AUTHORITY;
                 } else if (isSpecial()) {
                     state = State.SPECIAL_AUTHORITY_SLASHES;
@@ -983,13 +945,13 @@ public final class UrlParser {
             if (base == null || (base.hasOpaquePath() && c != '#')) {
                 return fail(new WebURLParseException.MissingSchemeNonRelativeURL());
             } else if (base.hasOpaquePath() && c == '#') {
-                scheme = base.scheme;
-                opaquePath = base.opaquePath;
-                path = new ArrayList<>(Arrays.asList(base.path));
-                query = base.query;
+                scheme = base.scheme();
+                opaquePath = base.opaquePathValue();
+                path = base.pathSegments();
+                query = base.queryValue();
                 fragment = "";
                 state = State.FRAGMENT;
-            } else if (base.scheme.equals("file")) {
+            } else if (base.schemeEquals("file")) {
                 state = State.FILE;
                 rewindPointer();
             } else {
@@ -1028,20 +990,20 @@ public final class UrlParser {
             if (base == null) {
                 return failApiValidation();
             }
-            scheme = base.scheme;
+            scheme = base.scheme();
             if (c == '/') {
                 state = State.RELATIVE_SLASH;
             } else if (isSpecial() && c == '\\') {
                 recordValidationError(new WebURLParseException.InvalidReverseSolidus());
                 state = State.RELATIVE_SLASH;
             } else {
-                username = base.username;
-                password = base.password;
-                host = base.host;
-                port = base.port;
-                path = new ArrayList<>(Arrays.asList(base.path));
-                opaquePath = base.opaquePath;
-                query = base.query;
+                username = base.username();
+                password = base.password();
+                host = base.hostValue();
+                port = base.portValue();
+                path = base.pathSegments();
+                opaquePath = base.opaquePathValue();
+                query = base.queryValue();
                 if (c == '?') {
                     query = "";
                     state = State.QUERY;
@@ -1073,10 +1035,10 @@ public final class UrlParser {
             } else if (c == '/') {
                 state = State.AUTHORITY;
             } else {
-                username = base.username;
-                password = base.password;
-                host = base.host;
-                port = base.port;
+                username = base.username();
+                password = base.password();
+                host = base.hostValue();
+                port = base.portValue();
                 state = State.PATH;
                 rewindPointer();
             }
@@ -1234,10 +1196,10 @@ public final class UrlParser {
                     recordValidationError(new WebURLParseException.InvalidReverseSolidus());
                 }
                 state = State.FILE_SLASH;
-            } else if (base != null && base.scheme.equals("file")) {
-                host = base.host;
-                path = new ArrayList<>(Arrays.asList(base.path));
-                query = base.query;
+            } else if (base != null && base.schemeEquals("file")) {
+                host = base.hostValue();
+                path = base.pathSegments();
+                query = base.queryValue();
                 if (c == '?') {
                     query = "";
                     state = State.QUERY;
@@ -1270,13 +1232,13 @@ public final class UrlParser {
                 }
                 state = State.FILE_HOST;
             } else {
-                if (base != null && base.scheme.equals("file")) {
+                if (base != null && base.schemeEquals("file")) {
                     if (!startsWithWindowsDriveLetter(input, pointer)
-                            && base.path.length > 0
-                            && isNormalizedWindowsDriveLetterString(base.path[0])) {
-                        path.add(base.path[0]);
+                            && base.firstPathSegment() != null
+                            && isNormalizedWindowsDriveLetterString(base.firstPathSegment())) {
+                        path.add(base.firstPathSegment());
                     }
-                    host = base.host;
+                    host = base.hostValue();
                 }
                 state = State.PATH;
                 rewindPointer();

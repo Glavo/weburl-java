@@ -19,38 +19,51 @@ import org.glavo.url.WebURL;
 import org.glavo.url.WebURLSearchParams;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 /// Internal immutable implementation of `WebURL`.
 @NotNullByDefault
 public final class WebURLImpl implements WebURL {
-    /// Shared empty immutable path.
-    private static final String @Unmodifiable [] EMPTY_PATH = new String[0];
-
-    /// URL scheme without the trailing colon.
-    final String scheme;
-    /// Percent-encoded username.
-    final String username;
-    /// Percent-encoded password.
-    final String password;
-    /// URL host, or `null` when absent.
-    final @Nullable UrlHost host;
-    /// URL port, or `-1` when absent or defaulted.
-    final int port;
-    /// Non-opaque immutable path segments.
-    final String @Unmodifiable [] path;
-    /// Opaque path, or `null` when the URL has a path segment list.
-    final @Nullable String opaquePath;
-    /// Percent-encoded query, or `null` when absent.
-    final @Nullable String query;
-    /// Percent-encoded fragment, or `null` when absent.
-    final @Nullable String fragment;
+    /// The serialized URL.
+    final String href;
+    /// Index of the colon after the scheme.
+    final int schemeEnd;
+    /// Start index of the username, or `-1` when credentials are absent.
+    private final int usernameStart;
+    /// End index of the username, or `-1` when credentials are absent.
+    private final int usernameEnd;
+    /// Start index of the password, or `-1` when absent.
+    private final int passwordStart;
+    /// End index of the password, or `-1` when absent.
+    private final int passwordEnd;
+    /// Start index of the host, or `-1` when absent.
+    private final int hostStart;
+    /// End index of the host, or `-1` when absent.
+    private final int hostEnd;
+    /// Start index of the port, or `-1` when absent.
+    private final int portStart;
+    /// End index of the port, or `-1` when absent.
+    private final int portEnd;
+    /// Start index of the logical path.
+    private final int pathStart;
+    /// End index of the logical path.
+    private final int pathEnd;
+    /// Start index of the query, or `-1` when absent.
+    private final int queryStart;
+    /// End index of the query, or `-1` when absent.
+    private final int queryEnd;
+    /// Start index of the fragment, or `-1` when absent.
+    private final int fragmentStart;
+    /// Whether the path is opaque.
+    private final boolean opaquePath;
+    /// Whether href contains the extra `/.` prefix before the logical path.
+    private final boolean pathPrefix;
     /// Cached immutable query parameter object, or `null` until requested.
     private volatile @Nullable WebURLSearchParams searchParams;
 
@@ -66,61 +79,216 @@ public final class WebURLImpl implements WebURL {
             @Nullable String query,
             @Nullable String fragment
     ) {
-        this.scheme = scheme;
-        this.username = username;
-        this.password = password;
-        this.host = host;
-        this.port = port;
-        this.path = path.isEmpty() ? EMPTY_PATH : path.toArray(String[]::new);
-        this.opaquePath = opaquePath;
-        this.query = query;
-        this.fragment = fragment;
-    }
+        StringBuilder output = new StringBuilder();
+        output.append(scheme);
+        int schemeEndValue = output.length();
+        output.append(':');
 
-    /// Creates an immutable URL from parsed components and an existing immutable path array.
-    private WebURLImpl(
-            String scheme,
-            String username,
-            String password,
-            @Nullable UrlHost host,
-            int port,
-            String @Unmodifiable [] path,
-            @Nullable String opaquePath,
-            @Nullable String query,
-            @Nullable String fragment
-    ) {
-        this.scheme = scheme;
-        this.username = username;
-        this.password = password;
-        this.host = host;
-        this.port = port;
-        this.path = path.length == 0 ? EMPTY_PATH : path.clone();
-        this.opaquePath = opaquePath;
-        this.query = query;
-        this.fragment = fragment;
+        int usernameStartValue = -1;
+        int usernameEndValue = -1;
+        int passwordStartValue = -1;
+        int passwordEndValue = -1;
+        int hostStartValue = -1;
+        int hostEndValue = -1;
+        int portStartValue = -1;
+        int portEndValue = -1;
+
+        if (host != null) {
+            output.append("//");
+            if (!username.isEmpty() || !password.isEmpty()) {
+                usernameStartValue = output.length();
+                output.append(username);
+                usernameEndValue = output.length();
+                if (!password.isEmpty()) {
+                    output.append(':');
+                    passwordStartValue = output.length();
+                    output.append(password);
+                    passwordEndValue = output.length();
+                }
+                output.append('@');
+            }
+
+            hostStartValue = output.length();
+            output.append(UrlParser.serializeHost(host));
+            hostEndValue = output.length();
+            if (port != -1) {
+                output.append(':');
+                portStartValue = output.length();
+                output.append(port);
+                portEndValue = output.length();
+            }
+        }
+
+        boolean opaquePathValue = opaquePath != null;
+        boolean pathPrefixValue = false;
+        int pathStartValue = output.length();
+        if (opaquePathValue) {
+            output.append(opaquePath);
+        } else {
+            if (host == null && path.size() > 1 && path.get(0).isEmpty()) {
+                output.append("/.");
+                pathPrefixValue = true;
+                pathStartValue = output.length();
+            }
+            for (String segment : path) {
+                output.append('/').append(segment);
+            }
+        }
+        int pathEndValue = output.length();
+
+        int queryStartValue = -1;
+        int queryEndValue = -1;
+        if (query != null) {
+            output.append('?');
+            queryStartValue = output.length();
+            output.append(query);
+            queryEndValue = output.length();
+        }
+
+        int fragmentStartValue = -1;
+        if (fragment != null) {
+            output.append('#');
+            fragmentStartValue = output.length();
+            output.append(fragment);
+        }
+
+        this.href = output.toString();
+        this.schemeEnd = schemeEndValue;
+        this.usernameStart = usernameStartValue;
+        this.usernameEnd = usernameEndValue;
+        this.passwordStart = passwordStartValue;
+        this.passwordEnd = passwordEndValue;
+        this.hostStart = hostStartValue;
+        this.hostEnd = hostEndValue;
+        this.portStart = portStartValue;
+        this.portEnd = portEndValue;
+        this.pathStart = pathStartValue;
+        this.pathEnd = pathEndValue;
+        this.queryStart = queryStartValue;
+        this.queryEnd = queryEndValue;
+        this.fragmentStart = fragmentStartValue;
+        this.opaquePath = opaquePathValue;
+        this.pathPrefix = pathPrefixValue;
     }
 
     /// Returns whether this URL has an opaque path.
     boolean hasOpaquePath() {
-        return opaquePath != null;
+        return opaquePath;
+    }
+
+    /// Returns whether this URL has a host.
+    boolean hasHost() {
+        return hostStart >= 0;
+    }
+
+    /// Returns whether this URL has a host that serializes to an empty string.
+    boolean hasEmptyHost() {
+        return hostStart >= 0 && hostStart == hostEnd;
+    }
+
+    /// Returns the serialized URL without its fragment.
+    String hrefWithoutFragment() {
+        return fragmentStart < 0 ? href : href.substring(0, fragmentStart - 1);
+    }
+
+    /// Returns whether the scheme equals the supplied lower-case ASCII value.
+    boolean schemeEquals(String value) {
+        return schemeEnd == value.length() && href.regionMatches(0, value, 0, schemeEnd);
+    }
+
+    /// Returns the port value, or `-1` when absent.
+    int portValue() {
+        return portStart < 0 ? -1 : Integer.parseInt(href.substring(portStart, portEnd));
+    }
+
+    /// Returns the host reconstructed for parser state.
+    @Nullable UrlHost hostValue() {
+        if (hostStart < 0) {
+            return null;
+        }
+        return UrlParser.parseSerializedHost(hostname(), !UrlParser.isSpecialScheme(scheme()));
+    }
+
+    /// Returns a mutable copy of the non-opaque path segments.
+    List<String> pathSegments() {
+        ArrayList<String> result = new ArrayList<>();
+        if (opaquePath || pathStart == pathEnd) {
+            return result;
+        }
+
+        int index = pathStart;
+        while (index < pathEnd) {
+            int next = href.indexOf('/', index + 1);
+            if (next < 0 || next > pathEnd) {
+                result.add(href.substring(index + 1, pathEnd));
+                break;
+            }
+            result.add(href.substring(index + 1, next));
+            index = next;
+        }
+        return result;
+    }
+
+    /// Returns the first path segment, or `null` when absent.
+    @Nullable String firstPathSegment() {
+        if (opaquePath || pathStart == pathEnd) {
+            return null;
+        }
+        int next = href.indexOf('/', pathStart + 1);
+        int end = next < 0 || next > pathEnd ? pathEnd : next;
+        return href.substring(pathStart + 1, end);
+    }
+
+    /// Returns the opaque path value, or `null` for a non-opaque path.
+    @Nullable String opaquePathValue() {
+        return opaquePath ? pathname() : null;
+    }
+
+    /// Returns the query value, or `null` when absent.
+    @Nullable String queryValue() {
+        return queryStart < 0 ? null : href.substring(queryStart, queryEnd);
+    }
+
+    /// Returns the fragment value, or `null` when absent.
+    @Nullable String fragmentValue() {
+        return fragmentStart < 0 ? null : href.substring(fragmentStart);
     }
 
     /// Returns the serialized URL.
     @Override
     public String href() {
-        return UrlParser.serializeUrl(this);
+        return href;
     }
 
     /// Returns the serialized origin.
     @Override
     public String origin() {
-        return UrlParser.serializeOrigin(this);
+        switch (scheme()) {
+            case "blob":
+                WebURLImpl pathUrl = UrlParser.parseUrl(pathname());
+                if (pathUrl == null || (!pathUrl.schemeEquals("http") && !pathUrl.schemeEquals("https"))) {
+                    return "null";
+                }
+                return pathUrl.origin();
+            case "ftp":
+            case "http":
+            case "https":
+            case "ws":
+            case "wss":
+                if (!hasHost()) {
+                    return "null";
+                }
+                return scheme() + "://" + host();
+            case "file":
+            default:
+                return "null";
+        }
     }
 
     /// Returns the scheme.
     @Override
     public String scheme() {
-        return scheme;
+        return href.substring(0, schemeEnd);
     }
 
     /// Returns a URL with the scheme updated when the URL Standard permits the change.
@@ -132,7 +300,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the protocol, including the trailing colon.
     @Override
     public String protocol() {
-        return scheme + ":";
+        return href.substring(0, schemeEnd + 1);
     }
 
     /// Returns a URL with the protocol updated when the URL Standard permits the change.
@@ -144,7 +312,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the username.
     @Override
     public String username() {
-        return username;
+        return usernameStart < 0 ? "" : href.substring(usernameStart, usernameEnd);
     }
 
     /// Returns a URL with the username updated when the URL can have credentials.
@@ -153,13 +321,14 @@ public final class WebURLImpl implements WebURL {
         if (UrlParser.cannotHaveAUsernamePasswordPort(this)) {
             return this;
         }
-        return copy(UrlParser.percentEncodeUserInfo(value), password, host, port, path, opaquePath, query, fragment);
+        return copy(UrlParser.percentEncodeUserInfo(value), password(), hostValue(), portValue(),
+                pathSegments(), opaquePathValue(), queryValue(), fragmentValue());
     }
 
     /// Returns the password.
     @Override
     public String password() {
-        return password;
+        return passwordStart < 0 ? "" : href.substring(passwordStart, passwordEnd);
     }
 
     /// Returns a URL with the password updated when the URL can have credentials.
@@ -168,17 +337,17 @@ public final class WebURLImpl implements WebURL {
         if (UrlParser.cannotHaveAUsernamePasswordPort(this)) {
             return this;
         }
-        return copy(username, UrlParser.percentEncodeUserInfo(value), host, port, path, opaquePath, query, fragment);
+        return copy(username(), UrlParser.percentEncodeUserInfo(value), hostValue(), portValue(),
+                pathSegments(), opaquePathValue(), queryValue(), fragmentValue());
     }
 
     /// Returns the host, including the port when present.
     @Override
     public String host() {
-        if (host == null) {
+        if (hostStart < 0) {
             return "";
         }
-        String serializedHost = UrlParser.serializeHost(host);
-        return port == -1 ? serializedHost : serializedHost + ":" + port;
+        return portStart < 0 ? href.substring(hostStart, hostEnd) : href.substring(hostStart, portEnd);
     }
 
     /// Returns a URL with the host updated when the URL has a non-opaque path.
@@ -193,7 +362,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the hostname.
     @Override
     public String hostname() {
-        return host == null ? "" : UrlParser.serializeHost(host);
+        return hostStart < 0 ? "" : href.substring(hostStart, hostEnd);
     }
 
     /// Returns a URL with the hostname updated when the URL has a non-opaque path.
@@ -208,7 +377,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the port as a string.
     @Override
     public String port() {
-        return port == -1 ? "" : Integer.toString(port);
+        return portStart < 0 ? "" : href.substring(portStart, portEnd);
     }
 
     /// Returns a URL with the port updated when the URL can have a port.
@@ -218,7 +387,8 @@ public final class WebURLImpl implements WebURL {
             return this;
         }
         if (value.isEmpty()) {
-            return copy(username, password, host, -1, path, opaquePath, query, fragment);
+            return copy(username(), password(), hostValue(), -1, pathSegments(),
+                    opaquePathValue(), queryValue(), fragmentValue());
         }
         return withStateOverride(value, UrlParser.State.PORT);
     }
@@ -226,7 +396,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized pathname.
     @Override
     public String pathname() {
-        return UrlParser.serializePath(this);
+        return href.substring(pathStart, pathEnd);
     }
 
     /// Returns a URL with the pathname updated when the URL has a non-opaque path.
@@ -235,25 +405,28 @@ public final class WebURLImpl implements WebURL {
         if (hasOpaquePath()) {
             return this;
         }
-        WebURLImpl copy = copy(username, password, host, port, List.of(), null, query, fragment);
+        WebURLImpl copy = copy(username(), password(), hostValue(), portValue(),
+                List.of(), null, queryValue(), fragmentValue());
         return parseIntoCopyOrThis(value, copy, UrlParser.State.PATH_START);
     }
 
     /// Returns the search string, including the leading question mark when non-empty.
     @Override
     public String search() {
-        return query == null || query.isEmpty() ? "" : "?" + query;
+        return queryStart < 0 || queryStart == queryEnd ? "" : href.substring(queryStart - 1, queryEnd);
     }
 
     /// Returns a URL with the search string updated.
     @Override
     public WebURL withSearch(String value) {
         if (value.isEmpty()) {
-            return copy(username, password, host, port, path, opaquePath, null, fragment);
+            return copy(username(), password(), hostValue(), portValue(),
+                    pathSegments(), opaquePathValue(), null, fragmentValue());
         }
 
         String input = value.charAt(0) == '?' ? value.substring(1) : value;
-        WebURLImpl copy = copy(username, password, host, port, path, opaquePath, "", fragment);
+        WebURLImpl copy = copy(username(), password(), hostValue(), portValue(),
+                pathSegments(), opaquePathValue(), "", fragmentValue());
         return parseIntoCopyOrThis(input, copy, UrlParser.State.QUERY);
     }
 
@@ -262,7 +435,7 @@ public final class WebURLImpl implements WebURL {
     public WebURLSearchParams searchParams() {
         WebURLSearchParams params = searchParams;
         if (params == null) {
-            params = WebURLSearchParamsImpl.fromQueryInternal(query == null ? "" : query);
+            params = WebURLSearchParamsImpl.fromQueryInternal(queryStart < 0 ? "" : href.substring(queryStart, queryEnd));
             searchParams = params;
         }
         return params;
@@ -272,25 +445,27 @@ public final class WebURLImpl implements WebURL {
     @Override
     public WebURL withSearchParams(WebURLSearchParams value) {
         String serializedQuery = value.toString();
-        return copy(username, password, host, port, path, opaquePath,
-                serializedQuery.isEmpty() ? null : serializedQuery, fragment);
+        return copy(username(), password(), hostValue(), portValue(), pathSegments(), opaquePathValue(),
+                serializedQuery.isEmpty() ? null : serializedQuery, fragmentValue());
     }
 
     /// Returns the hash string, including the leading number sign when non-empty.
     @Override
     public String hash() {
-        return fragment == null || fragment.isEmpty() ? "" : "#" + fragment;
+        return fragmentStart < 0 || fragmentStart == href.length() ? "" : href.substring(fragmentStart - 1);
     }
 
     /// Returns a URL with the hash string updated.
     @Override
     public WebURL withHash(String value) {
         if (value.isEmpty()) {
-            return copy(username, password, host, port, path, opaquePath, query, null);
+            return copy(username(), password(), hostValue(), portValue(),
+                    pathSegments(), opaquePathValue(), queryValue(), null);
         }
 
         String input = value.charAt(0) == '#' ? value.substring(1) : value;
-        WebURLImpl copy = copy(username, password, host, port, path, opaquePath, query, "");
+        WebURLImpl copy = copy(username(), password(), hostValue(), portValue(),
+                pathSegments(), opaquePathValue(), queryValue(), "");
         return parseIntoCopyOrThis(input, copy, UrlParser.State.FRAGMENT);
     }
 
@@ -313,24 +488,10 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized URL.
     @Override
     public String toString() {
-        return href();
+        return href;
     }
 
     /// Creates a URL copy with replacement components.
-    private WebURLImpl copy(
-            String username,
-            String password,
-            @Nullable UrlHost host,
-            int port,
-            String @Unmodifiable [] path,
-            @Nullable String opaquePath,
-            @Nullable String query,
-            @Nullable String fragment
-    ) {
-        return new WebURLImpl(scheme, username, password, host, port, path, opaquePath, query, fragment);
-    }
-
-    /// Creates a URL copy with replacement components and a path list.
     private WebURLImpl copy(
             String username,
             String password,
@@ -341,7 +502,7 @@ public final class WebURLImpl implements WebURL {
             @Nullable String query,
             @Nullable String fragment
     ) {
-        return new WebURLImpl(scheme, username, password, host, port, path, opaquePath, query, fragment);
+        return new WebURLImpl(scheme(), username, password, host, port, path, opaquePath, query, fragment);
     }
 
     /// Returns the implementation object for a `WebURL`.
@@ -353,38 +514,38 @@ public final class WebURLImpl implements WebURL {
     @Override
     public String toRFC2396String() {
         StringBuilder output = new StringBuilder();
-        output.append(scheme).append(':');
+        output.append(href, 0, schemeEnd + 1);
 
         if (hasOpaquePath()) {
-            appendRfc2396Encoded(output, opaquePath == null ? "" : opaquePath, WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, pathname(), WebURLImpl::isRfc2396Uric);
         } else {
-            if (host != null) {
+            if (hasHost()) {
                 output.append("//");
-                if (!username.isEmpty() || !password.isEmpty()) {
-                    appendRfc2396Encoded(output, username, WebURLImpl::isRfc2396UserInfo);
-                    if (!password.isEmpty()) {
+                if (usernameStart >= 0) {
+                    appendRfc2396Encoded(output, username(), WebURLImpl::isRfc2396UserInfo);
+                    if (passwordStart >= 0) {
                         output.append(':');
-                        appendRfc2396Encoded(output, password, WebURLImpl::isRfc2396UserInfo);
+                        appendRfc2396Encoded(output, password(), WebURLImpl::isRfc2396UserInfo);
                     }
                     output.append('@');
                 }
-                appendRfc2396Encoded(output, UrlParser.serializeHost(host), WebURLImpl::isRfc2396Host);
-                if (port != -1) {
-                    output.append(':').append(port);
+                appendRfc2396Encoded(output, hostname(), WebURLImpl::isRfc2396Host);
+                if (portStart >= 0) {
+                    output.append(':').append(href, portStart, portEnd);
                 }
-            } else if (path.length > 1 && path[0].isEmpty()) {
+            } else if (pathPrefix) {
                 output.append("/.");
             }
-            appendRfc2396Encoded(output, UrlParser.serializePath(this), WebURLImpl::isRfc2396Path);
+            appendRfc2396Encoded(output, pathname(), WebURLImpl::isRfc2396Path);
         }
 
-        if (query != null) {
+        if (queryStart >= 0) {
             output.append('?');
-            appendRfc2396Encoded(output, query, WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href.substring(queryStart, queryEnd), WebURLImpl::isRfc2396Uric);
         }
-        if (fragment != null) {
+        if (fragmentStart >= 0) {
             output.append('#');
-            appendRfc2396Encoded(output, fragment, WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href.substring(fragmentStart), WebURLImpl::isRfc2396Uric);
         }
         return output.toString();
     }
