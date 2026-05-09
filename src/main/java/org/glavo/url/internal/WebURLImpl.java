@@ -326,7 +326,7 @@ public final class WebURLImpl implements WebURL {
     @Override
     public URI toURI() {
         try {
-            return new URI(toRfc2396String());
+            return new URI(toRFC2396String());
         } catch (URISyntaxException exception) {
             throw new IllegalStateException("This URL cannot be represented as an RFC 2396 URI", exception);
         }
@@ -370,7 +370,7 @@ public final class WebURLImpl implements WebURL {
     }
 
     /// Returns the serialized URL converted to Java's RFC 2396 URI syntax.
-    private String toRfc2396String() {
+    private String toRFC2396String() {
         StringBuilder output = new StringBuilder();
         output.append(scheme).append(':');
 
