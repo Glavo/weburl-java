@@ -63,16 +63,6 @@ public final class UrlParser {
         }
     }
 
-    /// Runs the basic URL parser and throws when parsing fails.
-    public static WebURLImpl basicParseRequired(
-            String input,
-            @Nullable WebURLImpl baseUrl,
-            @Nullable UrlRecord url,
-            @Nullable State stateOverride
-    ) {
-        return basicParseRequired(input, baseUrl, url, stateOverride, IDNAProfile.defaultProfile());
-    }
-
     /// Runs the basic URL parser with a configured IDNA profile and throws when parsing fails.
     public static WebURLImpl basicParseRequired(
             String input,
@@ -91,29 +81,9 @@ public final class UrlParser {
         return stateMachine.toUrl();
     }
 
-    /// Serializes a URL.
-    public static String serializeUrl(WebURLImpl url) {
-        return serializeUrl(url, false);
-    }
-
-    /// Serializes a URL, optionally excluding the fragment.
-    public static String serializeUrl(WebURLImpl url, boolean excludeFragment) {
-        return excludeFragment ? url.hrefWithoutFragment() : url.href();
-    }
-
     /// Serializes a URL host.
     public static String serializeHost(UrlHost host) {
         return host.serialize();
-    }
-
-    /// Serializes a URL path.
-    public static String serializePath(WebURLImpl url) {
-        return url.getRawPath();
-    }
-
-    /// Serializes a URL origin.
-    public static String serializeOrigin(WebURLImpl url) {
-        return url.origin();
     }
 
     /// Returns whether the scheme is a special URL scheme.
