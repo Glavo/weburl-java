@@ -31,9 +31,9 @@ public final class WebURLParsingTest {
     @Test
     public void parsesAgainstExplicitBaseString() {
         assertEquals("https://example.com/a/c", WebURL.parse("../c", "https://example.com/a/b/").href());
-        assertEquals("https://example.com/a/b/d", WebURL.tryParseURL("d", "https://example.com/a/b/").href());
-        assertTrue(WebURL.canParseURL("?q=1", "https://example.com/a/b/"));
-        assertFalse(WebURL.canParseURL("?q=1"));
+        assertEquals("https://example.com/a/b/d", WebURL.tryParse("d", "https://example.com/a/b/").href());
+        assertTrue(WebURL.canParse("?q=1", "https://example.com/a/b/"));
+        assertFalse(WebURL.canParse("?q=1"));
     }
 
     /// Tests explicit base arguments with an already parsed base URL.
@@ -58,7 +58,7 @@ public final class WebURLParsingTest {
                 WebURL.parseAddress("例え.テスト").href());
         assertEquals("data:text/plain,hi", WebURL.parseAddress("data:text/plain,hi").href());
 
-        assertFalse(WebURL.canParseURL("www.glavo.site"));
+        assertFalse(WebURL.canParse("www.glavo.site"));
         assertTrue(WebURL.canParseAddress("www.glavo.site"));
         assertNull(WebURL.tryParseAddress("not a url"));
         assertThrows(WebURLParseException.class, () -> WebURL.parseAddress("not a url"));
@@ -66,12 +66,12 @@ public final class WebURLParsingTest {
                 () -> WebURL.parseAddress("www.glavo.site:abc"));
     }
 
-    /// Tests parse and canParseURL failure handling.
+    /// Tests parse and canParse failure handling.
     @Test
     public void reportsParsingFailures() {
-        assertNull(WebURL.tryParseURL("https://example.com:999999/"));
-        assertFalse(WebURL.canParseURL("https://example.com:999999/"));
-        assertNull(WebURL.tryParseURL("/relative", "not a url"));
+        assertNull(WebURL.tryParse("https://example.com:999999/"));
+        assertFalse(WebURL.canParse("https://example.com:999999/"));
+        assertNull(WebURL.tryParse("/relative", "not a url"));
         assertThrows(WebURLParseException.PortOutOfRange.class,
                 () -> WebURL.parse("https://example.com:999999/"));
     }
@@ -81,6 +81,6 @@ public final class WebURLParsingTest {
     public void parsesUnicodeDomainsWithUts46() {
         assertEquals("https://xn--bcher-kva.example/", WebURL.parse("https://bücher.example/").href());
         assertEquals("https://xn--fa-hia.example/", WebURL.parse("https://faß.example/").href());
-        assertTrue(WebURL.canParseURL("https://xn--bcher-kva.example/"));
+        assertTrue(WebURL.canParse("https://xn--bcher-kva.example/"));
     }
 }

@@ -81,8 +81,8 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if parsing fails
-    static @Nullable WebURL tryParseURL(String input) {
-        return WebURLParsing.tryParseURL(input);
+    static @Nullable WebURL tryParse(String input) {
+        return WebURLParsing.tryParse(input);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
@@ -93,8 +93,8 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param input the URL input string
     /// @param base the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
-    static @Nullable WebURL tryParseURL(String input, String base) {
-        return WebURLParsing.tryParseURL(input, base);
+    static @Nullable WebURL tryParse(String input, String base) {
+        return WebURLParsing.tryParse(input, base);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
@@ -105,16 +105,16 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param input the URL input string
     /// @param base the base URL
     /// @return the parsed URL, or `null` if the input cannot be parsed against the base
-    static @Nullable WebURL tryParseURL(String input, WebURL base) {
-        return WebURLParsing.tryParseURL(input, base);
+    static @Nullable WebURL tryParse(String input, WebURL base) {
+        return WebURLParsing.tryParse(input, base);
     }
 
     /// Returns whether an input string can be parsed as an absolute URL.
     ///
     /// @param input the URL input string
     /// @return `true` if parsing succeeds, otherwise `false`
-    static boolean canParseURL(String input) {
-        return WebURLParsing.canParseURL(input);
+    static boolean canParse(String input) {
+        return WebURLParsing.canParse(input);
     }
 
     /// Returns whether an input string can be parsed against a base URL string.
@@ -122,8 +122,8 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param input the URL input string
     /// @param base the base URL string
     /// @return `true` if the base parses and the input parses against it, otherwise `false`
-    static boolean canParseURL(String input, String base) {
-        return WebURLParsing.canParseURL(input, base);
+    static boolean canParse(String input, String base) {
+        return WebURLParsing.canParse(input, base);
     }
 
     /// Returns whether an input string can be parsed against a base URL.
@@ -131,8 +131,8 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param input the URL input string
     /// @param base the base URL
     /// @return `true` if the input parses against the base, otherwise `false`
-    static boolean canParseURL(String input, WebURL base) {
-        return WebURLParsing.canParseURL(input, base);
+    static boolean canParse(String input, WebURL base) {
+        return WebURLParsing.canParse(input, base);
     }
 
     /// Parses a browser address input and returns the parsed URL.

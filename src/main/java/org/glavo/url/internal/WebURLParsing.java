@@ -48,34 +48,34 @@ public final class WebURLParsing {
     }
 
     /// Parses an input string and returns `null` on failure.
-    public static @Nullable WebURL tryParseURL(String input) {
+    public static @Nullable WebURL tryParse(String input) {
         return parseNullable(input, null);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
-    public static @Nullable WebURL tryParseURL(String input, String base) {
+    public static @Nullable WebURL tryParse(String input, String base) {
         WebURLImpl parsedBase = parseBaseNullable(base);
         return parsedBase == null ? null : parseNullable(input, parsedBase);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
-    public static @Nullable WebURL tryParseURL(String input, WebURL base) {
+    public static @Nullable WebURL tryParse(String input, WebURL base) {
         return parseNullable(input, implementation(base));
     }
 
     /// Returns whether an input string can be parsed.
-    public static boolean canParseURL(String input) {
-        return tryParseURL(input) != null;
+    public static boolean canParse(String input) {
+        return tryParse(input) != null;
     }
 
     /// Returns whether an input string can be parsed against a base URL string.
-    public static boolean canParseURL(String input, String base) {
-        return tryParseURL(input, base) != null;
+    public static boolean canParse(String input, String base) {
+        return tryParse(input, base) != null;
     }
 
     /// Returns whether an input string can be parsed against a base URL.
-    public static boolean canParseURL(String input, WebURL base) {
-        return tryParseURL(input, base) != null;
+    public static boolean canParse(String input, WebURL base) {
+        return tryParse(input, base) != null;
     }
 
     /// Parses a browser address input and returns the parsed URL.

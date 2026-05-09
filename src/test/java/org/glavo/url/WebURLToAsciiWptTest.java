@@ -68,7 +68,7 @@ public final class WebURLToAsciiWptTest {
         String input = testCase.get("input").getAsString();
         @Nullable String expected = nullableString(testCase, "output");
 
-        @Nullable WebURL url = WebURL.tryParseURL("https://" + input + "/x");
+        @Nullable WebURL url = WebURL.tryParse("https://" + input + "/x");
         if (expected == null) {
             assertNull(url);
             return;

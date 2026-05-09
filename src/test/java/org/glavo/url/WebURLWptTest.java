@@ -73,7 +73,7 @@ public final class WebURLWptTest {
         @Nullable String base = nullableString(testCase, "base");
 
         if (booleanValue(testCase, "failure")) {
-            assertNull(tryParseURL(input, base));
+            assertNull(tryParse(input, base));
             return;
         }
 
@@ -90,10 +90,10 @@ public final class WebURLWptTest {
     /// Asserts one WPT relative-only test case.
     private static void assertRelativeOnlyCase(String input, String relativeTo) {
         if (relativeTo.equals("any-base")) {
-            assertNotNull(WebURL.tryParseURL(input, OPAQUE_PATH_BASE));
-            assertNotNull(WebURL.tryParseURL(input, NON_OPAQUE_PATH_BASE));
+            assertNotNull(WebURL.tryParse(input, OPAQUE_PATH_BASE));
+            assertNotNull(WebURL.tryParse(input, NON_OPAQUE_PATH_BASE));
         } else if (relativeTo.equals("non-opaque-path-base")) {
-            assertNotNull(WebURL.tryParseURL(input, NON_OPAQUE_PATH_BASE));
+            assertNotNull(WebURL.tryParse(input, NON_OPAQUE_PATH_BASE));
         } else {
             throw new AssertionError("Unknown relativeTo value: " + relativeTo);
         }
@@ -180,8 +180,8 @@ public final class WebURLWptTest {
     }
 
     /// Tries to parse a URL with an optional base.
-    private static @Nullable WebURL tryParseURL(String input, @Nullable String base) {
-        return base == null ? WebURL.tryParseURL(input) : WebURL.tryParseURL(input, base);
+    private static @Nullable WebURL tryParse(String input, @Nullable String base) {
+        return base == null ? WebURL.tryParse(input) : WebURL.tryParse(input, base);
     }
 
     /// Reads a WPT JSON file as an array.

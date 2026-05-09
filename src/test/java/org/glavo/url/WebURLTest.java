@@ -54,14 +54,14 @@ public final class WebURLTest {
         assertEquals("https://developer.mozilla.org/en-US/docs", e.href());
     }
 
-    /// Tests parse and canParseURL failure handling.
+    /// Tests parse and canParse failure handling.
     @Test
     public void reportsParseFailures() {
         assertThrows(WebURLParseException.class, () -> WebURL.parse("/en-US/docs"));
         assertThrows(WebURLParseException.class, () -> WebURL.parse("/en-US/docs", ""));
-        assertNull(WebURL.tryParseURL("/en-US/docs"));
-        assertFalse(WebURL.canParseURL("/en-US/docs"));
-        assertTrue(WebURL.canParseURL("/en-US/docs", "https://developer.mozilla.org"));
+        assertNull(WebURL.tryParse("/en-US/docs"));
+        assertFalse(WebURL.canParse("/en-US/docs"));
+        assertTrue(WebURL.canParse("/en-US/docs", "https://developer.mozilla.org"));
     }
 
     /// Tests typed parse exceptions for selected URL Standard validation errors.
