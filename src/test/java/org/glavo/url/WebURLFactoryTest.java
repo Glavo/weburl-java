@@ -34,31 +34,26 @@ public final class WebURLFactoryTest {
         WebURLFactory factory = WebURLFactory.standard();
 
         assertSame(factory, WebURLFactory.standard());
-        assertNull(factory.base());
         assertEquals(WebURLFactory.IdnaProvider.AUTOMATIC, factory.idnaProvider());
         assertEquals(WebURL.of("https://example.com/a").href(), factory.parse("https://example.com/a").href());
         assertFalse(factory.canParse("../relative"));
     }
 
-    /// Tests a factory with a configured base URL.
+    /// Tests explicit base URL arguments.
     @Test
-    public void parsesAgainstConfiguredBase() {
-        WebURLFactory factory = WebURLFactory.builder()
-                .base("https://example.com/a/b/")
-                .build();
+    public void parsesAgainstExplicitBase() {
+        WebURLFactory factory = WebURLFactory.standard();
 
-        assertEquals("https://example.com/a/c", factory.parse("../c").href());
-        assertEquals("https://example.com/a/b/d", factory.tryParse("d").href());
-        assertTrue(factory.canParse("?q=1"));
-        assertEquals("https://example.com/a/b/", factory.base().href());
+        assertEquals("https://example.com/a/c", factory.parse("../c", "https://example.com/a/b/").href());
+        assertEquals("https://example.com/a/b/d", factory.tryParse("d", "https://example.com/a/b/").href());
+        assertTrue(factory.canParse("?q=1", "https://example.com/a/b/"));
+        assertFalse(factory.canParse("?q=1"));
     }
 
-    /// Tests that explicit base arguments override the configured base for one call.
+    /// Tests explicit base arguments with an already parsed base URL.
     @Test
-    public void explicitBaseOverridesConfiguredBase() {
-        WebURLFactory factory = WebURLFactory.builder()
-                .base("https://example.com/a/b/")
-                .build();
+    public void parsesAgainstExplicitWebUrlBase() {
+        WebURLFactory factory = WebURLFactory.standard();
         WebURL base = WebURL.of("https://example.org/x/y/");
 
         assertEquals("https://example.org/x/z", factory.parse("../z", base).href());
@@ -105,21 +100,18 @@ public final class WebURLFactoryTest {
         }
     }
 
-    /// Tests factory copy and base clearing helpers.
+    /// Tests factory copy helpers.
     @Test
-    public void copiesAndClearsFactoryConfiguration() {
+    public void copiesFactoryConfiguration() {
         WebURLFactory factory = WebURLFactory.builder()
-                .base("https://example.com/a/")
                 .idnaProvider(WebURLFactory.IdnaProvider.JDK)
                 .build();
 
-        WebURLFactory copied = factory.toBuilder().base("https://example.org/b/").build();
-        WebURLFactory withoutBase = copied.withoutBase();
+        WebURLFactory copied = factory.toBuilder().build();
 
-        assertEquals("https://example.org/c", copied.parse("../c").href());
         assertEquals(WebURLFactory.IdnaProvider.JDK, copied.idnaProvider());
-        assertNull(withoutBase.base());
-        assertFalse(withoutBase.canParse("../c"));
-        assertEquals("https://example.net/d", withoutBase.withBase(WebURL.of("https://example.net/base/")).parse("../d").href());
+        assertFalse(copied.canParse("../c"));
+        assertEquals("https://example.net/d",
+                copied.parse("../d", WebURL.of("https://example.net/base/")).href());
     }
 }
