@@ -176,6 +176,7 @@ tasks.named<ProcessResources>("processTestResources") {
 
 val wptCommit = "ebf8e3069ec4ac6498826bf9066419e46b0f4ac5"
 val wptResources = listOf(
+    "IdnaTestV2",
     "toascii",
     "urltestdata"
 )

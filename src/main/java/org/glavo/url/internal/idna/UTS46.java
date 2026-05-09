@@ -244,6 +244,14 @@ public final class UTS46 {
             error = true;
         }
 
+        if (!checkHyphens && startsWithAcePrefix(label)) {
+            error = true;
+        }
+
+        if (label.indexOf('.') >= 0) {
+            error = true;
+        }
+
         int[] codePoints = toCodePoints(label);
         if (codePoints.length > 0 && DATA.isMark(codePoints[0])) {
             error = true;
