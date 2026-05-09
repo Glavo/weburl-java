@@ -102,16 +102,52 @@ public final class WebURLTest {
         assertSame(url.href(), url.href());
         assertSame(url.origin(), url.origin());
         assertSame(url.scheme(), url.scheme());
+        assertSame(url.getScheme(), url.getScheme());
         assertSame(url.protocol(), url.protocol());
         assertSame(url.username(), url.username());
+        assertSame(url.getUsername(), url.getUsername());
         assertSame(url.password(), url.password());
+        assertSame(url.getPassword(), url.getPassword());
         assertSame(url.host(), url.host());
         assertSame(url.hostname(), url.hostname());
         assertSame(url.port(), url.port());
         assertSame(url.pathname(), url.pathname());
+        assertSame(url.getRawPath(), url.getRawPath());
         assertSame(url.search(), url.search());
+        assertSame(url.getRawQuery(), url.getRawQuery());
         assertSame(url.hash(), url.hash());
+        assertSame(url.getRawFragment(), url.getRawFragment());
         assertSame(url.toRFC2396String(), url.toRFC2396String());
+    }
+
+    /// Tests Java-style raw component getters.
+    @Test
+    public void readsJavaStyleRawComponents() {
+        WebURL url = WebURL.parseURL("https://user:pass@example.com:8080/a%2Fb?x=a%26b#frag%23ment");
+
+        assertEquals("https", url.getScheme());
+        assertEquals("user", url.getUsername());
+        assertEquals("pass", url.getPassword());
+        assertEquals(8080, url.getPort());
+        assertEquals("/a%2Fb", url.getRawPath());
+        assertEquals("x=a%26b", url.getRawQuery());
+        assertEquals("frag%23ment", url.getRawFragment());
+
+        WebURL absentComponents = WebURL.parseURL("https://example.com/path");
+        assertNull(absentComponents.getUsername());
+        assertNull(absentComponents.getPassword());
+        assertEquals(-1, absentComponents.getPort());
+        assertEquals("/path", absentComponents.getRawPath());
+        assertNull(absentComponents.getRawQuery());
+        assertNull(absentComponents.getRawFragment());
+
+        assertEquals(-1, WebURL.parseURL("https://example.com:443/path").getPort());
+        assertEquals("", WebURL.parseURL("https://example.com/path?").getRawQuery());
+        assertEquals("", WebURL.parseURL("https://example.com/path#").getRawFragment());
+
+        WebURL emptyUsername = WebURL.parseURL("https://:pass@example.com/");
+        assertEquals("", emptyUsername.getUsername());
+        assertEquals("pass", emptyUsername.getPassword());
     }
 
     /// Tests equality, hash code, and natural ordering by serialized URL.

@@ -217,6 +217,14 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the scheme component without the trailing colon
     String scheme();
 
+    /// Returns the scheme component without its delimiter.
+    ///
+    /// This method is the Java-style getter form of {@link #scheme()}. Unlike {@link #protocol()}, the
+    /// returned value does not include the trailing colon.
+    ///
+    /// @return the scheme component without the trailing colon
+    String getScheme();
+
     /// Returns a URL with the scheme component updated.
     ///
     /// The supplied value is interpreted as a URL scheme name. A trailing colon is accepted for consistency
@@ -263,6 +271,15 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the username component without the password separator or `@`
     String username();
 
+    /// Returns the raw username component.
+    ///
+    /// This method exposes the normalized, percent-encoded username stored in the URL record. It does not
+    /// percent-decode the value. The result is `null` when the URL has no serialized credentials. When the URL
+    /// has credentials with an empty username, the result is the empty string.
+    ///
+    /// @return the raw username component, or `null` when absent
+    @Nullable String getUsername();
+
     /// Returns a URL with the username component updated.
     ///
     /// The value is encoded with the URL Standard userinfo percent-encode set. The update is ignored for URLs
@@ -279,6 +296,14 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// @return the password component without the leading colon or trailing `@`
     String password();
+
+    /// Returns the raw password component.
+    ///
+    /// This method exposes the normalized, percent-encoded password stored in the URL record. It does not
+    /// percent-decode the value. The result is `null` when the URL has no password component.
+    ///
+    /// @return the raw password component, or `null` when absent
+    @Nullable String getPassword();
 
     /// Returns a URL with the password component updated.
     ///
@@ -333,6 +358,15 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the port as a string, or the empty string when absent
     String port();
 
+    /// Returns the port component as an integer.
+    ///
+    /// This method follows the Java `URI` convention of returning `-1` when no port is stored in the URL
+    /// record. WHATWG URL parsing normalizes default ports away, so an HTTPS URL with an explicit port of 443
+    /// also returns `-1`.
+    ///
+    /// @return the normalized port, or `-1` when absent
+    int getPort();
+
     /// Returns a URL with the port component updated.
     ///
     /// The value is parsed through the WHATWG port state. Supplying the empty string removes the port. A default
@@ -351,6 +385,14 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the serialized pathname
     String pathname();
 
+    /// Returns the raw path component.
+    ///
+    /// This method is the Java `URI`-style getter for the URL path. It returns the same normalized,
+    /// percent-encoded path serialization as {@link #pathname()}, without applying percent-decoding.
+    ///
+    /// @return the raw path component
+    String getRawPath();
+
     /// Returns a URL with the pathname component updated.
     ///
     /// The value is parsed through the WHATWG path-start state after clearing the current path. Dot-segment and
@@ -367,6 +409,15 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// @return the query prefixed by `?`, or the empty string when absent or empty
     String search();
+
+    /// Returns the raw query component.
+    ///
+    /// This method exposes the normalized, percent-encoded query stored in the URL record without the leading
+    /// question mark. It follows the Java `URI` convention of returning `null` when the query component is
+    /// absent. An empty query component is returned as the empty string.
+    ///
+    /// @return the raw query component, or `null` when absent
+    @Nullable String getRawQuery();
 
     /// Returns a URL with the search component updated.
     ///
@@ -404,6 +455,15 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// @return the fragment prefixed by `#`, or the empty string when absent or empty
     String hash();
+
+    /// Returns the raw fragment component.
+    ///
+    /// This method exposes the normalized, percent-encoded fragment stored in the URL record without the leading
+    /// number sign. It follows the Java `URI` convention of returning `null` when the fragment component is
+    /// absent. An empty fragment component is returned as the empty string.
+    ///
+    /// @return the raw fragment component, or `null` when absent
+    @Nullable String getRawFragment();
 
     /// Returns a URL with the hash component updated.
     ///

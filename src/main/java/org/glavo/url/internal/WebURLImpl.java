@@ -181,6 +181,12 @@ public final class WebURLImpl implements WebURL {
         return record.scheme;
     }
 
+    /// Returns the scheme.
+    @Override
+    public String getScheme() {
+        return record.scheme;
+    }
+
     /// Returns a URL with the scheme updated when the URL Standard permits the change.
     @Override
     public WebURL withScheme(String value) {
@@ -216,6 +222,12 @@ public final class WebURLImpl implements WebURL {
         return value;
     }
 
+    /// Returns the raw username, or `null` when absent.
+    @Override
+    public @Nullable String getUsername() {
+        return record.usernameStart < 0 ? null : username();
+    }
+
     /// Returns a URL with the username updated when the URL can have credentials.
     @Override
     public WebURL withUsername(String value) {
@@ -237,6 +249,12 @@ public final class WebURLImpl implements WebURL {
             password = value;
         }
         return value;
+    }
+
+    /// Returns the raw password, or `null` when absent.
+    @Override
+    public @Nullable String getPassword() {
+        return record.passwordStart < 0 ? null : password();
     }
 
     /// Returns a URL with the password updated when the URL can have credentials.
@@ -310,6 +328,12 @@ public final class WebURLImpl implements WebURL {
         return value;
     }
 
+    /// Returns the port value, or `-1` when absent.
+    @Override
+    public int getPort() {
+        return record.port;
+    }
+
     /// Returns a URL with the port updated when the URL can have a port.
     @Override
     public WebURL withPort(String value) {
@@ -333,6 +357,12 @@ public final class WebURLImpl implements WebURL {
             pathname = value;
         }
         return value;
+    }
+
+    /// Returns the raw path.
+    @Override
+    public String getRawPath() {
+        return pathname();
     }
 
     /// Returns a URL with the pathname updated when the URL has a non-opaque path.
@@ -359,6 +389,12 @@ public final class WebURLImpl implements WebURL {
             search = value;
         }
         return value;
+    }
+
+    /// Returns the raw query, or `null` when absent.
+    @Override
+    public @Nullable String getRawQuery() {
+        return record.query;
     }
 
     /// Returns a URL with the search string updated.
@@ -411,6 +447,12 @@ public final class WebURLImpl implements WebURL {
             hash = value;
         }
         return value;
+    }
+
+    /// Returns the raw fragment, or `null` when absent.
+    @Override
+    public @Nullable String getRawFragment() {
+        return record.fragment;
     }
 
     /// Returns a URL with the hash string updated.
