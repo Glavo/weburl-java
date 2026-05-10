@@ -79,9 +79,30 @@ when used to process user-supplied input.
 
 ### WebURL for Java solves this problem
 
-WebURL for Java is designed to address these shortcomings of `java.net.URI` and `java.net.URL`.
+WebURL for Java is designed to address all of the shortcomings described above.
 
-WebURL for Java follows the WHATWG URL Standard, which is the most widely recognized URL standard in practice,
+**Modern standard.** WebURL follows the [WHATWG URL Standard](https://url.spec.whatwg.org/), the same
+specification implemented by every major browser. It passes the full
+[web-platform-tests](https://github.com/web-platform-tests/wpt/tree/master/url) URL test suite, so
+its behavior is tested against thousands of real-world URL inputs that a browser would accept.
+
+**Single, consistent API.** WebURL exposes one core class — `WebURL` — with unambiguous, well-defined
+semantics. There is no `URI`/`URL` split to navigate, no surprising round-trip failures, and no
+checked exceptions for URLs that are perfectly valid in practice.
+
+**Safe equality.** `WebURL.equals()` and `WebURL.hashCode()` are purely structural — they compare
+the serialized URL string and never touch the network. `WebURL` objects are safe to use as keys in
+`HashMap` or `HashSet`.
+
+**Full IDN support.** WebURL implements UTS #46 (Unicode IDNA Compatibility Processing) directly
+from the Unicode-provided mapping tables, without requiring ICU4J or any external dependency.
+Internationalized domain names like `münchen.de` are automatically normalized to their ACE form
+`xn--mnchen-3ya.de` during parsing.
+
+**Lenient, browser-like input handling.** In addition to the strict standard parser, WebURL
+provides `parseBrowserInput()`, which applies the same heuristics a browser address bar uses —
+auto-detecting the scheme, handling scheme-free hostnames such as `example.com`, and converting
+local file paths into `file://` URLs — making it straightforward to process user-supplied input.
 
 ## Features
 
