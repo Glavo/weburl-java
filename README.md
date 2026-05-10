@@ -30,74 +30,21 @@ TODO: Publish to Maven Central.
 
 ## Comparison with Java `URI`/`URL`
 
-Java provides two built-in types for working with URLs: `java.net.URI` and `java.net.URL`.
-Both have significant limitations that `WebURL` is designed to address.
-
-### Normalization
-
-`URI` preserves many input details. `WebURL` applies WHATWG URL normalization while parsing:
-
-```java
-URI uri = URI.create("HTTP://EXAMPLE.COM:80/a/../b?x=1#top");
-System.out.println(uri.toString()); // --> HTTP://EXAMPLE.COM:80/a/../b?x=1#top
-
-WebURL url = WebURL.parse("HTTP://EXAMPLE.COM:80/a/../b?x=1#top");
-System.out.println(url.href()); // --> http://example.com/b?x=1#top
-```
-
-### Internationalized Domains
-
-`URI` does not apply UTS #46 or URL Standard domain-to-ASCII processing. For non-ASCII domain names, it may create a
-URI object but fail to expose a Java host component:
-
-```java
-URI uri = URI.create("https://b\u00fccher.example/path");
-System.out.println(uri.getHost()); // --> null
-
-WebURL url = WebURL.parse("https://b\u00fccher.example/path");
-System.out.println(url.getHost()); // --> xn--bcher-kva.example
-System.out.println(url.toDisplayString()); // --> https://bücher.example/path
-```
-
-### Relative References
-
-`URI` can hold a relative reference. `WebURL` is always absolute, so relative input must be resolved against an
-absolute base URL:
-
-```java
-URI relative = URI.create("../guide");
-System.out.println(relative.isAbsolute()); // --> false
-System.out.println(WebURL.tryParse("../guide")); // --> null
-
-WebURL resolved = WebURL.parse("../guide", "https://example.com/docs/api/");
-System.out.println(resolved.href()); // --> https://example.com/docs/guide
-```
-
-### Java Interop
-
-Use `WebURL` as the normalized URL value, then convert when another API specifically requires `URI` or `URL`:
-
-```java
-WebURL url = WebURL.parse("https://example.com/a b?q=1#f");
-
-URI uri = url.toURI();
-System.out.println(uri.toASCIIString()); // --> https://example.com/a%20b?q=1#f
-
-URL javaUrl = url.toURL();
-System.out.println(javaUrl.toExternalForm()); // --> https://example.com/a%20b?q=1#f
-```
-
-`toURL()` can only succeed when the Java runtime has a URL stream handler for the scheme. `WebURL` itself does not
-need such handlers:
-
-```java
-WebURL data = WebURL.parse("data:text/plain,hello");
-System.out.println(data.href()); // --> data:text/plain,hello
-data.toURL(); // --> throws MalformedURLException on a standard JDK without a data: URL handler
-```
-
-Avoid using `java.net.URL` equality for URL identity. `URL.equals()` and `URL.hashCode()` may perform DNS lookups;
-`WebURL.equals()` is DNS-free and compares only normalized serializations.
+| Feature | `java.net.URI` | `java.net.URL` | `WebURL` |
+|---|---|---|---|
+| Specification | RFC 2396 (obsolete) | RFC 2396, plus protocol handlers | WHATWG URL Standard |
+| Absolute only | No — can represent relative references | Yes | Yes |
+| Input normalization | Minimal; preserves original spelling | Minimal; preserves original spelling | Full: scheme/host lowercased, IDNA applied, default ports removed, dot segments resolved, percent-encoding normalized |
+| IDN / internationalized domains | Not supported | Not supported | Full UTS #46 support, no ICU4J required |
+| IPv4/IPv6 normalization | Not performed | Not performed | IPv4 → dotted decimal; IPv6 → compressed bracketed form |
+| Schemes other than HTTP(S) | Accepts any RFC 2396 scheme | Only schemes with a registered URL stream handler | Any WHATWG-compatible scheme |
+| Relative references | Accepts `//example.com/path`, `../guide`, etc. | Not supported | Not supported; use base-aware `parse(input, base)` |
+| Browser-style input | Not supported | Not supported | `parseBrowserInput()` handles bare domains, local paths, etc. |
+| Network I/O | None | `equals()`/`hashCode()` may trigger DNS resolution | None |
+| Equality | Component-based; case/port/segment differences cause inequality | Host name resolution may be involved | Pure string comparison of WHATWG serialization (`href()`) |
+| Immutability | Immutable | Mutable (host/port can change after construction) | Immutable |
+| `Comparable` | Yes | No | Yes |
+| Other applications | `File.toURI()`, `Path.toUri()` | `URL.openConnection()` | `WebURL.of(Path)`, `WebURL.of(URI)`, `webURL.toURI()` |
 
 ## Quick Start
 
