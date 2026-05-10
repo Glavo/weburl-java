@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +63,23 @@ public final class WebURLTest {
         assertThrows(WebURLParseException.class, () -> WebURL.parse("/en-US/docs", ""));
         assertNull(WebURL.tryParse("/en-US/docs"));
         assertNotNull(WebURL.tryParse("/en-US/docs", "https://developer.mozilla.org"));
+    }
+
+    /// Tests conversions from Java URL-like types.
+    @Test
+    public void createsFromJavaUrlTypes() throws Exception {
+        URI uri = URI.create("https://example.com/a%20b?q=1#f");
+        assertEquals("https://example.com/a%20b?q=1#f", WebURL.of(uri).href());
+
+        URL url = new URL("https://example.com/a%20b?q=1#f");
+        assertEquals("https://example.com/a%20b?q=1#f", WebURL.of(url).href());
+
+        Path path = Path.of("build", "weburl of", "file.txt").toAbsolutePath();
+        WebURL pathUrl = WebURL.of(path);
+        assertEquals(WebURL.of(path.toUri()), pathUrl);
+        assertEquals("file", pathUrl.getScheme());
+
+        assertThrows(WebURLParseException.class, () -> WebURL.of(URI.create("../relative")));
     }
 
     /// Tests typed parse exceptions for selected URL Standard validation errors.

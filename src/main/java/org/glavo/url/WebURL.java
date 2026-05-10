@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
 
 /// An immutable Java representation of a WHATWG URL.
 ///
@@ -80,6 +81,48 @@ import java.net.URL;
 /// URLs by the lexicographic order of those serialized strings.
 @NotNullByDefault
 public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
+    /// Creates a URL from a Java `URI`.
+    ///
+    /// The URI is converted with {@link URI#toString()} and then processed as an absolute URL input. Relative
+    /// URI values and URI values whose string form is not accepted as a WHATWG URL fail in the same way as
+    /// {@link #parse(String)}.
+    ///
+    /// This method does not use Java `URI` component getters. Existing percent escapes, Unicode characters,
+    /// opaque URI syntax, and authority syntax are interpreted through the same URL processing rules as string
+    /// input.
+    ///
+    /// @param uri the Java URI to convert
+    /// @return the converted URL
+    /// @throws WebURLParseException when the URI string is not accepted as an absolute URL
+    static WebURL of(URI uri) {
+        return parse(uri.toString());
+    }
+
+    /// Creates a URL from a Java `URL`.
+    ///
+    /// The URL is converted with {@link URL#toExternalForm()} and then processed as an absolute URL input. This
+    /// method does not open a connection, resolve the host name, or use Java `URL` equality semantics.
+    ///
+    /// @param url the Java URL to convert
+    /// @return the converted URL
+    /// @throws WebURLParseException when the URL's external form is not accepted as an absolute URL
+    static WebURL of(URL url) {
+        return parse(url.toExternalForm());
+    }
+
+    /// Creates a file URL from a path.
+    ///
+    /// The path is first converted with {@link Path#toUri()}, then converted as a Java `URI` by
+    /// {@link #of(URI)}. The path does not need to exist. The path provider determines the exact URI form used
+    /// for conversion.
+    ///
+    /// @param path the path to convert
+    /// @return the converted file URL
+    /// @throws WebURLParseException when the path URI is not accepted as an absolute URL
+    static WebURL of(Path path) {
+        return of(path.toUri());
+    }
+
     /// Parses an absolute input string and returns the parsed URL.
     ///
     /// The input must be an absolute URL. Relative inputs fail; use a base-aware overload when relative URL
