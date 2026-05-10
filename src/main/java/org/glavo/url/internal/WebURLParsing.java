@@ -115,6 +115,10 @@ public final class WebURLParsing {
         if (text.isEmpty()) {
             return null;
         }
+        @Nullable String localPathInput = toLocalPathUrlInput(text);
+        if (localPathInput != null) {
+            return localPathInput;
+        }
         if (text.startsWith("//") || text.startsWith("\\\\")) {
             int authorityEnd = firstAddressAuthorityDelimiter(text, 2);
             String authority = text.substring(2, authorityEnd);
@@ -133,6 +137,71 @@ public final class WebURLParsing {
         }
         @Nullable String scheme = addressScheme(authority);
         return scheme == null ? null : completeAddressInput(scheme, text, 0, authorityEnd);
+    }
+
+    /// Converts a local path-like browser input to a file URL input, or returns `null` when it is not a path.
+    private static @Nullable String toLocalPathUrlInput(String text) {
+        if (startsWithWindowsDriveAbsolutePath(text)) {
+            return localPathToFileUrl("file:///", text);
+        }
+        if (startsWithWindowsUncPath(text)) {
+            return windowsUncPathToFileUrl(text);
+        }
+        if (text.charAt(0) == '/' && !text.startsWith("//")) {
+            return localPathToFileUrl("file://", text);
+        }
+        return null;
+    }
+
+    /// Returns whether a string starts with an absolute Windows drive path.
+    private static boolean startsWithWindowsDriveAbsolutePath(String text) {
+        return text.length() >= 3
+                && isAsciiAlpha(text.charAt(0))
+                && text.charAt(1) == ':'
+                && isLocalPathSeparator(text.charAt(2));
+    }
+
+    /// Returns whether a string starts with a Windows UNC path.
+    private static boolean startsWithWindowsUncPath(String text) {
+        return text.length() >= 3 && text.charAt(0) == '\\' && text.charAt(1) == '\\';
+    }
+
+    /// Converts a Windows UNC path-like input to a file URL input.
+    private static @Nullable String windowsUncPathToFileUrl(String text) {
+        int hostStart = 2;
+        int hostEnd = firstLocalPathSeparator(text, hostStart);
+        String host = text.substring(hostStart, hostEnd);
+        if (!isAddressHost(host)) {
+            return null;
+        }
+        String path = hostEnd < text.length() ? text.substring(hostEnd) : "/";
+        return localPathToFileUrl("file://" + host, path);
+    }
+
+    /// Converts a local path string to a file URL using the supplied file URL prefix.
+    private static String localPathToFileUrl(String prefix, String path) {
+        String normalizedPath = path.indexOf('\\') < 0 ? path : path.replace('\\', '/');
+        return prefix + PercentEncoding.utf8PercentEncodeString(normalizedPath, WebURLParsing::isLocalFilePathPercentEncode);
+    }
+
+    /// Returns the first local path separator at or after the given index.
+    private static int firstLocalPathSeparator(String text, int start) {
+        for (int i = start; i < text.length(); i++) {
+            if (isLocalPathSeparator(text.charAt(i))) {
+                return i;
+            }
+        }
+        return text.length();
+    }
+
+    /// Returns whether a character is a local path separator recognized by the browser input heuristic.
+    private static boolean isLocalPathSeparator(char c) {
+        return c == '/' || c == '\\';
+    }
+
+    /// Returns whether a byte must be percent-encoded in a local file path URL.
+    private static boolean isLocalFilePathPercentEncode(int value) {
+        return value == '%' || PercentEncoding.isPathPercentEncode(value);
     }
 
     /// Completes a browser-style address input with a scheme and authority delimiter.

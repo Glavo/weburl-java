@@ -128,13 +128,30 @@ public final class WebURLParsingTest {
         assertEquals(expected, WebURL.parseBrowserInput(input).href());
     }
 
+    /// Tests local path inputs that are completed as file URLs.
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            C:\\Users\\Alice\\file.txt | file:///C:/Users/Alice/file.txt
+            C:/Users/Alice/file.txt | file:///C:/Users/Alice/file.txt
+            c:\\Program Files\\demo #1.txt | file:///c:/Program%20Files/demo%20%231.txt
+            C:\\tmp\\100%\\a?b.txt | file:///C:/tmp/100%25/a%3Fb.txt
+            /home/alice/file.txt | file:///home/alice/file.txt
+            /tmp/a b#c?d | file:///tmp/a%20b%23c%3Fd
+            /relative | file:///relative
+            \\\\server\\share\\file.txt | file://server/share/file.txt
+            \\\\files.example.com\\share name\\file.txt | file://files.example.com/share%20name/file.txt
+            """)
+    public void completesLocalPathsWithFileUrls(String input, String expected) {
+        assertEquals(expected, WebURL.parseBrowserInput(input).href());
+    }
+
     /// Tests browser-style input preprocessing before address completion.
     @Test
     public void preprocessesBrowserInputText() {
         assertEquals("https://example.com/path", WebURL.parseBrowserInput("  example.com/path  ").href());
         assertEquals("https://example.com/path", WebURL.parseBrowserInput("examp\tle.com/pa\nth").href());
         assertEquals("https://example.com/path", WebURL.parseBrowserInput("example.com\\path").href());
-        assertEquals("https://example.com/path", WebURL.parseBrowserInput("\\\\example.com\\path").href());
+        assertEquals("file://example.com/path", WebURL.parseBrowserInput("\\\\example.com\\path").href());
     }
 
     /// Tests browser-style inputs that are neither complete URLs nor recognized URL-like addresses.
@@ -143,7 +160,6 @@ public final class WebURLParsingTest {
             not a url
             foo bar.com
             ?foo
-            /relative
             #fragment
             foo+bar
             foo+bar.com
