@@ -9,7 +9,9 @@ The word "Web" in the name refers to WHATWG (The Web Hypertext Application Techn
 
 ## Why WebURL?
 
-The Java standard library ships two classes for representing URLs: [`java.net.URI`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URI.html) and [`java.net.URL`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URL.html).
+The Java standard library ships two classes for representing URLs: [
+`java.net.URI`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URI.html) and [
+`java.net.URL`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URL.html).
 Both have well-known, serious shortcomings.
 
 ### 1. Both follow an outdated standard
@@ -45,14 +47,18 @@ While both can parse IDN URLs, `URI` fails to recognize the host at all:
 
 ```java
 URI uri = new URI("https://münchen.de");
-System.out.println(uri.getHost()); // --> null
+System.out.
+
+println(uri.getHost()); // --> null
 ```
 
 `URL` does recognise the host, but returns the raw Unicode string instead of the ACE form:
 
 ```java
 URL url = new URL("https://münchen.de");
-System.out.println(url.getHost()); // --> "münchen.de"
+System.out.
+
+println(url.getHost()); // --> "münchen.de"
 ```
 
 Although the Java standard library provides `java.net.IDN` for manually converting IDN to the ACE form,
@@ -68,6 +74,10 @@ dot-segment resolution.
 
 WebURL for Java implements this standard faithfully, passing the full
 [web-platform-tests](https://github.com/web-platform-tests/wpt/tree/master/url) URL test suite.
+
+In addition, WebURL for Java supports parsing WHATWG URLs into `java.net.URI` or `java.net.URL`.
+Even if you still need to use those two classes to represent URLs, WebURL for Java can serve as a drop-in replacement
+for `new URI(String)` to improve compatibility.
 
 ## Features
 
