@@ -33,89 +33,71 @@ TODO: Publish to Maven Central.
 Java provides two built-in types for working with URLs: `java.net.URI` and `java.net.URL`.
 Both have significant limitations that `WebURL` is designed to address.
 
-### `java.net.URI`
+### Normalization
 
-| Feature | `java.net.URI` | `WebURL` |
-|---|---|---|
-| Specification | RFC 2396 (obsolete) | WHATWG URL Standard |
-| Absolute only | No – can represent relative references | Yes – every `WebURL` is absolute |
-| Input normalization | Minimal; preserves original spelling | Full: scheme/host lowercased, IDNA applied, default ports removed, dot segments resolved, percent-encoding normalized |
-| IDN / internationalized domains | Not supported | Full UTS #46 support, no ICU4J required |
-| IPv4/IPv6 normalization | Not performed | IPv4 → dotted decimal; IPv6 → compressed bracketed form |
-| Real-world URL compatibility | Rejects many valid real-world URLs | Accepts URLs exactly as browsers do |
-| Browser-style input | Not supported | `parseBrowserInput()` handles bare domains, local paths, etc. |
-| Equality | Structural, scheme-sensitive comparison | Defined solely by the WHATWG serialization (`href()`) |
-| Interoperability | N/A | `WebURL.of(URI)`, `webURL.toURI()`, `webURL.toRFC2396String()` |
-
-`java.net.URI` is based on RFC 2396, which has been superseded by RFC 3986 and has never matched
-browser URL-parsing behavior. It rejects many URLs that are perfectly valid in the real world — for
-example, URLs with non-ASCII characters in the host, IPv6 addresses with zone identifiers, or paths
-that require IDNA processing. `WebURL` parses and normalizes all of these correctly.
-
-`URI` is also a generic syntax object that can represent relative references such as `../foo`.
-`WebURL` is always absolute: relative inputs must be resolved against a base URL before a `WebURL` is
-returned, making it impossible to accidentally hold a relative reference where an absolute URL is expected.
-
-**Example:**
+`URI` preserves many input details. `WebURL` applies WHATWG URL normalization while parsing:
 
 ```java
-// URI rejects this valid internationalized URL
-URI.create("https://münchen.de/path");   // throws IllegalArgumentException
+URI uri = URI.create("HTTP://EXAMPLE.COM:80/a/../b?x=1#top");
+System.out.println(uri.toString()); // --> HTTP://EXAMPLE.COM:80/a/../b?x=1#top
 
-// WebURL handles it, applying IDNA normalization
-WebURL url = WebURL.parse("https://münchen.de/path");
-System.out.println(url.href());            // https://xn--mnchen-3ya.de/path
-System.out.println(url.toDisplayString()); // https://münchen.de/path
+WebURL url = WebURL.parse("HTTP://EXAMPLE.COM:80/a/../b?x=1#top");
+System.out.println(url.href()); // --> http://example.com/b?x=1#top
 ```
 
-### `java.net.URL`
+### Internationalized Domains
 
-| Feature | `java.net.URL` | `WebURL` |
-|---|---|---|
-| Specification | Scheme-handler–specific; no single standard | WHATWG URL Standard |
-| Network I/O | `equals()` and `hashCode()` may perform DNS resolution | Never performs network I/O |
-| Equality | Host-name–resolution–based (DNS-dependent, slow, unreliable offline) | Always defined by serialized URL string only |
-| Protocol handlers | Required; limited to registered schemes | No protocol handlers; works with any scheme |
-| Thread safety | Not guaranteed | Immutable; fully thread-safe |
-| Serialization | Supported, but handler-dependent | Implements `Serializable`; handler-independent |
-| Interoperability | N/A | `WebURL.of(URL)`, `webURL.toURL()` |
-
-`java.net.URL` is notorious for defining `equals()` and `hashCode()` in terms of IP-address resolution.
-Two `URL` objects with different hostnames that resolve to the same IP address are considered equal,
-making `URL` unsafe to use in collections, caches, or security checks without wrapping it first.
-`WebURL` defines equality entirely by the serialized URL string, with no network access ever performed.
-
-`URL` also requires a registered URL stream handler for every scheme. Schemes without a handler —
-such as `data`, `mailto`, `tel`, or custom schemes — throw `MalformedURLException` when you try to
-create a `URL` object. `WebURL` works with any syntactically valid scheme.
-
-**Example:**
+`URI` does not apply UTS #46 or URL Standard domain-to-ASCII processing. For non-ASCII domain names, it may create a
+URI object but fail to expose a Java host component:
 
 ```java
-// URL.equals() may block while performing DNS resolution, and
-// two hosts that resolve to the same IP are considered "equal"
-URL a = new URL("http://example.com/");
-URL b = new URL("http://93.184.216.34/");
-a.equals(b); // may return true after a DNS lookup — almost certainly not what you want
+URI uri = URI.create("https://b\u00fccher.example/path");
+System.out.println(uri.getHost()); // --> null
 
-// WebURL.equals() is always fast and purely string-based
-WebURL wa = WebURL.parse("http://example.com/");
-WebURL wb = WebURL.parse("http://93.184.216.34/");
-wa.equals(wb); // always false — different serializations
+WebURL url = WebURL.parse("https://b\u00fccher.example/path");
+System.out.println(url.getHost()); // --> xn--bcher-kva.example
+System.out.println(url.toDisplayString()); // --> https://bücher.example/path
 ```
 
-### Summary
+### Relative References
 
-Use `WebURL` when:
+`URI` can hold a relative reference. `WebURL` is always absolute, so relative input must be resolved against an
+absolute base URL:
 
-- You need to parse URLs the same way browsers do.
-- You work with internationalized domain names.
-- You need fast, DNS-free, collection-safe URL equality and hashing.
-- You handle non-HTTP schemes such as `data`, `mailto`, or custom schemes.
-- You want a strict, always-absolute URL value rather than a generic URI syntax object.
+```java
+URI relative = URI.create("../guide");
+System.out.println(relative.isAbsolute()); // --> false
+System.out.println(WebURL.tryParse("../guide")); // --> null
 
-`WebURL` provides `WebURL.of(URI)`, `WebURL.of(URL)`, `webURL.toURI()`, and `webURL.toURL()` for
-straightforward interoperability with existing Java APIs that require `URI` or `URL` objects.
+WebURL resolved = WebURL.parse("../guide", "https://example.com/docs/api/");
+System.out.println(resolved.href()); // --> https://example.com/docs/guide
+```
+
+### Java Interop
+
+Use `WebURL` as the normalized URL value, then convert when another API specifically requires `URI` or `URL`:
+
+```java
+WebURL url = WebURL.parse("https://example.com/a b?q=1#f");
+
+URI uri = url.toURI();
+System.out.println(uri.toASCIIString()); // --> https://example.com/a%20b?q=1#f
+
+URL javaUrl = url.toURL();
+System.out.println(javaUrl.toExternalForm()); // --> https://example.com/a%20b?q=1#f
+```
+
+`toURL()` can only succeed when the Java runtime has a URL stream handler for the scheme. `WebURL` itself does not
+need such handlers:
+
+```java
+WebURL data = WebURL.parse("data:text/plain,hello");
+System.out.println(data.href()); // --> data:text/plain,hello
+data.toURL(); // --> throws MalformedURLException on a standard JDK without a data: URL handler
+```
+
+Avoid using `java.net.URL` equality for URL identity. `URL.equals()` and `URL.hashCode()` may perform DNS lookups;
+`WebURL.equals()` is DNS-free and compares only normalized serializations.
 
 ## Quick Start
 
