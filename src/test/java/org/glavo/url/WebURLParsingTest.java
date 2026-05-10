@@ -19,10 +19,9 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Tests for `WebURL` parsing entry points.
 @NotNullByDefault
@@ -32,8 +31,8 @@ public final class WebURLParsingTest {
     public void parsesAgainstExplicitBaseString() {
         assertEquals("https://example.com/a/c", WebURL.parse("../c", "https://example.com/a/b/").href());
         assertEquals("https://example.com/a/b/d", WebURL.tryParse("d", "https://example.com/a/b/").href());
-        assertTrue(WebURL.canParse("?q=1", "https://example.com/a/b/"));
-        assertFalse(WebURL.canParse("?q=1"));
+        assertNotNull(WebURL.tryParse("?q=1", "https://example.com/a/b/"));
+        assertNull(WebURL.tryParse("?q=1"));
     }
 
     /// Tests explicit base arguments with an already parsed base URL.
@@ -58,19 +57,18 @@ public final class WebURLParsingTest {
                 WebURL.parseBrowserInput("例え.テスト").href());
         assertEquals("data:text/plain,hi", WebURL.parseBrowserInput("data:text/plain,hi").href());
 
-        assertFalse(WebURL.canParse("www.glavo.site"));
-        assertTrue(WebURL.canParseBrowserInput("www.glavo.site"));
+        assertNull(WebURL.tryParse("www.glavo.site"));
+        assertNotNull(WebURL.tryParseBrowserInput("www.glavo.site"));
         assertNull(WebURL.tryParseBrowserInput("not a url"));
         assertThrows(WebURLParseException.class, () -> WebURL.parseBrowserInput("not a url"));
         assertThrows(WebURLParseException.PortInvalid.class,
                 () -> WebURL.parseBrowserInput("www.glavo.site:abc"));
     }
 
-    /// Tests parse and canParse failure handling.
+    /// Tests parse and tryParse failure handling.
     @Test
     public void reportsParsingFailures() {
         assertNull(WebURL.tryParse("https://example.com:999999/"));
-        assertFalse(WebURL.canParse("https://example.com:999999/"));
         assertNull(WebURL.tryParse("/relative", "not a url"));
         assertThrows(WebURLParseException.PortOutOfRange.class,
                 () -> WebURL.parse("https://example.com:999999/"));
@@ -81,6 +79,6 @@ public final class WebURLParsingTest {
     public void parsesUnicodeDomainsWithUts46() {
         assertEquals("https://xn--bcher-kva.example/", WebURL.parse("https://bücher.example/").href());
         assertEquals("https://xn--fa-hia.example/", WebURL.parse("https://faß.example/").href());
-        assertTrue(WebURL.canParse("https://xn--bcher-kva.example/"));
+        assertNotNull(WebURL.tryParse("https://xn--bcher-kva.example/"));
     }
 }

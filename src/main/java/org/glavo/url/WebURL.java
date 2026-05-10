@@ -109,32 +109,6 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
         return WebURLParsing.tryParse(input, base);
     }
 
-    /// Returns whether an input string can be parsed as an absolute URL.
-    ///
-    /// @param input the URL input string
-    /// @return `true` if parsing succeeds, otherwise `false`
-    static boolean canParse(String input) {
-        return WebURLParsing.canParse(input);
-    }
-
-    /// Returns whether an input string can be parsed against a base URL string.
-    ///
-    /// @param input the URL input string
-    /// @param base the base URL string
-    /// @return `true` if the base parses and the input parses against it, otherwise `false`
-    static boolean canParse(String input, String base) {
-        return WebURLParsing.canParse(input, base);
-    }
-
-    /// Returns whether an input string can be parsed against a base URL.
-    ///
-    /// @param input the URL input string
-    /// @param base the base URL
-    /// @return `true` if the input parses against the base, otherwise `false`
-    static boolean canParse(String input, WebURL base) {
-        return WebURLParsing.canParse(input, base);
-    }
-
     /// Parses a browser-style URL input and returns the parsed URL.
     ///
     /// This method accepts standard absolute URL strings and browser address bar style URL inputs such as bare
@@ -160,16 +134,6 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the parsed URL, or `null` if parsing fails
     static @Nullable WebURL tryParseBrowserInput(String input) {
         return WebURLParsing.tryParseBrowserInput(input);
-    }
-
-    /// Returns whether a browser-style URL input can be parsed.
-    ///
-    /// This method has the same parser behavior as `parseBrowserInput(String)`, except it returns a boolean result.
-    ///
-    /// @param input the browser-style URL input string
-    /// @return `true` if parsing succeeds, otherwise `false`
-    static boolean canParseBrowserInput(String input) {
-        return WebURLParsing.canParseBrowserInput(input);
     }
 
     /// Returns the complete serialized URL.

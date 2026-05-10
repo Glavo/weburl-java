@@ -25,8 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -54,14 +54,13 @@ public final class WebURLTest {
         assertEquals("https://developer.mozilla.org/en-US/docs", e.href());
     }
 
-    /// Tests parse and canParse failure handling.
+    /// Tests parse and tryParse failure handling.
     @Test
     public void reportsParseFailures() {
         assertThrows(WebURLParseException.class, () -> WebURL.parse("/en-US/docs"));
         assertThrows(WebURLParseException.class, () -> WebURL.parse("/en-US/docs", ""));
         assertNull(WebURL.tryParse("/en-US/docs"));
-        assertFalse(WebURL.canParse("/en-US/docs"));
-        assertTrue(WebURL.canParse("/en-US/docs", "https://developer.mozilla.org"));
+        assertNotNull(WebURL.tryParse("/en-US/docs", "https://developer.mozilla.org"));
     }
 
     /// Tests typed parse exceptions for selected URL Standard validation errors.

@@ -63,21 +63,6 @@ public final class WebURLParsing {
         return parseNullable(input, implementation(base));
     }
 
-    /// Returns whether an input string can be parsed.
-    public static boolean canParse(String input) {
-        return tryParse(input) != null;
-    }
-
-    /// Returns whether an input string can be parsed against a base URL string.
-    public static boolean canParse(String input, String base) {
-        return tryParse(input, base) != null;
-    }
-
-    /// Returns whether an input string can be parsed against a base URL.
-    public static boolean canParse(String input, WebURL base) {
-        return tryParse(input, base) != null;
-    }
-
     /// Parses a browser-style URL input and returns the parsed URL.
     public static WebURL parseBrowserInput(String input) {
         Objects.requireNonNull(input, "input");
@@ -93,11 +78,6 @@ public final class WebURLParsing {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
         return parseNullable(addressInput == null ? input : addressInput, null);
-    }
-
-    /// Returns whether a browser-style URL input can be parsed.
-    public static boolean canParseBrowserInput(String input) {
-        return tryParseBrowserInput(input) != null;
     }
 
     /// Parses an input string and throws when parsing fails.
