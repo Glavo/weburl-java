@@ -3,15 +3,53 @@
 [WebURL for Java](https://github.com/Glavo/weburl-java) is a WHATWG URL library for Java, providing URL support that
 conforms to [the WHATWG URL Standard](https://url.spec.whatwg.org/).
 
-Because [`java.net.URI`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URI.html) is based on
-the outdated [RFC 2396 specification](http://www.ietf.org/rfc/rfc2396.txt), it cannot parse many real-world URLs.
-
-WebURL for Java is based on the WHATWG URL Standard, which is the most widely adopted URL specification today,
-and it handles URLs in the same way browsers do.
-
 Despite the name WebURL, this library is not limited to `http`/`https`. It also handles `file`, `ftp`, `data`,
 `mailto`, `tel`, `urn`, and any other URL scheme.
 The word "Web" in the name refers to WHATWG (The Web Hypertext Application Technology Working Group).
+
+## Why WebURL?
+
+The Java standard library ships two classes for representing URLs: [`java.net.URI`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URI.html) and [`java.net.URL`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URL.html).
+Both have well-known, serious shortcomings.
+
+### 1. Both follow an outdated standard
+
+`URI` and `URL` are both specified against [RFC 2396](http://www.ietf.org/rfc/rfc2396.txt), which was superseded by
+[RFC 3986](https://www.ietf.org/rfc/rfc3986.txt) in 2005 and is a far cry from how URLs are handled on the modern
+web. Many URLs that browsers accept every day are rejected or mishandled by the standard Java classes.
+
+For example, `URI.create("https://example.com/a b")` throws an `IllegalArgumentException` because the unencoded
+space is not allowed by RFC 2396, even though every major browser accepts this URL without complaint.
+
+### 2. `URI` and `URL` have subtle, incompatible semantics
+
+Despite nominally following the same specification, the two classes behave differently in edge cases, making
+round-trip conversion unreliable:
+
+- `new URL("https://example.com/a b")` succeeds (URL is lenient about spaces), but calling `.toURI()` on it
+  throws a `URISyntaxException` because URI refuses the unencoded space.
+- Conversely, some URIs that `URI` can parse successfully will cause `URI.toURL()` to throw, depending on the
+  scheme or the presence of a registered `URLStreamHandler`.
+
+### 3. `java.net.URL` has dangerous network-aware equality
+
+`URL.equals()` and `URL.hashCode()` may perform DNS resolution to decide whether two URLs are equal (for example,
+`http://example.com/` and `http://93.184.216.34/` could be considered equal). This makes `URL` objects unsafe to
+use as keys in hash maps or sets, and can cause unexpected latency or failures in network-restricted environments.
+
+### 4. No internationalized domain name (IDN) support
+
+Neither class can correctly handle internationalized domain names. They provide no IDNA processing, so a domain
+like `münchen.de` is not converted to its ACE form `xn--mnchen-3ya.de`, and the URL is likely to be rejected or
+mishandled downstream.
+
+### The WHATWG URL Standard solves all of this
+
+The [WHATWG URL Standard](https://url.spec.whatwg.org/) was designed specifically to capture real-world URL
+parsing behavior as implemented by browsers. It defines a single, unambiguous parsing algorithm that handles
+percent-encoding normalization, IDN via UTS #46, IPv4/IPv6 address normalization, default-port elision, and
+dot-segment resolution. WebURL for Java implements this standard faithfully, passing the full
+[web-platform-tests](https://github.com/web-platform-tests/wpt/tree/master/url) URL test suite.
 
 ## Features
 
@@ -27,23 +65,6 @@ The word "Web" in the name refers to WHATWG (The Web Hypertext Application Techn
 ## Add to Your Project
 
 TODO: Publish to Maven Central.
-
-## Comparison with Java `URI`/`URL`
-
-| Feature                         | `WebURL`                                                                                                              | `java.net.URI`                                                  | `java.net.URL`                                                                     |
-|---------------------------------|-----------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|------------------------------------------------------------------------------------|
-| Specification                   | [WHATWG URL Standard](https://url.spec.whatwg.org/)                                                                   | [RFC 2396](http://www.ietf.org/rfc/rfc2396.txt) (obsolete)      | [RFC 2396](http://www.ietf.org/rfc/rfc2396.txt) (obsolete), plus protocol handlers |
-| Absolute only                   | Yes                                                                                                                   | No — can represent relative references                          | Yes                                                                                |
-| Input normalization             | Full: scheme/host lowercased, IDNA applied, default ports removed, dot segments resolved, percent-encoding normalized | Minimal; preserves original spelling                            | Minimal; preserves original spelling                                               |
-| IDN / internationalized domains | Full UTS #46 support                                                                                                  | Not supported                                                   | Not supported                                                                      |
-| IPv4/IPv6 normalization         | IPv4 → dotted decimal; IPv6 → compressed bracketed form                                                               | Not performed                                                   | Not performed                                                                      |
-| Schemes other than HTTP(S)      | Any scheme compatible with the WHATWG URL Standard                                                                    | Accepts any RFC 2396 scheme                                     | Only schemes with a registered URL stream handler                                  |
-| Relative references             | Not supported; use base-aware `parse(input, base)`                                                                    | Accepts `//example.com/path`, `../guide`, etc.                  | Not supported                                                                      |
-| Browser-style input             | `parseBrowserInput(String)` handles bare domains, local paths, etc.                                                   | Not supported                                                   | Not supported                                                                      |
-| Network I/O                     | None                                                                                                                  | None                                                            | `equals()`/`hashCode()` may trigger DNS resolution                                 |
-| Equality                        | Pure string comparison of WHATWG serialization (`href()`)                                                             | Component-based; case/port/segment differences cause inequality | Host name resolution may be involved                                               |
-| Immutability                    | Immutable                                                                                                             | Immutable                                                       | Mutable (host/port can change after construction)                                  |
-| `Comparable`                    | Yes                                                                                                                   | Yes                                                             | No                                                                                 |
 
 ## Quick Start
 
