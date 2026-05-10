@@ -20,6 +20,7 @@ import org.glavo.url.internal.WebURLParsing;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -80,7 +81,8 @@ import java.nio.file.Path;
 /// `href()`. Two URL objects are equal when their serialized URLs are equal, and `compareTo(WebURL)` orders
 /// URLs by the lexicographic order of those serialized strings.
 @NotNullByDefault
-public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
+public sealed interface WebURL extends Comparable<WebURL>, Serializable
+        permits WebURLImpl {
     /// Creates a URL from a Java `URI`.
     ///
     /// The URI is converted with {@link URI#toString()} and then processed as an absolute URL input. Relative

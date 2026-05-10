@@ -20,6 +20,12 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.Serial;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,6 +36,10 @@ import java.util.List;
 /// Internal immutable implementation of `WebURL`.
 @NotNullByDefault
 public final class WebURLImpl implements WebURL {
+    /// Serialization identifier for this implementation type.
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     /// Upper-case hexadecimal digits used by RFC 2396 escaping.
     private static final char @Unmodifiable [] HEX = "0123456789ABCDEF".toCharArray();
 
@@ -611,6 +621,58 @@ public final class WebURLImpl implements WebURL {
     @Override
     public String toString() {
         return href();
+    }
+
+    /// Returns the serialization proxy for this URL.
+    @Serial
+    private Object writeReplace() {
+        return new WebURLImpl.SerializationProxy(href());
+    }
+
+    /// Rejects direct deserialization because the serialized form is defined by `SerializationProxy`.
+    @Serial
+    private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+        throw new InvalidObjectException("Serialization proxy required");
+    }
+
+    /// Rejects direct deserialization because the serialized form is defined by `SerializationProxy`.
+    @Serial
+    private void readObjectNoData() throws ObjectStreamException {
+        throw new InvalidObjectException("Serialization proxy required");
+    }
+
+    /// Serialization proxy that stores only the canonical WHATWG URL serialization.
+    @SuppressWarnings("ClassCanBeRecord")
+    @NotNullByDefault
+    private static final class SerializationProxy implements Serializable {
+        /// Serialization identifier for the proxy type.
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        /// Canonical WHATWG URL serialization.
+        private final String href;
+
+        /// Creates a serialization proxy with the canonical WHATWG URL serialization.
+        private SerializationProxy(String href) {
+            this.href = href;
+        }
+
+        /// Recreates a `WebURL` from the canonical WHATWG URL serialization.
+        @Serial
+        private Object readResolve() throws ObjectStreamException {
+            if (href == null) {
+                throw new InvalidObjectException("href cannot be null");
+            }
+
+            try {
+                return WebURL.parse(href);
+            } catch (RuntimeException exception) {
+                InvalidObjectException invalidObject =
+                        new InvalidObjectException("href is not a valid serialized URL");
+                invalidObject.initCause(exception);
+                throw invalidObject;
+            }
+        }
     }
 
     /// Appends either a decoded display component or the original serialized component.

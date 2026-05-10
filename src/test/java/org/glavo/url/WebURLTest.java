@@ -19,6 +19,10 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -28,6 +32,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -288,6 +293,36 @@ public final class WebURLTest {
         ), urls);
     }
 
+    /// Tests Java serialization round-trips by the canonical URL serialization.
+    @Test
+    public void serializesByHref() throws Exception {
+        for (String input : List.of(
+                "https://user%40name:pa%3Ass@example.com/a%2Fb?x=a%26b#frag%23ment",
+                "https://xn--6qq79v.xn--rhqv96g/%E8%B7%AF%E5%BE%84?q=%E5%80%BC#%E7%89%87",
+                "http://[2001:db8::1]:8080/api",
+                "file:///C:/Users/Glavo/project/file.txt",
+                "data:text/plain,hello%20world",
+                "non-special:"
+        )) {
+            WebURL url = WebURL.parse(input);
+            url.toDisplayString();
+            WebURL deserialized = serializeRoundTrip(url);
+
+            assertNotSame(url, deserialized);
+            assertEquals(url, deserialized);
+            assertEquals(url.hashCode(), deserialized.hashCode());
+            assertEquals(0, url.compareTo(deserialized));
+            assertEquals(url.href(), deserialized.href());
+            assertEquals(url.origin(), deserialized.origin());
+            assertEquals(url.toDisplayString(), deserialized.toDisplayString());
+            assertEquals(url.getRawAuthority(), deserialized.getRawAuthority());
+            assertEquals(url.getRawPath(), deserialized.getRawPath());
+            assertEquals(url.getRawQuery(), deserialized.getRawQuery());
+            assertEquals(url.getRawFragment(), deserialized.getRawFragment());
+            assertEquals(url.toRFC2396String(), deserialized.toRFC2396String());
+        }
+    }
+
     /// Tests host parsing and serialization.
     @Test
     public void parsesHosts() {
@@ -452,6 +487,17 @@ public final class WebURLTest {
         assertEquals("non-special:#fragment", emptyOpaqueWithFragment.toRFC2396String());
         assertThrows(IllegalStateException.class, emptyOpaque::toURI);
         assertThrows(IllegalStateException.class, emptyOpaqueWithFragment::toURI);
+    }
+
+    /// Serializes and deserializes a `WebURL`.
+    private static WebURL serializeRoundTrip(WebURL url) throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+            output.writeObject(url);
+        }
+        try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+            return (WebURL) input.readObject();
+        }
     }
 
     /// Returns a nullable object for equality contract assertions.
