@@ -26,26 +26,26 @@ import java.net.URL;
 
 /// An immutable Java representation of a WHATWG URL.
 ///
-/// A `WebURL` is the result of the WHATWG URL parser. It represents an absolute URL record, not a relative
-/// reference. Relative input strings can be parsed only when a base URL is supplied to one of the `parse` or
-/// `tryParse` overloads that accepts a base. Once created, a `WebURL` is immutable and its complete identity is
-/// the serialized URL returned by {@link #href()}.
+/// A URL identifies or locates a resource using the syntax and processing rules of the WHATWG URL Standard.
+/// Every `WebURL` is absolute: it has a scheme, and any relative reference supplied to a base-aware `parse` or
+/// `tryParse` method is resolved against that base before a `WebURL` is returned. Once created, a `WebURL` is
+/// immutable and its complete identity is the serialized URL returned by {@link #href()}.
 ///
-/// The URL record has the following components:
+/// A URL has the following components:
 ///
 /// - A `scheme`, always present and returned by {@link #getScheme()} without the trailing colon. The scheme is
-///   normalized to lower-case ASCII by the parser.
+///   stored in lower-case ASCII.
 /// - Optional credentials made from a `username` and an optional `password`. These are serialized before the
 ///   host as `username[:password]@` and are exposed through username, password, and user-info getters.
 /// - An optional `host`. A present host makes the URL hierarchical and gives it an authority component. Domain
 ///   hosts are processed with URL Standard domain-to-ASCII rules, IPv4 hosts are normalized to dotted decimal
-///   form, and IPv6 hosts are serialized in brackets. Some URLs, such as `file:///path`, have a present but
+///   form, and IPv6 hosts are serialized in brackets. Some hierarchical URLs, such as `file:///path`, have an
 ///   empty host; opaque URLs such as `data:text/plain,hi` have no host.
 /// - A `port`, represented as an integer. The value `-1` means no port is stored. Default ports are removed
-///   during parsing, so `https://example.com:443/` has no stored port.
-/// - A `path`, always present as a string view. Hierarchical URLs have a path produced from path segments;
-///   many special URLs serialize that path with a leading slash. Non-special URLs can have an opaque path whose
-///   syntax is not a slash-separated path hierarchy.
+///   as part of URL normalization, so `https://example.com:443/` has no stored port.
+/// - A `path`, always present as a string. Hierarchical URLs have a path made from path segments; many special
+///   URLs serialize that path with a leading slash. Non-special URLs can have an opaque path whose syntax is
+///   not a slash-separated path hierarchy.
 /// - An optional `query`, serialized after `?`. An absent query is `null`; a present empty query is the empty
 ///   string.
 /// - An optional `fragment`, serialized after `#`. An absent fragment is `null`; a present empty fragment is
@@ -64,11 +64,12 @@ import java.net.URL;
 /// `application/x-www-form-urlencoded` rules; plus (`+`) remains plus.
 ///
 /// `WebURL` differs from {@link URI} in several important ways. `URI` is a generic RFC 2396-oriented syntax
-/// object and can represent relative references; `WebURL` is always a parsed WHATWG URL record. URL parsing
-/// can change the input by lower-casing schemes and domain hosts, applying IDNA processing, normalizing IPv4
-/// and IPv6 hosts, removing default ports, resolving dot segments, and percent-encoding characters according
-/// to URL Standard encode sets. A `WebURL` therefore does not preserve the original input spelling. Use
-/// {@link #toURI()} or {@link #toRFC2396String()} when an equivalent Java `URI` representation is needed.
+/// object and can represent relative references; `WebURL` is an absolute URL value with URL Standard
+/// normalization. Creating a `WebURL` can change the input by lower-casing schemes and domain hosts, applying
+/// IDNA processing, normalizing IPv4 and IPv6 hosts, removing default ports, resolving dot segments, and
+/// percent-encoding characters according to URL Standard encode sets. A `WebURL` therefore does not preserve
+/// the original input spelling. Use {@link #toURI()} or {@link #toRFC2396String()} when an equivalent Java
+/// `URI` representation is needed.
 ///
 /// `WebURL` also differs from {@link URL}. Java `URL` is tied to protocol handlers and may perform host name
 /// resolution in operations such as equality checks. `WebURL` performs no network I/O, has no stream-handler
@@ -81,18 +82,19 @@ import java.net.URL;
 public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// Parses an absolute input string and returns the parsed URL.
     ///
-    /// The input is parsed by the WHATWG basic URL parser with no base URL. Relative inputs therefore fail.
+    /// The input must be an absolute URL. Relative inputs fail; use a base-aware overload when relative URL
+    /// references should be accepted.
     ///
     /// @param input the URL input string
     /// @return the parsed URL
-    /// @throws WebURLParseException when parsing fails
+    /// @throws WebURLParseException when the input is not a valid absolute URL
     static WebURL parse(String input) {
         return WebURLParsing.parse(input);
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
     ///
-    /// The base is parsed first. The input may be either absolute or relative to that base.
+    /// The base string must be a valid absolute URL. The input may be either absolute or relative to that base.
     ///
     /// @param input the URL input string
     /// @param base the base URL string
@@ -109,26 +111,26 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @param input the URL input string
     /// @param base the base URL
     /// @return the parsed URL
-    /// @throws WebURLParseException when parsing fails
+    /// @throws WebURLParseException when the input cannot be resolved against the base URL
     static WebURL parse(String input, WebURL base) {
         return WebURLParsing.parse(input, base);
     }
 
     /// Parses an absolute input string and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parse(String)`, except failures are represented by `null`
-    /// instead of an exception.
+    /// This method has the same URL processing behavior as `parse(String)`, except failures are represented by
+    /// `null` instead of an exception.
     ///
     /// @param input the URL input string
-    /// @return the parsed URL, or `null` if parsing fails
+    /// @return the parsed URL, or `null` if the input is not a valid absolute URL
     static @Nullable WebURL tryParse(String input) {
         return WebURLParsing.tryParse(input);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parse(String, String)`, except failures are represented by
-    /// `null` instead of an exception.
+    /// This method has the same URL processing behavior as `parse(String, String)`, except failures are
+    /// represented by `null` instead of an exception.
     ///
     /// @param input the URL input string
     /// @param base the base URL string
@@ -139,8 +141,8 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Parses an input string against a base URL and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parse(String, WebURL)`, except failures are represented by
-    /// `null` instead of an exception.
+    /// This method has the same URL processing behavior as `parse(String, WebURL)`, except failures are
+    /// represented by `null` instead of an exception.
     ///
     /// @param input the URL input string
     /// @param base the base URL
@@ -154,7 +156,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// This method accepts standard absolute URL strings and a deterministic subset of browser address bar
     /// style URL inputs, such as bare domain names, `//`-prefixed authorities, `localhost` with a port, IP
     /// addresses, and bracketed IPv6 addresses. Inputs recognized as URL-like but lacking an explicit scheme
-    /// are completed with `https` before parsing.
+    /// are completed with `https` before normal URL processing.
     ///
     /// This method is not a complete browser omnibox or navigation algorithm. It performs no DNS lookup, no
     /// HTTP(S) probing, no HSTS or policy checks, no history or search suggestion lookup, no search fallback,
@@ -163,31 +165,31 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// @param input the browser-style URL input string
     /// @return the parsed URL
-    /// @throws WebURLParseException when parsing fails
+    /// @throws WebURLParseException when the input is not accepted as a browser-style URL input
     static WebURL parseBrowserInput(String input) {
         return WebURLParsing.parseBrowserInput(input);
     }
 
     /// Parses a browser-style URL input and returns `null` on failure.
     ///
-    /// This method has the same parser behavior as `parseBrowserInput(String)`, except failures are represented
-    /// by `null` instead of an exception.
+    /// This method has the same URL processing behavior as `parseBrowserInput(String)`, except failures are
+    /// represented by `null` instead of an exception.
     ///
     /// @param input the browser-style URL input string
-    /// @return the parsed URL, or `null` if parsing fails
+    /// @return the parsed URL, or `null` if the input is not accepted as a browser-style URL input
     static @Nullable WebURL tryParseBrowserInput(String input) {
         return WebURLParsing.tryParseBrowserInput(input);
     }
 
     /// Returns the complete serialized URL.
     ///
-    /// The returned string is the WHATWG URL serialization of this URL record. It includes the scheme and path,
+    /// The returned string is the WHATWG URL serialization of this URL. It includes the scheme and path,
     /// and includes authority, query, and fragment delimiters when those components are present. Default ports
     /// are omitted, host syntax is normalized, path dot segments have been resolved where the URL Standard
     /// requires it, and percent-encoding uses URL Standard encode sets.
     ///
     /// This string is canonical for this object but is not necessarily the same string that was supplied to the
-    /// parser. It is also not guaranteed to be accepted directly by Java {@link URI}; use {@link #toURI()} or
+    /// input. It is also not guaranteed to be accepted directly by Java {@link URI}; use {@link #toURI()} or
     /// {@link #toRFC2396String()} for that conversion.
     ///
     /// @return the serialized URL
@@ -208,10 +210,10 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the scheme component without its delimiter.
     ///
-    /// The scheme identifies the URL's parsing and serialization rules, such as `http`, `https`, `file`,
+    /// The scheme identifies the URL's processing and serialization rules, such as `http`, `https`, `file`,
     /// or a non-special scheme such as `data`. It is the canonical URL Standard scheme name: it starts with
     /// an ASCII letter, contains only ASCII letters, ASCII digits, plus (`+`), hyphen (`-`), and period
-    /// (`.`), and is normalized to lower case during parsing.
+    /// (`.`), and is stored in lower case.
     ///
     /// The corresponding WHATWG `URL.protocol` attribute is this scheme followed by a trailing colon. This
     /// method returns only the logical scheme name because Java URL and URI APIs use the term `scheme` for this
@@ -235,13 +237,13 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the raw username component.
     ///
-    /// This method exposes the normalized, percent-encoded username stored in the URL record. It does not
+    /// This method exposes the normalized, percent-encoded username stored in the URL. It does not
     /// percent-decode the value. The result is `null` when the URL has no serialized credentials. When the URL
     /// has credentials with an empty username, the result is the empty string.
     ///
     /// The word "raw" has the same meaning as in Java `URI` raw component getters: the returned string is the
     /// serialized component with percent-encoding preserved. It is not necessarily a substring of the original
-    /// input because URL parsing may normalize, percent-encode, or otherwise rewrite credentials.
+    /// input because URL processing may normalize, percent-encode, or otherwise rewrite credentials.
     ///
     /// @return the raw username component, or `null` when absent
     @Nullable String getRawUsername();
@@ -268,12 +270,12 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the raw password component.
     ///
-    /// This method exposes the normalized, percent-encoded password stored in the URL record. It does not
+    /// This method exposes the normalized, percent-encoded password stored in the URL. It does not
     /// percent-decode the value. The result is `null` when the URL has no password component.
     ///
     /// The word "raw" has the same meaning as in Java `URI` raw component getters: the returned string is the
     /// serialized component with percent-encoding preserved. It is not necessarily a substring of the original
-    /// input because URL parsing may normalize, percent-encode, or otherwise rewrite credentials.
+    /// input because URL processing may normalize, percent-encode, or otherwise rewrite credentials.
     ///
     /// @return the raw password component, or `null` when absent
     @Nullable String getRawPassword();
@@ -305,7 +307,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// This method is the Java `URI`-style getter for the URL user-info with percent-encoding preserved. It
     /// returns the normalized user-info serialization without the trailing at-sign (`@`). The returned value is
-    /// not necessarily a substring of the original input because URL parsing may normalize, percent-encode, or
+    /// not necessarily a substring of the original input because URL processing may normalize, percent-encode, or
     /// otherwise rewrite credentials.
     ///
     /// User-info is present when the URL serialization contains credentials. When present, it consists of the
@@ -322,13 +324,13 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// {@link #getRawAuthority()} with valid percent triplets decoded as UTF-8. It does not include the leading
     /// double solidus (`//`).
     ///
-    /// The authority is present when the URL record has a host component. When present, it consists of the
+    /// The authority is present when this URL has a host component. When present, it consists of the
     /// serialized credentials followed by at-sign (`@`) when credentials are present, the serialized host, and
     /// the serialized port prefixed by colon (`:`) when a non-default port is present. Domain hosts remain in
     /// their URL Standard ASCII form; this method does not convert Punycode labels back to Unicode. Percent
     /// escapes that are invalid or incomplete are left unchanged.
     ///
-    /// The result is `null` when the URL record has no host component. A URL with an explicitly empty authority,
+    /// The result is `null` when this URL has no host component. A URL with an explicitly empty authority,
     /// such as a `file` URL with an empty host, returns the empty string.
     ///
     /// @return the decoded authority component, or `null` when absent
@@ -338,14 +340,14 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// This method is the Java `URI`-style getter for the URL authority with percent-encoding preserved. It
     /// returns the normalized authority serialization without the leading double solidus (`//`). The returned
-    /// value is not necessarily a substring of the original input because URL parsing may normalize,
+    /// value is not necessarily a substring of the original input because URL processing may normalize,
     /// percent-encode, or otherwise rewrite credentials, hosts, and ports.
     ///
-    /// The authority is present when the URL record has a host component. When present, it consists of the raw
+    /// The authority is present when this URL has a host component. When present, it consists of the raw
     /// username and optional raw password followed by at-sign (`@`) when credentials are present, the serialized
     /// host, and the serialized port prefixed by colon (`:`) when a non-default port is present.
     ///
-    /// The result is `null` when the URL record has no host component. A URL with an explicitly empty authority,
+    /// The result is `null` when this URL has no host component. A URL with an explicitly empty authority,
     /// such as a `file` URL with an empty host, returns the empty string.
     ///
     /// @return the raw authority component, or `null` when absent
@@ -358,7 +360,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// processing, so Unicode domain labels are represented in ASCII form. IPv4 hosts are returned in dotted
     /// decimal form. IPv6 hosts are returned in their compressed form enclosed in square brackets.
     ///
-    /// The result is `null` when the URL record has no host component, such as for most opaque URLs. A URL with
+    /// The result is `null` when this URL has no host component, such as for most opaque URLs. A URL with
     /// an explicitly empty host returns the empty string.
     ///
     /// @return the host component, or `null` when absent
@@ -366,9 +368,9 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the port component as an integer.
     ///
-    /// This method follows the Java `URI` convention of returning `-1` when no port is stored in the URL
-    /// record. WHATWG URL parsing normalizes default ports away, so an HTTPS URL with an explicit port of 443
-    /// also returns `-1`.
+    /// This method follows the Java `URI` convention of returning `-1` when no port is stored in this URL.
+    /// URL Standard normalization removes default ports, so an HTTPS URL with an explicit port of 443 also
+    /// returns `-1`.
     ///
     /// @return the normalized port, or `-1` when absent
     int getPort();
@@ -407,7 +409,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the raw query component.
     ///
-    /// This method exposes the normalized, percent-encoded query stored in the URL record without the leading
+    /// This method exposes the normalized, percent-encoded query stored in the URL without the leading
     /// question mark. It follows the Java `URI` convention of returning `null` when the query component is
     /// absent. An empty query component is returned as the empty string.
     ///
@@ -436,7 +438,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the raw fragment component.
     ///
-    /// This method exposes the normalized, percent-encoded fragment stored in the URL record without the leading
+    /// This method exposes the normalized, percent-encoded fragment stored in the URL without the leading
     /// number sign. It follows the Java `URI` convention of returning `null` when the fragment component is
     /// absent. An empty fragment component is returned as the empty string.
     ///
@@ -453,7 +455,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the serialized URL converted to RFC 2396 URI syntax.
     ///
-    /// The returned string is suitable for Java {@link URI} parsing when this URL has an RFC 2396
+    /// The returned string is suitable for Java {@link URI} construction when this URL has an RFC 2396
     /// representation. Existing valid percent escapes are preserved, and bare percent signs or characters
     /// accepted by WHATWG URL serialization but rejected by Java URI syntax are percent-encoded component by
     /// component.
@@ -467,8 +469,8 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// Returns the serialized URL as a Java `URI`.
     ///
     /// The URI is constructed from {@link #toRFC2396String()}. This method does not reparse the original input;
-    /// it converts the normalized WHATWG URL serialization into a string acceptable to Java's RFC 2396-oriented
-    /// `URI` parser and then constructs a `URI` from that string.
+    /// it converts the normalized WHATWG URL serialization into Java's RFC 2396-oriented `URI` syntax and then
+    /// constructs a `URI` from that string.
     ///
     /// @return a Java `URI` representing this URL
     /// @throws IllegalStateException when this URL has no RFC 2396 representation accepted by Java `URI`
