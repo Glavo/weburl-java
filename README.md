@@ -1,5 +1,7 @@
 # WebURL for Java
 
+[![codecov](https://codecov.io/gh/Glavo/weburl-java/graph/badge.svg?token=YH1WL9LMVO)](https://codecov.io/gh/Glavo/weburl-java)
+
 **WebURL for Java** is a URL library for Java, providing URL support that
 conforms to [the WHATWG URL Standard](https://url.spec.whatwg.org/).
 
