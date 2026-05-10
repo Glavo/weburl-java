@@ -14,6 +14,7 @@ plugins {
 
 group = "org.glavo"
 version = "0.1.0" + "-SNAPSHOT"
+description = "A modern Java URL library that brings browser-grade WHATWG URL parsing to URI-style APIs."
 
 repositories {
     mavenCentral()
@@ -62,7 +63,13 @@ dependencies {
     benchmarkAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion")
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 tasks.withType(JavaCompile::class) {
+    options.encoding = "UTF-8"
     options.release.set(17)
 }
 
@@ -198,7 +205,6 @@ tasks.test {
     inputs.dir(downloadDir.map { it.dir("wpt") })
     systemProperty("org.glavo.url.wpt.resources", downloadDir.map { it.dir("wpt") }.get().asFile.absolutePath)
 }
-
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
