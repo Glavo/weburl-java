@@ -1,1 +1,1 @@
-rootProject.name = "weburl-java"
+rootProject.name = "weburl"
