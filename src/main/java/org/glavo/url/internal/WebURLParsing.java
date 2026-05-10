@@ -232,10 +232,49 @@ public final class WebURLParsing {
 
     /// Returns whether a host string is recognized as a browser-style input host.
     private static boolean isAddressHost(String host) {
-        return isIpAddressHost(host)
-                || isSingleLabelHost(host)
-                || isReservedAddressHost(host)
-                || containsDomainDot(host);
+        if (isIpAddressHost(host)) {
+            return true;
+        }
+        return isAddressHostname(host)
+                && (isSingleLabelHost(host)
+                        || isReservedAddressHost(host)
+                        || containsDomainDot(host));
+    }
+
+    /// Returns whether a host has the shape of a browser-address hostname.
+    private static boolean isAddressHostname(String host) {
+        if (host.isEmpty() || host.startsWith("[") || isDomainDot(host.charAt(0))) {
+            return false;
+        }
+
+        boolean hasLabelCharacter = false;
+        for (int i = 0; i < host.length(); ) {
+            int codePoint = host.codePointAt(i);
+            i += Character.charCount(codePoint);
+            if (isDomainDot(codePoint)) {
+                if (!hasLabelCharacter) {
+                    return false;
+                }
+                hasLabelCharacter = false;
+            } else if (isAddressHostnameCodePoint(codePoint)) {
+                if (codePoint != '_' && codePoint != '-') {
+                    hasLabelCharacter = true;
+                }
+            } else {
+                return false;
+            }
+        }
+        return hasLabelCharacter;
+    }
+
+    /// Returns whether a code point may appear in a browser-address hostname label.
+    private static boolean isAddressHostnameCodePoint(int codePoint) {
+        return codePoint >= '0' && codePoint <= '9'
+                || codePoint >= 'A' && codePoint <= 'Z'
+                || codePoint >= 'a' && codePoint <= 'z'
+                || codePoint == '-'
+                || codePoint == '_'
+                || codePoint > 0x7f && !Character.isISOControl(codePoint);
     }
 
     /// Returns whether a host is an IP address literal or IPv4-number-like host.
@@ -301,12 +340,16 @@ public final class WebURLParsing {
     /// Returns whether a string contains a domain-label separator.
     private static boolean containsDomainDot(String value) {
         for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (c == '.' || c == '\u3002' || c == '\uff0e' || c == '\uff61') {
+            if (isDomainDot(value.charAt(i))) {
                 return true;
             }
         }
         return false;
+    }
+
+    /// Returns whether a code point is a domain-label separator.
+    private static boolean isDomainDot(int codePoint) {
+        return codePoint == '.' || codePoint == '\u3002' || codePoint == '\uff0e' || codePoint == '\uff61';
     }
 
     /// Returns whether an address authority contains an ASCII space or control character.

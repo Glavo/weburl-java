@@ -106,7 +106,6 @@ public final class WebURLParsingTest {
             printer | http://printer/
             printer/path | http://printer/path
             dotlesshostname/ | http://dotlesshostname/
-            foo+bar | http://foo+bar/
             foo:81 | http://foo:81/
             """)
     public void completesLocalAndReservedHostsWithHttp(String input, String expected) {
@@ -146,6 +145,12 @@ public final class WebURLParsingTest {
             ?foo
             /relative
             #fragment
+            foo+bar
+            foo+bar.com
+            foo;bar
+            foo._
+            .internal
+            example..com
             [2001:]
             [foo.com]
             """)
