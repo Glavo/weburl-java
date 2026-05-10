@@ -123,6 +123,34 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
         return of(path.toUri());
     }
 
+    /// Parses an absolute URL string and returns it as a Java `URI`.
+    ///
+    /// This is a convenience method equivalent to `WebURL.parse(input).toURI()`. The input is processed as a
+    /// WHATWG URL first, then converted to Java's RFC 2396-oriented `URI` syntax.
+    ///
+    /// @param input the URL input string
+    /// @return a Java `URI` representing the parsed URL
+    /// @throws WebURLParseException when the input is not a valid absolute URL
+    /// @throws IllegalStateException when the parsed URL has no RFC 2396 representation accepted by Java `URI`
+    static URI toURI(String input) {
+        return parse(input).toURI();
+    }
+
+    /// Parses an absolute URL string and returns it as a Java `URL`.
+    ///
+    /// This is a convenience method equivalent to `WebURL.parse(input).toURL()`. Java {@link URL} supports only
+    /// schemes for which the runtime has a URL stream handler, so some valid WHATWG URLs cannot be represented
+    /// as a Java `URL`.
+    ///
+    /// @param input the URL input string
+    /// @return a Java `URL` representing the parsed URL
+    /// @throws WebURLParseException when the input is not a valid absolute URL
+    /// @throws IllegalStateException when the parsed URL has no RFC 2396 representation accepted by Java `URI`
+    /// @throws MalformedURLException when Java has no URL handler for the scheme or rejects the URL
+    static URL toURL(String input) throws MalformedURLException {
+        return parse(input).toURL();
+    }
+
     /// Parses an absolute input string and returns the parsed URL.
     ///
     /// The input must be an absolute URL. Relative inputs fail; use a base-aware overload when relative URL

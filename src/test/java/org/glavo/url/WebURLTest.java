@@ -395,8 +395,11 @@ public final class WebURLTest {
         WebURL url = WebURL.parse("https://example.com/a b?q=1#f");
 
         assertEquals(new URI("https://example.com/a%20b?q=1#f"), url.toURI());
+        assertEquals(new URI("https://example.com/a%20b?q=1#f"), WebURL.toURI("https://example.com/a b?q=1#f"));
         assertEquals("https://example.com/a%20b?q=1#f", url.toURL().toExternalForm());
+        assertEquals("https://example.com/a%20b?q=1#f", WebURL.toURL("https://example.com/a b?q=1#f").toExternalForm());
         assertThrows(MalformedURLException.class, () -> WebURL.parse("non-special:opaque").toURL());
+        assertThrows(MalformedURLException.class, () -> WebURL.toURL("non-special:opaque"));
     }
 
     /// Tests Java URI conversion for URLs whose WHATWG serialization is not Java URI syntax.
