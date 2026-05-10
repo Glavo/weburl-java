@@ -77,19 +77,11 @@ as `http://localhost:8080` rather than a URL whose scheme is `localhost`.
 The absence of a lenient, browser-like parsing mode means that both classes frequently behave in unexpected ways
 when used to process user-supplied input.
 
-### The WHATWG URL Standard solves all of this
+### WebURL for Java solves this problem
 
-The [WHATWG URL Standard](https://url.spec.whatwg.org/) was designed specifically to capture real-world URL
-parsing behavior as implemented by browsers. It defines a single, unambiguous parsing algorithm that handles
-percent-encoding normalization, IDN via UTS #46, IPv4/IPv6 address normalization, default-port elision, and
-dot-segment resolution.
+WebURL for Java is designed to address these shortcomings of `java.net.URI` and `java.net.URL`.
 
-WebURL for Java implements this standard faithfully, passing the full
-[web-platform-tests](https://github.com/web-platform-tests/wpt/tree/master/url) URL test suite.
-
-In addition, WebURL for Java supports parsing WHATWG URLs into `java.net.URI` or `java.net.URL`.
-Even if you still need to use those two classes to represent URLs, WebURL for Java can serve as a drop-in replacement
-for `new URI(String)` to improve compatibility.
+WebURL for Java follows the WHATWG URL Standard, which is the most widely recognized URL standard in practice,
 
 ## Features
 
@@ -127,7 +119,7 @@ Maven:
 
 ### Parsing URLs
 
-Parse absolute URLs, or resolve relative URLs against a base:
+Parse absolute URLs or resolve relative URLs against a base:
 
 ```java
 // Absolute URL
@@ -229,12 +221,22 @@ WebURL.parseBrowserInput("/tmp/a b#c").href();
 // -> "file:///tmp/a%20b%23c"
 ```
 
-Note that this method is not part of the WHATWG URL Standard, 
-and its behavior may change at any time to better match user expectations.
-Therefore, do not assume that `parseBrowserInput` always returns the same result for the same input.
+We recommend using this method to parse and normalize user input, but when serializing you should save the
+normalized result rather than the user's original input.
 
-This method is intended for parsing and normalizing user input. When serializing, always save the normalized result to
-ensure consistency during deserialization.
+Because this method is not part of the WHATWG URL Standard, we may adjust its behavior at any time to better
+match user expectations, so you should not assume that its parsing rules are stable across different versions of
+WebURL for Java.
+
+This method makes its best effort to match browser address-bar behavior. However, different browsers — or even
+different versions of the same browser — may behave differently, so this goal is inherently fuzzy, and we can
+only approximate it rather than achieve full consistency.
+
+In addition, the heuristic algorithms used by browser address bars may take into account complex factors such as
+browsing history, and can support multi-step operations such as first trying `https` and then falling back to
+`http`. `parseBrowserInput`, by design, is a simple, side-effect-free conversion from `String` to `WebURL` that
+performs no actual network access and records no history, so some behaviors achievable in a browser address bar
+may not be reachable with this method.
 
 ### Display
 
