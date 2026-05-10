@@ -26,13 +26,53 @@ import java.net.URL;
 
 /// An immutable Java representation of a WHATWG URL.
 ///
-/// A URL has a `scheme` and either an opaque path or a hierarchical structure made from an optional
-/// authority, a path, an optional query, and an optional fragment. Component getters use Java `URI`-style
-/// naming. Raw component getters return normalized component strings with percent-encoding preserved, while
-/// decoded component getters decode percent triplets as UTF-8. Optional components return `null` when absent.
+/// A `WebURL` is the result of the WHATWG URL parser. It represents an absolute URL record, not a relative
+/// reference. Relative input strings can be parsed only when a base URL is supplied to one of the `parse` or
+/// `tryParse` overloads that accepts a base. Once created, a `WebURL` is immutable and its complete identity is
+/// the serialized URL returned by {@link #href()}.
 ///
-/// The serialized form returned by `href()`, `toString()`, and `toJSON()` is the WHATWG URL serialization.
-/// It is not identical to Java `URI` syntax for all inputs; use `toURI()` to obtain a Java `URI` value.
+/// The URL record has the following components:
+///
+/// - A `scheme`, always present and returned by {@link #getScheme()} without the trailing colon. The scheme is
+///   normalized to lower-case ASCII by the parser.
+/// - Optional credentials made from a `username` and an optional `password`. These are serialized before the
+///   host as `username[:password]@` and are exposed through username, password, and user-info getters.
+/// - An optional `host`. A present host makes the URL hierarchical and gives it an authority component. Domain
+///   hosts are processed with URL Standard domain-to-ASCII rules, IPv4 hosts are normalized to dotted decimal
+///   form, and IPv6 hosts are serialized in brackets. Some URLs, such as `file:///path`, have a present but
+///   empty host; opaque URLs such as `data:text/plain,hi` have no host.
+/// - A `port`, represented as an integer. The value `-1` means no port is stored. Default ports are removed
+///   during parsing, so `https://example.com:443/` has no stored port.
+/// - A `path`, always present as a string view. Hierarchical URLs have a path produced from path segments;
+///   many special URLs serialize that path with a leading slash. Non-special URLs can have an opaque path whose
+///   syntax is not a slash-separated path hierarchy.
+/// - An optional `query`, serialized after `?`. An absent query is `null`; a present empty query is the empty
+///   string.
+/// - An optional `fragment`, serialized after `#`. An absent fragment is `null`; a present empty fragment is
+///   the empty string.
+///
+/// For a hierarchical URL with a host, the main serialization shape is:
+///
+/// `scheme://[username[:password]@]host[:port]path[?query][#fragment]`
+///
+/// For a URL without a host, the URL Standard serialization depends on whether the path is opaque or
+/// hierarchical. The exact serialization is available from {@link #href()}.
+///
+/// Component getters follow Java {@link URI}-style naming. Methods whose names contain `Raw` return the
+/// normalized serialized component with percent-encoding preserved. Decoded component getters decode valid
+/// percent triplets as UTF-8 and leave invalid or incomplete percent sequences unchanged. Decoding never applies
+/// `application/x-www-form-urlencoded` rules; plus (`+`) remains plus.
+///
+/// `WebURL` differs from {@link URI} in several important ways. `URI` is a generic RFC 2396-oriented syntax
+/// object and can represent relative references; `WebURL` is always a parsed WHATWG URL record. URL parsing
+/// can change the input by lower-casing schemes and domain hosts, applying IDNA processing, normalizing IPv4
+/// and IPv6 hosts, removing default ports, resolving dot segments, and percent-encoding characters according
+/// to URL Standard encode sets. A `WebURL` therefore does not preserve the original input spelling. Use
+/// {@link #toURI()} or {@link #toRFC2396String()} when an equivalent Java `URI` representation is needed.
+///
+/// `WebURL` also differs from {@link URL}. Java `URL` is tied to protocol handlers and may perform host name
+/// resolution in operations such as equality checks. `WebURL` performs no network I/O, has no stream-handler
+/// dependency, and defines equality, hash code, and ordering only by the complete WHATWG serialization.
 ///
 /// Equality, hash code, and natural ordering are defined by the complete WHATWG URL serialization returned by
 /// `href()`. Two URL objects are equal when their serialized URLs are equal, and `compareTo(WebURL)` orders
@@ -111,12 +151,15 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Parses a browser-style URL input and returns the parsed URL.
     ///
-    /// This method accepts standard absolute URL strings and browser address bar style URL inputs such as bare
-    /// domain names, `//`-prefixed authorities, `localhost` with a port, IP addresses, and bracketed IPv6
-    /// addresses. Inputs without an explicit scheme are completed with `https`.
+    /// This method accepts standard absolute URL strings and a deterministic subset of browser address bar
+    /// style URL inputs, such as bare domain names, `//`-prefixed authorities, `localhost` with a port, IP
+    /// addresses, and bracketed IPv6 addresses. Inputs recognized as URL-like but lacking an explicit scheme
+    /// are completed with `https` before parsing.
     ///
-    /// This method does not implement search fallback. Inputs that are neither URL strings nor recognized
-    /// browser inputs fail instead of being interpreted as search terms.
+    /// This method is not a complete browser omnibox or navigation algorithm. It performs no DNS lookup, no
+    /// HTTP(S) probing, no HSTS or policy checks, no history or search suggestion lookup, no search fallback,
+    /// and no HTTPS-to-HTTP fallback after network failure. Inputs that are neither URL strings nor recognized
+    /// browser-style URL inputs fail instead of being interpreted as search terms.
     ///
     /// @param input the browser-style URL input string
     /// @return the parsed URL
@@ -138,9 +181,14 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the complete serialized URL.
     ///
-    /// The returned string is the WHATWG URL serialization, including the scheme, path, query, and fragment.
-    /// Default ports are omitted, percent-encoding uses the URL Standard encode sets, and an empty query or
-    /// fragment is preserved when present in the URL record.
+    /// The returned string is the WHATWG URL serialization of this URL record. It includes the scheme and path,
+    /// and includes authority, query, and fragment delimiters when those components are present. Default ports
+    /// are omitted, host syntax is normalized, path dot segments have been resolved where the URL Standard
+    /// requires it, and percent-encoding uses URL Standard encode sets.
+    ///
+    /// This string is canonical for this object but is not necessarily the same string that was supplied to the
+    /// parser. It is also not guaranteed to be accepted directly by Java {@link URI}; use {@link #toURI()} or
+    /// {@link #toRFC2396String()} for that conversion.
     ///
     /// @return the serialized URL
     String href();
@@ -405,9 +453,10 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the serialized URL converted to RFC 2396 URI syntax.
     ///
-    /// The returned string is suitable for Java `URI` parsing when this URL has an RFC 2396 representation.
-    /// Existing valid percent escapes are preserved, and bare percent signs or characters accepted by WHATWG
-    /// URL serialization but rejected by Java URI syntax are percent-encoded.
+    /// The returned string is suitable for Java {@link URI} parsing when this URL has an RFC 2396
+    /// representation. Existing valid percent escapes are preserved, and bare percent signs or characters
+    /// accepted by WHATWG URL serialization but rejected by Java URI syntax are percent-encoded component by
+    /// component.
     ///
     /// Some WHATWG URLs, such as non-special URLs with an empty opaque path and no query, have no corresponding
     /// absolute RFC 2396 URI because Java `URI` requires a non-empty scheme-specific part.
@@ -417,7 +466,9 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the serialized URL as a Java `URI`.
     ///
-    /// The URI is constructed from `toRFC2396String()`.
+    /// The URI is constructed from {@link #toRFC2396String()}. This method does not reparse the original input;
+    /// it converts the normalized WHATWG URL serialization into a string acceptable to Java's RFC 2396-oriented
+    /// `URI` parser and then constructs a `URI` from that string.
     ///
     /// @return a Java `URI` representing this URL
     /// @throws IllegalStateException when this URL has no RFC 2396 representation accepted by Java `URI`
@@ -425,8 +476,9 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
 
     /// Returns the serialized URL as a Java `URL`.
     ///
-    /// The result is obtained from `toURI().toURL()`. Java `URL` supports only schemes for which the runtime has
-    /// a URL stream handler, so some valid WHATWG URLs cannot be represented as a Java `URL`.
+    /// The result is obtained from `toURI().toURL()`. Java {@link URL} supports only schemes for which the
+    /// runtime has a URL stream handler, so some valid WHATWG URLs cannot be represented as a Java `URL`.
+    /// Creating the `URL` object does not make this class perform network I/O.
     ///
     /// @return a Java `URL` representing this URL
     /// @throws MalformedURLException when Java has no URL handler for the scheme or rejects the URL
