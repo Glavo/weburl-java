@@ -115,7 +115,119 @@ Maven:
 
 ## Quick Start
 
-TODO: Add a quick start guide.
+### Parsing URLs
+
+Parse absolute URLs, or resolve relative URLs against a base:
+
+```java
+// Absolute URL
+WebURL url = WebURL.parse("https://example.com/path");
+
+// Relative URL resolved against a string base
+WebURL docs = WebURL.parse("/docs", "https://example.com/");
+// -> "https://example.com/docs"
+
+// Relative URL resolved against a WebURL base
+WebURL page = WebURL.parse("api/v2", docs);
+// -> "https://example.com/api/v2"
+```
+
+### URL Components
+
+WebURL provides an API similar to `java.net.URI` for reading URL components: 
+
+```java
+WebURL url = WebURL.parse("https://user:pass@example.com:8080/a%2Fb?x=a%26b#frag%23ment");
+
+url.getScheme();        // "https"
+url.getUsername();      // "user"
+url.getPassword();      // "pass"
+url.getHost();          // "example.com"
+url.getPort();          // 8080
+url.getRawPath();       // "/a%2Fb"
+url.getRawQuery();      // "x=a%26b"
+url.getRawFragment();   // "frag%23ment"
+```
+
+### URL Normalization
+
+`WebURL` normalizes URLs according to the WHATWG specification during parsing, 
+so all `WebURL` instances are always normalized.
+
+You can obtain the normalized URL string via `href()` or `toString()`.
+
+```java
+WebURL.parse("HTTP://EXAMPLE.COM:443/a/./b/../c").href();
+// -> "http://example.com/a/c"
+
+WebURL.parse("https://bücher.example/").href();
+// -> "https://xn--bcher-kva.example/"
+
+WebURL.parse("https://bücher.example/").getHost();
+// -> "xn--bcher-kva.example"
+```
+
+### Error Handling
+
+Use `parse()` when a valid URL is expected — it throws `WebURLParseException` on failure.
+Use `tryParse()` when the input may be invalid — it returns `null` instead of throwing:
+
+```java
+// Throws WebURLParseException for invalid input
+WebURL url = WebURL.parse("://invalid");
+
+// Returns null for invalid input
+WebURL maybeUrl = WebURL.tryParse("://invalid");
+if (maybeUrl != null) {
+    // use the URL
+}
+```
+
+### Converting to and from `java.net.URI` / `java.net.URL`
+
+`WebURL` seamlessly interoperates with the standard library:
+
+```java
+// From java.net.URI or java.net.URL
+WebURL url1 = WebURL.of(URI.create("https://example.com/a%20b"));
+WebURL url2 = WebURL.of(new URL("https://example.com/a%20b"));
+
+// From a file path
+WebURL fileUrl = WebURL.of(Path.of("/tmp/data.txt").toAbsolutePath());
+
+// Back to java.net.URI / java.net.URL
+URI uri = url.toURI();
+URL javaUrl = url.toURL();
+
+// One-liner: parse and convert to URI
+URI uri = WebURL.toURI("https://example.com/a b?q=1#f");
+```
+
+### Parsing User Input
+
+`parse()` requires well-formed URLs. For user-facing input (e.g., an address bar),
+use `parseBrowserInput()`, which applies heuristics to handle
+scheme-fewer domains and local file paths:
+
+```java
+// Domain without scheme — https/auto-detected
+WebURL.parseBrowserInput("example.com").href();     // "https://example.com/"
+WebURL.parseBrowserInput("127.0.0.1:8080").href();  // "http://127.0.0.1:8080/"
+
+// Local file paths — file:// URLs
+WebURL.parseBrowserInput("/tmp/a b#c").href();
+// -> "file:///tmp/a%20b%23c"
+```
+
+### Display
+
+Use `toDisplayString()` for a human-readable representation with
+Unicode IDN domains and decoded non-ASCII characters:
+
+```java
+WebURL.parse("https://xn--bcher-kva.example/%F0%9F%98%80").toDisplayString();
+// -> "https://bücher.example/😀"
+```
 
 ## License
 
