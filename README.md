@@ -64,6 +64,19 @@ Although the Java standard library provides `java.net.IDN` for manually converti
 it is based on the outdated IDNA 2003 specification and does not support the newer IDNA 2008 or the
 widely used UTS #46 specification.
 
+### 5. Only fully structured URLs are supported
+
+Both `URL` and `URI` require a complete URL structure — the scheme field in particular is mandatory.
+
+This behavior is appropriate when parsing URLs produced by programs, but falls short when handling user input.
+
+Users entering URLs typically expect behavior similar to a browser address bar. For example, entering `example.com`
+should resolve to `https://example.com` rather than throw an error, and entering `localhost:8080` should be treated
+as `http://localhost:8080` rather than a URL whose scheme is `localhost`.
+
+The absence of a lenient, browser-like parsing mode means that both classes frequently behave in unexpected ways
+when used to process user-supplied input.
+
 ### The WHATWG URL Standard solves all of this
 
 The [WHATWG URL Standard](https://url.spec.whatwg.org/) was designed specifically to capture real-world URL
@@ -215,6 +228,13 @@ WebURL.parseBrowserInput("127.0.0.1:8080").href();  // "http://127.0.0.1:8080/"
 WebURL.parseBrowserInput("/tmp/a b#c").href();
 // -> "file:///tmp/a%20b%23c"
 ```
+
+Note that this method is not part of the WHATWG URL Standard, 
+and its behavior may change at any time to better match user expectations.
+Therefore, do not assume that `parseBrowserInput` always returns the same result for the same input.
+
+This method is intended for parsing and normalizing user input. When serializing, always save the normalized result to
+ensure consistency during deserialization.
 
 ### Display
 
