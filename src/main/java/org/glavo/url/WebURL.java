@@ -232,6 +232,20 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// serialization format that requires stable round-tripping. Serialize a `WebURL` with {@link #href()}, and
     /// parse serialized URL strings with {@link #parse(String)}.
     ///
+    /// Examples:
+    ///
+    /// | Input | Result |
+    /// | --- | --- |
+    /// | `https://example.com/a?b#c` | `https://example.com/a?b#c` |
+    /// | `example.com` | `https://example.com/` |
+    /// | `example.com:8080` | `http://example.com:8080/` |
+    /// | `localhost/path` | `http://localhost/path` |
+    /// | `localhost:8080/path` | `http://localhost:8080/path` |
+    /// | `127.0.0.1:3000` | `http://127.0.0.1:3000/` |
+    /// | `C:\Users\Alice\file.txt` | `file:///C:/Users/Alice/file.txt` |
+    /// | `/tmp/a b#c?d` | `file:///tmp/a%20b%23c%3Fd` |
+    /// | `not a url` | throws `WebURLParseException` |
+    ///
     /// @param input the browser-style URL input string
     /// @return the parsed URL
     /// @throws WebURLParseException when the input is not accepted as a browser-style URL input
