@@ -116,8 +116,10 @@ public final class WebURLParsing {
             return null;
         }
         if (text.startsWith("//") || text.startsWith("\\\\")) {
-            @Nullable String scheme = addressScheme(text.substring(2, firstAddressAuthorityDelimiter(text, 2)));
-            return scheme == null ? null : scheme + ":" + text;
+            int authorityEnd = firstAddressAuthorityDelimiter(text, 2);
+            String authority = text.substring(2, authorityEnd);
+            @Nullable String scheme = addressScheme(authority);
+            return scheme == null ? null : completeAddressInput(scheme, text, 2, authorityEnd);
         }
         if (text.charAt(0) == '/' || text.charAt(0) == '\\' || text.charAt(0) == '?' || text.charAt(0) == '#') {
             return null;
@@ -130,7 +132,30 @@ public final class WebURLParsing {
             return null;
         }
         @Nullable String scheme = addressScheme(authority);
-        return scheme == null ? null : scheme + "://" + text;
+        return scheme == null ? null : completeAddressInput(scheme, text, 0, authorityEnd);
+    }
+
+    /// Completes a browser-style address input with a scheme and authority delimiter.
+    private static String completeAddressInput(String scheme, String text, int authorityStart, int authorityEnd) {
+        String authority = text.substring(authorityStart, authorityEnd);
+        if (scheme.equals(HTTPS_SCHEME)) {
+            authority = stripHttpDefaultPort(authority);
+        }
+        return scheme + "://" + authority + text.substring(authorityEnd);
+    }
+
+    /// Removes an explicit HTTP default port from an authority before HTTPS completion.
+    private static String stripHttpDefaultPort(String authority) {
+        int at = authority.lastIndexOf('@');
+        int hostPortStart = at < 0 ? 0 : at + 1;
+        String hostPort = authority.substring(hostPortStart);
+        @Nullable String port = extractAddressPort(hostPort);
+        if (port == null || !isAsciiDecimal(port, 0, port.length()) || !isHttpDefaultPort(port)) {
+            return authority;
+        }
+
+        int colon = addressPortColon(hostPort);
+        return authority.substring(0, hostPortStart + colon);
     }
 
     /// Returns the default scheme for a browser-address authority, or `null` when it is not recognized.
@@ -144,7 +169,8 @@ public final class WebURLParsing {
             return null;
         }
         String host = extractAddressHost(hostPort);
-        return isAddressHost(host) ? defaultAddressScheme(host) : null;
+        @Nullable String port = extractAddressPort(hostPort);
+        return isAddressHost(host) ? defaultAddressScheme(host, port) : null;
     }
 
     /// Returns whether a valid scheme-looking prefix should instead be treated as a host before a port.
@@ -160,8 +186,9 @@ public final class WebURLParsing {
     }
 
     /// Returns the default scheme for an address host.
-    private static String defaultAddressScheme(String host) {
+    private static String defaultAddressScheme(String host, @Nullable String port) {
         return isIpAddressHost(host) || isSingleLabelHost(host) || isReservedAddressHost(host)
+                || port != null && isAsciiDecimal(port, 0, port.length()) && !isHttpDefaultPort(port)
                 ? HTTP_SCHEME
                 : HTTPS_SCHEME;
     }
@@ -174,6 +201,33 @@ public final class WebURLParsing {
         }
         int colon = hostPort.lastIndexOf(':');
         return colon < 0 ? hostPort : hostPort.substring(0, colon);
+    }
+
+    /// Extracts the port portion from an address authority tail, or returns `null` when absent.
+    private static @Nullable String extractAddressPort(String hostPort) {
+        int colon = addressPortColon(hostPort);
+        return colon < 0 ? null : hostPort.substring(colon + 1);
+    }
+
+    /// Returns the colon before the port in an address authority tail, or `-1` when absent.
+    private static int addressPortColon(String hostPort) {
+        if (hostPort.startsWith("[")) {
+            int end = hostPort.indexOf(']');
+            return end >= 0 && end + 1 < hostPort.length() && hostPort.charAt(end + 1) == ':' ? end + 1 : -1;
+        }
+        return hostPort.lastIndexOf(':');
+    }
+
+    /// Returns whether a port string represents the default HTTP port.
+    private static boolean isHttpDefaultPort(String port) {
+        int value = 0;
+        for (int i = 0; i < port.length(); i++) {
+            value = value * 10 + port.charAt(i) - '0';
+            if (value > 80) {
+                return false;
+            }
+        }
+        return value == 80;
     }
 
     /// Returns whether a host string is recognized as a browser-style input host.
@@ -209,7 +263,7 @@ public final class WebURLParsing {
         return true;
     }
 
-    /// Returns whether a substring is an IPv4 number in decimal, octal, or hexadecimal form.
+    /// Returns whether a substring is an IPv4 number in decimal or hexadecimal form.
     private static boolean isIpv4Number(String value, int start, int end) {
         if (start >= end) {
             return false;
