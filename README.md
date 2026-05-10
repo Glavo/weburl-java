@@ -30,21 +30,20 @@ TODO: Publish to Maven Central.
 
 ## Comparison with Java `URI`/`URL`
 
-| Feature | `java.net.URI` | `java.net.URL` | `WebURL` |
-|---|---|---|---|
-| Specification | RFC 2396 (obsolete) | RFC 2396, plus protocol handlers | WHATWG URL Standard |
-| Absolute only | No — can represent relative references | Yes | Yes |
-| Input normalization | Minimal; preserves original spelling | Minimal; preserves original spelling | Full: scheme/host lowercased, IDNA applied, default ports removed, dot segments resolved, percent-encoding normalized |
-| IDN / internationalized domains | Not supported | Not supported | Full UTS #46 support, no ICU4J required |
-| IPv4/IPv6 normalization | Not performed | Not performed | IPv4 → dotted decimal; IPv6 → compressed bracketed form |
-| Schemes other than HTTP(S) | Accepts any RFC 2396 scheme | Only schemes with a registered URL stream handler | Any WHATWG-compatible scheme |
-| Relative references | Accepts `//example.com/path`, `../guide`, etc. | Not supported | Not supported; use base-aware `parse(input, base)` |
-| Browser-style input | Not supported | Not supported | `parseBrowserInput()` handles bare domains, local paths, etc. |
-| Network I/O | None | `equals()`/`hashCode()` may trigger DNS resolution | None |
-| Equality | Component-based; case/port/segment differences cause inequality | Host name resolution may be involved | Pure string comparison of WHATWG serialization (`href()`) |
-| Immutability | Immutable | Mutable (host/port can change after construction) | Immutable |
-| `Comparable` | Yes | No | Yes |
-| Other applications | `File.toURI()`, `Path.toUri()` | `URL.openConnection()` | `WebURL.of(Path)`, `WebURL.of(URI)`, `webURL.toURI()` |
+| Feature                         | `java.net.URI`                                                  | `java.net.URL`                                     | `WebURL`                                                                                                              |
+|---------------------------------|-----------------------------------------------------------------|----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| Specification                   | RFC 2396 (obsolete)                                             | RFC 2396 (obsolete), plus protocol handlers        | WHATWG URL Standard                                                                                                   |
+| Absolute only                   | No — can represent relative references                          | Yes                                                | Yes                                                                                                                   |
+| Input normalization             | Minimal; preserves original spelling                            | Minimal; preserves original spelling               | Full: scheme/host lowercased, IDNA applied, default ports removed, dot segments resolved, percent-encoding normalized |
+| IDN / internationalized domains | Not supported                                                   | Not supported                                      | Full UTS #46 support                                                                                                  |
+| IPv4/IPv6 normalization         | Not performed                                                   | Not performed                                      | IPv4 → dotted decimal; IPv6 → compressed bracketed form                                                               |
+| Schemes other than HTTP(S)      | Accepts any RFC 2396 scheme                                     | Only schemes with a registered URL stream handler  | Any scheme compatible with the WHATWG URL Standard                                                                    |
+| Relative references             | Accepts `//example.com/path`, `../guide`, etc.                  | Not supported                                      | Not supported; use base-aware `parse(input, base)`                                                                    |
+| Browser-style input             | Not supported                                                   | Not supported                                      | `parseBrowserInput(String)` handles bare domains, local paths, etc.                                                   |
+| Network I/O                     | None                                                            | `equals()`/`hashCode()` may trigger DNS resolution | None                                                                                                                  |
+| Equality                        | Component-based; case/port/segment differences cause inequality | Host name resolution may be involved               | Pure string comparison of WHATWG serialization (`href()`)                                                             |
+| Immutability                    | Immutable                                                       | Mutable (host/port can change after construction)  | Immutable                                                                                                             |
+| `Comparable`                    | Yes                                                             | No                                                 | Yes                                                                                                                   |
 
 ## Quick Start
 
