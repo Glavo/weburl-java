@@ -30,6 +30,9 @@ import java.util.List;
 /// Internal immutable implementation of `WebURL`.
 @NotNullByDefault
 public final class WebURLImpl implements WebURL {
+    /// Upper-case hexadecimal digits used by RFC 2396 escaping.
+    private static final char @Unmodifiable [] HEX = "0123456789ABCDEF".toCharArray();
+
     /// URL scheme without the trailing colon.
     private final String scheme;
     /// URL host, or `null` when absent.
@@ -106,6 +109,8 @@ public final class WebURLImpl implements WebURL {
     private @Nullable String fragment;
     /// Cached RFC 2396 URI string, or `null` until requested.
     private @Nullable String rfc2396String;
+    /// Cached Java URI object, or `null` until requested.
+    private @Nullable URI uri;
 
     /// Creates an immutable URL from a completed URL record and serialized URL indexes.
     WebURLImpl(
@@ -496,8 +501,15 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized URL as a Java `URI`.
     @Override
     public URI toURI() {
+        @Nullable URI cached = uri;
+        if (cached != null) {
+            return cached;
+        }
+
         try {
-            return new URI(toRFC2396String());
+            URI value = new URI(toRFC2396String());
+            uri = value;
+            return value;
         } catch (URISyntaxException exception) {
             throw new IllegalStateException("This URL cannot be represented as an RFC 2396 URI", exception);
         }
@@ -542,7 +554,12 @@ public final class WebURLImpl implements WebURL {
         }
 
         String href = href();
-        StringBuilder output = new StringBuilder();
+        if (isRfc2396String(href)) {
+            rfc2396String = href;
+            return href;
+        }
+
+        StringBuilder output = new StringBuilder(href.length());
         output.append(href, 0, schemeEnd + 1);
 
         if (hasOpaquePath()) {
@@ -583,6 +600,63 @@ public final class WebURLImpl implements WebURL {
         return value;
     }
 
+    /// Returns whether the serialized URL can be used directly as an RFC 2396 URI string.
+    private boolean isRfc2396String(String value) {
+        if (hasOpaquePath()) {
+            if (!isRfc2396Encoded(value, pathStart, pathEnd, WebURLImpl::isRfc2396Uric)) {
+                return false;
+            }
+        } else {
+            if (hasHost()) {
+                if (usernameStart >= 0) {
+                    if (!isRfc2396Encoded(value, usernameStart, usernameEnd, WebURLImpl::isRfc2396UserInfo)) {
+                        return false;
+                    }
+                    if (passwordStart >= 0
+                            && !isRfc2396Encoded(value, passwordStart, passwordEnd,
+                                    WebURLImpl::isRfc2396UserInfo)) {
+                        return false;
+                    }
+                }
+                if (!isRfc2396Encoded(value, hostStart, hostEnd, WebURLImpl::isRfc2396Host)) {
+                    return false;
+                }
+            }
+            if (!isRfc2396Encoded(value, pathStart, pathEnd, WebURLImpl::isRfc2396Path)) {
+                return false;
+            }
+        }
+
+        if (queryStart >= 0 && !isRfc2396Encoded(value, queryStart, queryEnd, WebURLImpl::isRfc2396Uric)) {
+            return false;
+        }
+        return fragmentStart < 0
+                || isRfc2396Encoded(value, fragmentStart, value.length(), WebURLImpl::isRfc2396Uric);
+    }
+
+    /// Returns whether a component is already encoded for Java's RFC 2396 URI parser.
+    private static boolean isRfc2396Encoded(
+            String value,
+            int start,
+            int end,
+            Rfc2396CharPredicate allowed
+    ) {
+        for (int index = start; index < end; ) {
+            int c = value.codePointAt(index);
+            if (c == '%' && index + 2 < end
+                    && Infra.isAsciiHex(value.charAt(index + 1))
+                    && Infra.isAsciiHex(value.charAt(index + 2))) {
+                index += 3;
+                continue;
+            }
+            if (c > 0x7f || !allowed.test(c)) {
+                return false;
+            }
+            index += Character.charCount(c);
+        }
+        return true;
+    }
+
     /// Appends a component encoded for Java's RFC 2396 URI parser.
     private static void appendRfc2396Encoded(
             StringBuilder output,
@@ -604,19 +678,38 @@ public final class WebURLImpl implements WebURL {
             if (c <= 0x7f && allowed.test(c)) {
                 output.append((char) c);
             } else {
-                for (byte b : Encoding.utf8Encode(new String(Character.toChars(c)))) {
-                    appendRfc2396Escape(output, b & 0xff);
-                }
+                appendRfc2396EscapedUtf8(output, c);
             }
             index += Character.charCount(c);
+        }
+    }
+
+    /// Appends the UTF-8 bytes of one code point as RFC 2396 percent escapes.
+    private static void appendRfc2396EscapedUtf8(StringBuilder output, int codePoint) {
+        if (codePoint <= 0x7f) {
+            appendRfc2396Escape(output, codePoint);
+        } else if (codePoint <= 0x7ff) {
+            appendRfc2396Escape(output, 0xc0 | (codePoint >>> 6));
+            appendRfc2396Escape(output, 0x80 | (codePoint & 0x3f));
+        } else if (codePoint >= Character.MIN_SURROGATE && codePoint <= Character.MAX_SURROGATE) {
+            appendRfc2396Escape(output, '?');
+        } else if (codePoint <= 0xffff) {
+            appendRfc2396Escape(output, 0xe0 | (codePoint >>> 12));
+            appendRfc2396Escape(output, 0x80 | ((codePoint >>> 6) & 0x3f));
+            appendRfc2396Escape(output, 0x80 | (codePoint & 0x3f));
+        } else {
+            appendRfc2396Escape(output, 0xf0 | (codePoint >>> 18));
+            appendRfc2396Escape(output, 0x80 | ((codePoint >>> 12) & 0x3f));
+            appendRfc2396Escape(output, 0x80 | ((codePoint >>> 6) & 0x3f));
+            appendRfc2396Escape(output, 0x80 | (codePoint & 0x3f));
         }
     }
 
     /// Appends one RFC 2396 percent escape.
     private static void appendRfc2396Escape(StringBuilder output, int value) {
         output.append('%');
-        output.append(Character.toUpperCase(Character.forDigit((value >>> 4) & 0xf, 16)));
-        output.append(Character.toUpperCase(Character.forDigit(value & 0xf, 16)));
+        output.append(HEX[(value >>> 4) & 0xf]);
+        output.append(HEX[value & 0xf]);
     }
 
     /// Returns whether a character is an RFC 2396 path character.

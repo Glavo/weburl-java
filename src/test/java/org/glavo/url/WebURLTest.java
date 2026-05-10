@@ -93,9 +93,9 @@ public final class WebURLTest {
         assertSame(ipv6, WebURL.parse(ipv6).href());
     }
 
-    /// Tests that repeated string getters return cached strings.
+    /// Tests that repeated computed getters return cached values.
     @Test
-    public void cachesStringGetters() {
+    public void cachesComputedValues() {
         WebURL url = WebURL.parse("https://user:pass@example.com:8080/a/b?x=1#f");
 
         assertSame(url.href(), url.href());
@@ -120,7 +120,9 @@ public final class WebURLTest {
         assertSame(url.getFragment(), url.getFragment());
         assertSame(url.getRawFragment(), url.getRawFragment());
         assertSame(url.getRawFragmentOrEmpty(), url.getRawFragmentOrEmpty());
+        assertSame(url.href(), url.toRFC2396String());
         assertSame(url.toRFC2396String(), url.toRFC2396String());
+        assertSame(url.toURI(), url.toURI());
     }
 
     /// Tests Java-style raw component getters.
