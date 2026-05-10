@@ -1,6 +1,6 @@
 # WebURL for Java
 
-**WebURL for Java** is a WHATWG URL library for Java, providing URL support that
+**WebURL for Java** is a URL library for Java, providing URL support that
 conforms to [the WHATWG URL Standard](https://url.spec.whatwg.org/).
 
 Despite the name WebURL, this library is not limited to `http`/`https`. It also handles `file`, `ftp`, `data`,
@@ -9,9 +9,9 @@ The word "Web" in the name refers to WHATWG (The Web Hypertext Application Techn
 
 ## Why WebURL?
 
-The Java standard library ships two classes for representing URLs: [
-`java.net.URI`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URI.html) and [
-`java.net.URL`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URL.html).
+The Java standard library ships two classes for representing URLs: 
+[`java.net.URI`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URI.html) 
+and [`java.net.URL`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URL.html).
 Both have well-known, serious shortcomings.
 
 ### 1. Both follow an outdated standard
