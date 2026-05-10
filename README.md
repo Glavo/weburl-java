@@ -3,12 +3,14 @@
 [![](https://img.shields.io/maven-central/v/org.glavo/weburl?label=Maven%20Central)](https://search.maven.org/artifact/org.glavo/weburl)
 [![codecov](https://codecov.io/gh/Glavo/weburl-java/graph/badge.svg?token=YH1WL9LMVO)](https://codecov.io/gh/Glavo/weburl-java)
 
-**WebURL for Java** is a URL library for Java, providing URL support that
-conforms to [the WHATWG URL Standard](https://url.spec.whatwg.org/).
+**WebURL for Java** is a modern URL library for Java that implements the
+[WHATWG URL Standard](https://url.spec.whatwg.org/) — the same specification followed by every
+major browser. This means WebURL parses, normalizes, and serializes URLs exactly the way
+Chrome, Firefox, and Safari do, giving Java applications the same URL behavior as the web platform.
 
-Despite the name WebURL, this library is not limited to `http`/`https`. It also handles `file`, `ftp`, `data`,
-`mailto`, `tel`, `urn`, and any other URL scheme.
-The word "Web" in the name refers to WHATWG (The Web Hypertext Application Technology Working Group).
+> **"Web"** in the name refers to WHATWG (The Web Hypertext Application Technology Working Group).
+> Despite the name, WebURL is not limited to `http`/`https` — it handles any URL scheme,
+> including `file`, `ws`, `wss`, `ftp`, `data`, `blob`, `mailto`, `tel`, `urn` and more.
 
 ## Why WebURL?
 
