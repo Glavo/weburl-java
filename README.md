@@ -1,6 +1,6 @@
 # WebURL for Java
 
-[WebURL for Java](https://github.com/Glavo/weburl-java) is a WHATWG URL library for Java, providing URL support that
+**WebURL for Java** is a WHATWG URL library for Java, providing URL support that
 conforms to [the WHATWG URL Standard](https://url.spec.whatwg.org/).
 
 Despite the name WebURL, this library is not limited to `http`/`https`. It also handles `file`, `ftp`, `data`,
