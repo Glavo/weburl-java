@@ -171,6 +171,10 @@ tasks.named<ProcessResources>(mainSourceSet.processResourcesTaskName) {
     dependsOn(generateIdnaData)
 }
 
+tasks.named<Jar>("sourcesJar") {
+    dependsOn(generateIdnaData)
+}
+
 tasks.named<ProcessResources>("processTestResources") {
     dependsOn(tasks.named("downloadIdna-IdnaTestV2"))
     from(downloadDir.map { it.file("idna/IdnaTestV2.txt") }) {
@@ -295,4 +299,3 @@ nexusPublishing {
         }
     }
 }
-
