@@ -39,16 +39,34 @@ use as keys in hash maps or sets, and can cause unexpected latency or failures i
 
 ### 4. No internationalized domain name (IDN) support
 
-Neither class can correctly handle internationalized domain names. They provide no IDNA processing, so a domain
-like `münchen.de` is not converted to its ACE form `xn--mnchen-3ya.de`, and the URL is likely to be rejected or
-mishandled downstream.
+Neither class handles internationalized domain names (IDN) correctly. Neither supports IDNA processing.
+
+While both can parse IDN URLs, `URI` fails to recognize the host at all:
+
+```java
+URI uri = new URI("https://münchen.de");
+System.out.println(uri.getHost()); // --> null
+```
+
+`URL` does recognise the host, but returns the raw Unicode string instead of the ACE form:
+
+```java
+URL url = new URL("https://münchen.de");
+System.out.println(url.getHost()); // --> "münchen.de"
+```
+
+Although the Java standard library provides `java.net.IDN` for manually converting IDN to the ACE form,
+it is based on the outdated IDNA 2003 specification and does not support the newer IDNA 2008 or the
+widely used UTS #46 specification.
 
 ### The WHATWG URL Standard solves all of this
 
 The [WHATWG URL Standard](https://url.spec.whatwg.org/) was designed specifically to capture real-world URL
 parsing behavior as implemented by browsers. It defines a single, unambiguous parsing algorithm that handles
 percent-encoding normalization, IDN via UTS #46, IPv4/IPv6 address normalization, default-port elision, and
-dot-segment resolution. WebURL for Java implements this standard faithfully, passing the full
+dot-segment resolution.
+
+WebURL for Java implements this standard faithfully, passing the full
 [web-platform-tests](https://github.com/web-platform-tests/wpt/tree/master/url) URL test suite.
 
 ## Features
