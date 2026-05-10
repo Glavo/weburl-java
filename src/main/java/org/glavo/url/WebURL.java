@@ -203,10 +203,12 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// non-ASCII printable Unicode characters. Percent escapes for ASCII bytes are preserved, so delimiters and
     /// visually ambiguous characters such as `%2F`, `%3F`, `%23`, `%25`, and `%20` remain escaped.
     ///
-    /// The host is kept in its serialized ASCII form. Browser IDN display policies are security-sensitive and
-    /// differ between browsers, locales, platforms, and versions; this method does not try to reproduce those
-    /// policies. The result also does not hide credentials, remove schemes, elide `www`, or apply any browser
-    /// omnibox policy.
+    /// Domain hosts that contain IDNA ASCII Compatible Encoding labels are displayed in Unicode when UTS #46
+    /// ToUnicode succeeds and the Unicode form round-trips back to the same ASCII host. IPv4 hosts, IPv6 hosts,
+    /// opaque hosts, and domain hosts that do not pass that check remain in their serialized form. Browser IDN
+    /// display policies are security-sensitive and differ between browsers, locales, platforms, and versions;
+    /// this method provides a conservative display form, not an exact reproduction of any browser's policy. The
+    /// result also does not hide credentials, remove schemes, elide `www`, or apply any browser omnibox policy.
     ///
     /// This method is for display only. The result is not a canonical serialization, is not guaranteed to be
     /// accepted by {@link #parse(String)}, and must not be used as an authority for security decisions. Use

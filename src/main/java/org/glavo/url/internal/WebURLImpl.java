@@ -238,12 +238,14 @@ public final class WebURLImpl implements WebURL {
         String href = href();
         @Nullable String displayUsername = displayDecode(href, usernameStart, usernameEnd);
         @Nullable String displayPassword = displayDecode(href, passwordStart, passwordEnd);
+        @Nullable String displayHost = urlHost == null ? null : urlHost.displayString();
         @Nullable String displayPath = displayDecode(href, pathStart, pathEnd);
         @Nullable String displayQuery = displayDecode(href, queryStart, queryEnd);
         @Nullable String displayFragment = displayDecode(href, fragmentStart, href.length());
 
         if (displayUsername == null
                 && displayPassword == null
+                && displayHost == null
                 && displayPath == null
                 && displayQuery == null
                 && displayFragment == null) {
@@ -267,7 +269,7 @@ public final class WebURLImpl implements WebURL {
                     }
                     output.append('@');
                 }
-                output.append(href, hostStart, hostEnd);
+                appendDisplayComponent(output, href, hostStart, hostEnd, displayHost);
                 if (portStart >= 0) {
                     output.append(':').append(href, portStart, portEnd);
                 }

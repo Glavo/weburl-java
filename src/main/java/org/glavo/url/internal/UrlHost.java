@@ -15,6 +15,7 @@
  */
 package org.glavo.url.internal;
 
+import org.glavo.url.internal.idna.UTS46;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,6 +82,21 @@ public final class UrlHost {
             default:
                 throw new AssertionError(kind);
         }
+    }
+
+    /// Returns a Unicode display form for a domain host, or `null` when the serialized host should be used.
+    @Nullable String displayString() {
+        if (kind != Kind.DOMAIN || text == null || text.isEmpty() || !containsPunycodeLabel(text)) {
+            return null;
+        }
+
+        UTS46.Result unicode = UTS46.toUnicode(text, false, true, true, false, false, false);
+        if (unicode.error() || unicode.value().equals(text) || isAsciiOnly(unicode.value())) {
+            return null;
+        }
+
+        UTS46.Result ascii = UTS46.toAsciiForUrl(unicode.value(), false);
+        return !ascii.error() && ascii.value().equals(text) ? unicode.value() : null;
     }
 
     /// Matches the serialized host at the given index and returns the end index, or `-1`.
@@ -273,6 +289,42 @@ public final class UrlHost {
     /// Returns whether a character exists at an index and equals the expected value.
     private static boolean hasChar(String input, int index, char expected) {
         return index >= 0 && index < input.length() && input.charAt(index) == expected;
+    }
+
+    /// Returns whether the host contains an ASCII Compatible Encoding label.
+    private static boolean containsPunycodeLabel(String value) {
+        int labelStart = 0;
+        while (labelStart < value.length()) {
+            if (startsWithPunycodePrefix(value, labelStart)) {
+                return true;
+            }
+
+            int dot = value.indexOf('.', labelStart);
+            if (dot < 0) {
+                return false;
+            }
+            labelStart = dot + 1;
+        }
+        return false;
+    }
+
+    /// Returns whether a label starts with the Punycode prefix.
+    private static boolean startsWithPunycodePrefix(String value, int offset) {
+        return offset + 4 <= value.length()
+                && value.charAt(offset) == 'x'
+                && value.charAt(offset + 1) == 'n'
+                && value.charAt(offset + 2) == '-'
+                && value.charAt(offset + 3) == '-';
+    }
+
+    /// Returns whether the value contains only ASCII code points.
+    private static boolean isAsciiOnly(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (value.charAt(i) > 0x7f) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// Internal host kinds.

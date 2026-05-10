@@ -357,7 +357,12 @@ public final class WebURLTest {
         assertEquals("https://user:密@example.com/路径?q=值+%2F#片%23", url.toDisplayString());
 
         WebURL idn = WebURL.parse("https://bücher.example/%F0%9F%98%80");
-        assertEquals("https://xn--bcher-kva.example/😀", idn.toDisplayString());
+        assertEquals("https://bücher.example/😀", idn.toDisplayString());
+
+        assertEquals("http://例え.テスト/",
+                WebURL.parse("http://xn--r8jz45g.xn--zckzah/").toDisplayString());
+        assertEquals("http://[2001:db8::1]/路径",
+                WebURL.parse("http://[2001:db8::1]/%E8%B7%AF%E5%BE%84").toDisplayString());
 
         assertEquals("http://example.com/%zz?x=%E8%28#%E2%80%AE",
                 WebURL.parse("http://example.com/%zz?x=%E8%28#%E2%80%AE").toDisplayString());
