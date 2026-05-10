@@ -81,15 +81,15 @@ public final class WebURLParsingTest {
     /// Tests public domain inputs with explicit ports.
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
-            example.com:80 | https://example.com/
-            example.com:080/path | https://example.com/path
+            example.com:80 | http://example.com/
+            example.com:080/path | http://example.com/path
             example.com:443 | http://example.com:443/
             example.com:8080 | http://example.com:8080/
             www.foo.com:81/path | http://www.foo.com:81/path
-            //example.com:80/path | https://example.com/path
+            //example.com:80/path | http://example.com/path
             //example.com:8080/path | http://example.com:8080/path
             """)
-    public void keepsPublicDomainsWithNonDefaultPortsOnHttp(String input, String expected) {
+    public void keepsPublicDomainsWithExplicitPortsOnHttp(String input, String expected) {
         assertEquals(expected, WebURL.parseBrowserInput(input).href());
     }
 

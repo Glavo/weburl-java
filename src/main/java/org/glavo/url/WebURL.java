@@ -239,14 +239,14 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// browser address bar style URL inputs, such as bare domain names, `//`-prefixed authorities, single-label
     /// hosts, IP addresses, bracketed IPv6 addresses, and absolute local paths. Public-looking domain names
     /// recognized as URL-like but lacking an explicit scheme are completed with `https` before normal URL
-    /// processing. When such a domain has an explicit non-default port, it is completed with `http`; an explicit
-    /// port `80` is removed before HTTPS completion. IP addresses, single-label hosts, and reserved local or
-    /// test hosts such as `localhost`, `test`, and names below `.localhost` are completed with `http`. Windows
-    /// drive paths, Windows UNC paths, and POSIX-style absolute paths are completed as `file` URLs. This method
-    /// is not a complete browser omnibox or navigation algorithm: it performs no DNS lookup, no filesystem
-    /// lookup, no HTTP(S) probing, no HSTS or policy checks, no history or search suggestion lookup, no search
-    /// fallback, and no HTTPS-to-HTTP fallback after network failure. Inputs that are neither URL strings nor
-    /// recognized browser-style URL inputs fail instead of being interpreted as search terms.
+    /// processing. When such a domain has an explicit decimal port, it is completed with `http`. IP addresses,
+    /// single-label hosts, and reserved local or test hosts such as `localhost`, `test`, and names below
+    /// `.localhost` are completed with `http`. Windows drive paths, Windows UNC paths, and POSIX-style absolute
+    /// paths are completed as `file` URLs. This method is not a complete browser omnibox or navigation
+    /// algorithm: it performs no DNS lookup, no filesystem lookup, no HTTP(S) probing, no HSTS or policy checks,
+    /// no history or search suggestion lookup, no search fallback, and no HTTPS-to-HTTP fallback after network
+    /// failure. Inputs that are neither URL strings nor recognized browser-style URL inputs fail instead of
+    /// being interpreted as search terms.
     static WebURL parseBrowserInput(String input) {
         return WebURLParsing.parseBrowserInput(input);
     }

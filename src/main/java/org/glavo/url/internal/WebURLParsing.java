@@ -207,24 +207,7 @@ public final class WebURLParsing {
     /// Completes a browser-style address input with a scheme and authority delimiter.
     private static String completeAddressInput(String scheme, String text, int authorityStart, int authorityEnd) {
         String authority = text.substring(authorityStart, authorityEnd);
-        if (scheme.equals(HTTPS_SCHEME)) {
-            authority = stripHttpDefaultPort(authority);
-        }
         return scheme + "://" + authority + text.substring(authorityEnd);
-    }
-
-    /// Removes an explicit HTTP default port from an authority before HTTPS completion.
-    private static String stripHttpDefaultPort(String authority) {
-        int at = authority.lastIndexOf('@');
-        int hostPortStart = at < 0 ? 0 : at + 1;
-        String hostPort = authority.substring(hostPortStart);
-        @Nullable String port = extractAddressPort(hostPort);
-        if (port == null || !isAsciiDecimal(port, 0, port.length()) || !isHttpDefaultPort(port)) {
-            return authority;
-        }
-
-        int colon = addressPortColon(hostPort);
-        return authority.substring(0, hostPortStart + colon);
     }
 
     /// Returns the default scheme for a browser-address authority, or `null` when it is not recognized.
@@ -257,7 +240,7 @@ public final class WebURLParsing {
     /// Returns the default scheme for an address host.
     private static String defaultAddressScheme(String host, @Nullable String port) {
         return isIpAddressHost(host) || isSingleLabelHost(host) || isReservedAddressHost(host)
-                || port != null && isAsciiDecimal(port, 0, port.length()) && !isHttpDefaultPort(port)
+                || port != null && isAsciiDecimal(port, 0, port.length())
                 ? HTTP_SCHEME
                 : HTTPS_SCHEME;
     }
