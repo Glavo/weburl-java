@@ -361,6 +361,8 @@ public final class WebURLTest {
 
         assertEquals("http://例え.テスト/",
                 WebURL.parse("http://xn--r8jz45g.xn--zckzah/").toDisplayString());
+        assertEquals("https://你好.世界/",
+                WebURL.parse("https://xn--6qq79v.xn--rhqv96g/").toDisplayString());
         assertEquals("http://[2001:db8::1]/路径",
                 WebURL.parse("http://[2001:db8::1]/%E8%B7%AF%E5%BE%84").toDisplayString());
 
