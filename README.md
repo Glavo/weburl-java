@@ -94,7 +94,24 @@ for `new URI(String)` to improve compatibility.
 
 ## Add to Your Project
 
-TODO: Publish to Maven Central.
+Gradle:
+
+```kotlin
+dependencies {
+    implementation("org.glavo:weburl:0.1.0")
+}
+```
+
+Maven:
+
+```xml
+
+<dependency>
+    <groupId>org.glavo</groupId>
+    <artifactId>weburl</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
 
 ## Quick Start
 
