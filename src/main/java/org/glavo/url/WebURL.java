@@ -130,7 +130,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// @param input the URL input string
     /// @return a Java `URI` representing the parsed URL
-    /// @throws WebURLParseException when the input is not a valid absolute URL
+    /// @throws WebURLParseException  when the input is not a valid absolute URL
     /// @throws IllegalStateException when the parsed URL has no RFC 2396 representation accepted by Java `URI`
     static URI toURI(String input) {
         return parse(input).toURI();
@@ -144,7 +144,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     ///
     /// @param input the URL input string
     /// @return a Java `URL` representing the parsed URL
-    /// @throws WebURLParseException when the input is not a valid absolute URL
+    /// @throws WebURLParseException  when the input is not a valid absolute URL
     /// @throws IllegalStateException when the parsed URL has no RFC 2396 representation accepted by Java `URI`
     /// @throws MalformedURLException when Java has no URL handler for the scheme or rejects the URL
     static URL toURL(String input) throws MalformedURLException {
@@ -168,7 +168,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// The base string must be a valid absolute URL. The input may be either absolute or relative to that base.
     ///
     /// @param input the URL input string
-    /// @param base the base URL string
+    /// @param base  the base URL string
     /// @return the parsed URL
     /// @throws WebURLParseException when either input fails
     static WebURL parse(String input, String base) {
@@ -180,7 +180,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// The input may be either absolute or relative to the supplied base URL.
     ///
     /// @param input the URL input string
-    /// @param base the base URL
+    /// @param base  the base URL
     /// @return the parsed URL
     /// @throws WebURLParseException when the input cannot be resolved against the base URL
     static WebURL parse(String input, WebURL base) {
@@ -204,7 +204,7 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// represented by `null` instead of an exception.
     ///
     /// @param input the URL input string
-    /// @param base the base URL string
+    /// @param base  the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
     static @Nullable WebURL tryParse(String input, String base) {
         return WebURLParsing.tryParse(input, base);
@@ -216,40 +216,50 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// represented by `null` instead of an exception.
     ///
     /// @param input the URL input string
-    /// @param base the base URL
+    /// @param base  the base URL
     /// @return the parsed URL, or `null` if the input cannot be parsed against the base
     static @Nullable WebURL tryParse(String input, WebURL base) {
         return WebURLParsing.tryParse(input, base);
     }
 
-    /// Parses a browser-style URL input and returns the parsed URL.
+    /// Parses a user-entered browser-style URL input and returns the parsed URL.
     ///
-    /// This method accepts standard absolute URL strings and a deterministic subset of browser address bar
-    /// style URL inputs, such as bare domain names, `//`-prefixed authorities, single-label hosts, IP
-    /// addresses, and bracketed IPv6 addresses. Public-looking domain names recognized as URL-like but lacking
-    /// an explicit scheme are completed with `https` before normal URL processing. IP addresses, single-label
-    /// hosts, and reserved local or test hosts such as `localhost`, `test`, and names below `.localhost` are
-    /// completed with `http`.
+    /// This method is intended only for handling interactive text entered by a user, such as text copied from
+    /// or typed into a browser address bar. It may apply browser-like heuristics before normal URL processing,
+    /// and those heuristics may change in future releases as browser behavior and project policy evolve.
     ///
-    /// This method is not a complete browser omnibox or navigation algorithm. It performs no DNS lookup, no
-    /// HTTP(S) probing, no HSTS or policy checks, no history or search suggestion lookup, no search fallback,
-    /// and no HTTPS-to-HTTP fallback after network failure. Inputs that are neither URL strings nor recognized
-    /// browser-style URL inputs fail instead of being interpreted as search terms.
+    /// Do not use this method for stored URL data, protocol messages, cache keys, database values, or any other
+    /// serialization format that requires stable round-tripping. Serialize a `WebURL` with {@link #href()}, and
+    /// parse serialized URL strings with {@link #parse(String)}.
     ///
     /// @param input the browser-style URL input string
     /// @return the parsed URL
     /// @throws WebURLParseException when the input is not accepted as a browser-style URL input
+    /// @implSpec The current implementation accepts standard absolute URL strings and a deterministic subset of
+    /// browser address bar style URL inputs, such as bare domain names, `//`-prefixed authorities, single-label
+    /// hosts, IP addresses, and bracketed IPv6 addresses. Public-looking domain names recognized as URL-like but
+    /// lacking an explicit scheme are completed with `https` before normal URL processing. IP addresses,
+    /// single-label hosts, and reserved local or test hosts such as `localhost`, `test`, and names below
+    /// `.localhost` are completed with `http`. This method is not a complete browser omnibox or navigation
+    /// algorithm: it performs no DNS lookup, no HTTP(S) probing, no HSTS or policy checks, no history or search
+    /// suggestion lookup, no search fallback, and no HTTPS-to-HTTP fallback after network failure. Inputs that
+    /// are neither URL strings nor recognized browser-style URL inputs fail instead of being interpreted as
+    /// search terms.
     static WebURL parseBrowserInput(String input) {
         return WebURLParsing.parseBrowserInput(input);
     }
 
-    /// Parses a browser-style URL input and returns `null` on failure.
+    /// Parses a user-entered browser-style URL input and returns `null` on failure.
     ///
-    /// This method has the same URL processing behavior as `parseBrowserInput(String)`, except failures are
-    /// represented by `null` instead of an exception.
+    /// This method is intended only for handling interactive text entered by a user. Like
+    /// {@link #parseBrowserInput(String)}, it may apply browser-like heuristics that can change in future
+    /// releases. Do not use this method for stable serialization or round-tripping; serialize a `WebURL` with
+    /// {@link #href()}, and parse serialized URL strings with {@link #parse(String)}.
     ///
     /// @param input the browser-style URL input string
     /// @return the parsed URL, or `null` if the input is not accepted as a browser-style URL input
+    /// @implSpec This method has the same URL processing behavior as {@link #parseBrowserInput(String)}, except
+    /// failures are represented by `null` instead of an exception.
     static @Nullable WebURL tryParseBrowserInput(String input) {
         return WebURLParsing.tryParseBrowserInput(input);
     }
