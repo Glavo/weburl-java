@@ -120,6 +120,8 @@ public final class WebURLTest {
         assertSame(url.getFragment(), url.getFragment());
         assertSame(url.getRawFragment(), url.getRawFragment());
         assertSame(url.getRawFragmentOrEmpty(), url.getRawFragmentOrEmpty());
+        assertSame(url.href(), url.toDisplayString());
+        assertSame(url.toDisplayString(), url.toDisplayString());
         assertSame(url.href(), url.toRFC2396String());
         assertSame(url.toRFC2396String(), url.toRFC2396String());
         assertSame(url.toURI(), url.toURI());
@@ -345,6 +347,20 @@ public final class WebURLTest {
         assertEquals("http://example.com/#y", WebURL.parse("http://example.com#y").href());
         assertEquals("http://example.com/?", WebURL.parse("http://example.com/?").href());
         assertEquals("http://example.com/#", WebURL.parse("http://example.com/#").href());
+    }
+
+    /// Tests browser-like display serialization.
+    @Test
+    public void returnsDisplayString() {
+        WebURL url = WebURL.parse(
+                "https://user:%E5%AF%86@example.com/%E8%B7%AF%E5%BE%84?q=%E5%80%BC+%2F#%E7%89%87%23");
+        assertEquals("https://user:密@example.com/路径?q=值+%2F#片%23", url.toDisplayString());
+
+        WebURL idn = WebURL.parse("https://bücher.example/%F0%9F%98%80");
+        assertEquals("https://xn--bcher-kva.example/😀", idn.toDisplayString());
+
+        assertEquals("http://example.com/%zz?x=%E8%28#%E2%80%AE",
+                WebURL.parse("http://example.com/%zz?x=%E8%28#%E2%80%AE").toDisplayString());
     }
 
     /// Tests conversion to Java networking types.

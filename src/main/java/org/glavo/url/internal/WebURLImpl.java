@@ -109,6 +109,8 @@ public final class WebURLImpl implements WebURL {
     private @Nullable String fragment;
     /// Cached RFC 2396 URI string, or `null` until requested.
     private @Nullable String rfc2396String;
+    /// Cached display string, or `null` until requested.
+    private @Nullable String displayString;
     /// Cached Java URI object, or `null` until requested.
     private @Nullable URI uri;
 
@@ -223,6 +225,70 @@ public final class WebURLImpl implements WebURL {
     @Override
     public String href() {
         return href;
+    }
+
+    /// Returns a human-readable display string.
+    @Override
+    public String toDisplayString() {
+        @Nullable String cached = displayString;
+        if (cached != null) {
+            return cached;
+        }
+
+        String href = href();
+        @Nullable String displayUsername = displayDecode(href, usernameStart, usernameEnd);
+        @Nullable String displayPassword = displayDecode(href, passwordStart, passwordEnd);
+        @Nullable String displayPath = displayDecode(href, pathStart, pathEnd);
+        @Nullable String displayQuery = displayDecode(href, queryStart, queryEnd);
+        @Nullable String displayFragment = displayDecode(href, fragmentStart, href.length());
+
+        if (displayUsername == null
+                && displayPassword == null
+                && displayPath == null
+                && displayQuery == null
+                && displayFragment == null) {
+            displayString = href;
+            return href;
+        }
+
+        StringBuilder output = new StringBuilder(href.length());
+        output.append(href, 0, schemeEnd + 1);
+
+        if (hasOpaquePath()) {
+            appendDisplayComponent(output, href, pathStart, pathEnd, displayPath);
+        } else {
+            if (hasHost()) {
+                output.append("//");
+                if (usernameStart >= 0) {
+                    appendDisplayComponent(output, href, usernameStart, usernameEnd, displayUsername);
+                    if (passwordStart >= 0) {
+                        output.append(':');
+                        appendDisplayComponent(output, href, passwordStart, passwordEnd, displayPassword);
+                    }
+                    output.append('@');
+                }
+                output.append(href, hostStart, hostEnd);
+                if (portStart >= 0) {
+                    output.append(':').append(href, portStart, portEnd);
+                }
+            } else if (pathPrefix) {
+                output.append("/.");
+            }
+            appendDisplayComponent(output, href, pathStart, pathEnd, displayPath);
+        }
+
+        if (queryStart >= 0) {
+            output.append('?');
+            appendDisplayComponent(output, href, queryStart, queryEnd, displayQuery);
+        }
+        if (fragmentStart >= 0) {
+            output.append('#');
+            appendDisplayComponent(output, href, fragmentStart, href.length(), displayFragment);
+        }
+
+        String value = output.toString();
+        displayString = value;
+        return value;
     }
 
     /// Returns the serialized origin.
@@ -543,6 +609,146 @@ public final class WebURLImpl implements WebURL {
     @Override
     public String toString() {
         return href();
+    }
+
+    /// Appends either a decoded display component or the original serialized component.
+    private static void appendDisplayComponent(
+            StringBuilder output,
+            String value,
+            int start,
+            int end,
+            @Nullable String displayValue
+    ) {
+        if (displayValue == null) {
+            output.append(value, start, end);
+        } else {
+            output.append(displayValue);
+        }
+    }
+
+    /// Decodes percent-encoded non-ASCII UTF-8 sequences for display, or returns `null` if unchanged.
+    private static @Nullable String displayDecode(String value, int start, int end) {
+        if (start < 0) {
+            return null;
+        }
+
+        @Nullable StringBuilder output = null;
+        for (int index = start; index < end; ) {
+            char c = value.charAt(index);
+            int next = index + 1;
+            if (c == '%' && index + 2 < end
+                    && Infra.isAsciiHex(value.charAt(index + 1))
+                    && Infra.isAsciiHex(value.charAt(index + 2))) {
+                int decoded = displayDecodeUtf8CodePoint(value, index, end);
+                if (decoded >= 0) {
+                    int decodedLength = displayUtf8Length(value.charAt(index + 1), value.charAt(index + 2));
+                    int decodedEnd = index + decodedLength * 3;
+                    if (output == null) {
+                        output = new StringBuilder(end - start);
+                        output.append(value, start, index);
+                    }
+                    output.appendCodePoint(decoded);
+                    index = decodedEnd;
+                    continue;
+                }
+                next = index + 3;
+            }
+
+            if (output != null) {
+                output.append(value, index, next);
+            }
+            index = next;
+        }
+        return output == null ? null : output.toString();
+    }
+
+    /// Decodes one display-safe UTF-8 code point from percent escapes, or returns `-1`.
+    private static int displayDecodeUtf8CodePoint(String value, int start, int end) {
+        int b0 = hexByte(value, start);
+        int codePoint;
+        int length;
+        if (b0 < 0x80) {
+            return -1;
+        } else if (b0 >= 0xc2 && b0 <= 0xdf) {
+            length = 2;
+            int b1 = continuationByte(value, start + 3, end);
+            if (b1 < 0) {
+                return -1;
+            }
+            codePoint = ((b0 & 0x1f) << 6) | (b1 & 0x3f);
+        } else if (b0 >= 0xe0 && b0 <= 0xef) {
+            length = 3;
+            int b1 = continuationByte(value, start + 3, end);
+            int b2 = continuationByte(value, start + 6, end);
+            if (b1 < 0 || b2 < 0 || (b0 == 0xe0 && b1 < 0xa0) || (b0 == 0xed && b1 >= 0xa0)) {
+                return -1;
+            }
+            codePoint = ((b0 & 0x0f) << 12) | ((b1 & 0x3f) << 6) | (b2 & 0x3f);
+        } else if (b0 >= 0xf0 && b0 <= 0xf4) {
+            length = 4;
+            int b1 = continuationByte(value, start + 3, end);
+            int b2 = continuationByte(value, start + 6, end);
+            int b3 = continuationByte(value, start + 9, end);
+            if (b1 < 0 || b2 < 0 || b3 < 0 || (b0 == 0xf0 && b1 < 0x90) || (b0 == 0xf4 && b1 >= 0x90)) {
+                return -1;
+            }
+            codePoint = ((b0 & 0x07) << 18) | ((b1 & 0x3f) << 12) | ((b2 & 0x3f) << 6) | (b3 & 0x3f);
+        } else {
+            return -1;
+        }
+
+        return start + length * 3 <= end && isDisplayCodePoint(codePoint) ? codePoint : -1;
+    }
+
+    /// Returns the UTF-8 sequence length implied by the first escaped byte.
+    private static int displayUtf8Length(char high, char low) {
+        int value = hexValue(high) * 16 + hexValue(low);
+        if (value < 0x80) {
+            return 1;
+        }
+        if (value < 0xe0) {
+            return 2;
+        }
+        return value < 0xf0 ? 3 : 4;
+    }
+
+    /// Returns a continuation byte from a percent escape, or `-1`.
+    private static int continuationByte(String value, int start, int end) {
+        if (start + 2 >= end || value.charAt(start) != '%'
+                || !Infra.isAsciiHex(value.charAt(start + 1))
+                || !Infra.isAsciiHex(value.charAt(start + 2))) {
+            return -1;
+        }
+        int b = hexByte(value, start);
+        return b >= 0x80 && b <= 0xbf ? b : -1;
+    }
+
+    /// Decodes one percent-encoded byte.
+    private static int hexByte(String value, int start) {
+        return hexValue(value.charAt(start + 1)) * 16 + hexValue(value.charAt(start + 2));
+    }
+
+    /// Returns the numeric value of an ASCII hexadecimal digit.
+    private static int hexValue(char c) {
+        if (c >= '0' && c <= '9') {
+            return c - '0';
+        }
+        if (c >= 'A' && c <= 'F') {
+            return c - 'A' + 10;
+        }
+        return c - 'a' + 10;
+    }
+
+    /// Returns whether a code point may be decoded for display.
+    private static boolean isDisplayCodePoint(int codePoint) {
+        int type = Character.getType(codePoint);
+        return codePoint >= 0x80
+                && !Character.isISOControl(codePoint)
+                && type != Character.CONTROL
+                && type != Character.FORMAT
+                && type != Character.PRIVATE_USE
+                && type != Character.SURROGATE
+                && type != Character.UNASSIGNED;
     }
 
     /// Returns the serialized URL converted to Java's RFC 2396 URI syntax.

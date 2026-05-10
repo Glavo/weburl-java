@@ -195,6 +195,26 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// @return the serialized URL
     String href();
 
+    /// Returns a human-readable display string for this URL.
+    ///
+    /// The returned string is intended for user interfaces that want a browser-like address presentation while
+    /// retaining this URL's structure. It starts from the WHATWG URL serialization and decodes valid
+    /// percent-encoded UTF-8 sequences in credentials, path, query, and fragment only when they represent
+    /// non-ASCII printable Unicode characters. Percent escapes for ASCII bytes are preserved, so delimiters and
+    /// visually ambiguous characters such as `%2F`, `%3F`, `%23`, `%25`, and `%20` remain escaped.
+    ///
+    /// The host is kept in its serialized ASCII form. Browser IDN display policies are security-sensitive and
+    /// differ between browsers, locales, platforms, and versions; this method does not try to reproduce those
+    /// policies. The result also does not hide credentials, remove schemes, elide `www`, or apply any browser
+    /// omnibox policy.
+    ///
+    /// This method is for display only. The result is not a canonical serialization, is not guaranteed to be
+    /// accepted by {@link #parse(String)}, and must not be used as an authority for security decisions. Use
+    /// {@link #href()} when a stable URL serialization is required.
+    ///
+    /// @return a human-readable display string
+    String toDisplayString();
+
     /// Returns the serialized origin.
     ///
     /// For tuple origins such as `http`, `https`, `ws`, `wss`, and `ftp`, the result is
