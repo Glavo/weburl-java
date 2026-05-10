@@ -69,17 +69,14 @@ public final class WebURLParsing {
     public static WebURL parseBrowserInput(String input) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
-        if (addressInput != null) {
-            return parseRequired(addressInput, null, "Invalid browser input: " + input);
-        }
-        return parseRequired(input, null, "Invalid browser input: " + input);
+        return parseRequired(Objects.requireNonNullElse(addressInput, input), null, "Invalid browser input: " + input);
     }
 
     /// Parses a browser-style URL input and returns `null` on failure.
     public static @Nullable WebURL tryParseBrowserInput(String input) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
-        return parseNullable(addressInput == null ? input : addressInput, null);
+        return parseNullable(Objects.requireNonNullElse(addressInput, input), null);
     }
 
     /// Parses an input string and throws when parsing fails.
