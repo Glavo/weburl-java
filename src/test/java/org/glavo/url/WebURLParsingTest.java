@@ -50,9 +50,14 @@ public final class WebURLParsingTest {
         assertEquals("https://www.glavo.site/", WebURL.parseBrowserInput("www.glavo.site").href());
         assertEquals("https://www.glavo.site/path?q=1#f", WebURL.parseBrowserInput("www.glavo.site/path?q=1#f").href());
         assertEquals("https://www.glavo.site/path", WebURL.parseBrowserInput("//www.glavo.site/path").href());
-        assertEquals("https://localhost:8080/path", WebURL.parseBrowserInput("localhost:8080/path").href());
-        assertEquals("https://127.0.0.1:3000/", WebURL.parseBrowserInput("127.0.0.1:3000").href());
-        assertEquals("https://[::1]:8080/", WebURL.parseBrowserInput("[::1]:8080").href());
+        assertEquals("http://localhost:8080/path", WebURL.parseBrowserInput("localhost:8080/path").href());
+        assertEquals("http://127.0.0.1:3000/", WebURL.parseBrowserInput("127.0.0.1:3000").href());
+        assertEquals("http://[::1]:8080/", WebURL.parseBrowserInput("[::1]:8080").href());
+        assertEquals("http://printer/", WebURL.parseBrowserInput("printer").href());
+        assertEquals("http://printer/path", WebURL.parseBrowserInput("printer/path").href());
+        assertEquals("http://test/path", WebURL.parseBrowserInput("test/path").href());
+        assertEquals("http://app.localhost/", WebURL.parseBrowserInput("app.localhost").href());
+        assertEquals("http://[::1]/", WebURL.parseBrowserInput("//[::1]/").href());
         assertEquals("https://xn--r8jz45g.xn--zckzah/",
                 WebURL.parseBrowserInput("例え.テスト").href());
         assertEquals("data:text/plain,hi", WebURL.parseBrowserInput("data:text/plain,hi").href());

@@ -25,8 +25,10 @@ import java.util.Objects;
 /// Internal parsing helpers used by `WebURL` static factory methods.
 @NotNullByDefault
 public final class WebURLParsing {
-    /// The scheme used for browser-style inputs without an explicit scheme.
-    private static final String ADDRESS_SCHEME = "https";
+    /// The scheme used for public-looking browser-style inputs without an explicit scheme.
+    private static final String HTTPS_SCHEME = "https";
+    /// The scheme used for local or private browser-style inputs without an explicit scheme.
+    private static final String HTTP_SCHEME = "http";
 
     /// Creates no instances.
     private WebURLParsing() {
@@ -117,7 +119,8 @@ public final class WebURLParsing {
             return null;
         }
         if (text.startsWith("//") || text.startsWith("\\\\")) {
-            return ADDRESS_SCHEME + ":" + text;
+            @Nullable String scheme = addressScheme(text.substring(2, firstAddressAuthorityDelimiter(text, 2)));
+            return scheme == null ? null : scheme + ":" + text;
         }
         if (text.charAt(0) == '/' || text.charAt(0) == '\\' || text.charAt(0) == '?' || text.charAt(0) == '#') {
             return null;
@@ -126,23 +129,44 @@ public final class WebURLParsing {
         int authorityEnd = firstAddressAuthorityDelimiter(text);
         String authority = text.substring(0, authorityEnd);
         int schemeEnd = validSchemeEnd(authority);
-        if (schemeEnd >= 0 && !isAddressHost(authority.substring(0, schemeEnd))) {
+        if (schemeEnd >= 0 && !isAddressHostWithPortPrefix(authority, schemeEnd)) {
             return null;
         }
-        return isAddressAuthority(authority) ? ADDRESS_SCHEME + "://" + text : null;
+        @Nullable String scheme = addressScheme(authority);
+        return scheme == null ? null : scheme + "://" + text;
     }
 
-    /// Returns whether a string is a browser-address authority.
-    private static boolean isAddressAuthority(String authority) {
+    /// Returns the default scheme for a browser-address authority, or `null` when it is not recognized.
+    private static @Nullable String addressScheme(String authority) {
         if (authority.isEmpty() || containsAddressAuthoritySpace(authority)) {
-            return false;
+            return null;
         }
         int at = authority.lastIndexOf('@');
         String hostPort = at < 0 ? authority : authority.substring(at + 1);
         if (hostPort.isEmpty()) {
+            return null;
+        }
+        String host = extractAddressHost(hostPort);
+        return isAddressHost(host) ? defaultAddressScheme(host) : null;
+    }
+
+    /// Returns whether a valid scheme-looking prefix should instead be treated as a host before a port.
+    private static boolean isAddressHostWithPortPrefix(String authority, int schemeEnd) {
+        String host = authority.substring(0, schemeEnd);
+        if (!isAddressHost(host)) {
             return false;
         }
-        return isAddressHost(extractAddressHost(hostPort));
+        if (containsDomainDot(host) || isIpAddressHost(host) || isReservedAddressHost(host)) {
+            return true;
+        }
+        return isAsciiDecimal(authority, schemeEnd + 1, authority.length());
+    }
+
+    /// Returns the default scheme for an address host.
+    private static String defaultAddressScheme(String host) {
+        return isIpAddressHost(host) || isSingleLabelHost(host) || isReservedAddressHost(host)
+                ? HTTP_SCHEME
+                : HTTPS_SCHEME;
     }
 
     /// Extracts the host portion from an address authority tail.
@@ -157,9 +181,70 @@ public final class WebURLParsing {
 
     /// Returns whether a host string is recognized as a browser-style input host.
     private static boolean isAddressHost(String host) {
-        return host.startsWith("[")
-                || host.equalsIgnoreCase("localhost")
+        return isIpAddressHost(host)
+                || isSingleLabelHost(host)
+                || isReservedAddressHost(host)
                 || containsDomainDot(host);
+    }
+
+    /// Returns whether a host is an IP address literal or IPv4-number-like host.
+    private static boolean isIpAddressHost(String host) {
+        return host.startsWith("[") || isIpv4AddressLikeHost(host);
+    }
+
+    /// Returns whether a host consists of IPv4 number parts.
+    private static boolean isIpv4AddressLikeHost(String host) {
+        if (host.isEmpty()) {
+            return false;
+        }
+
+        int start = 0;
+        while (start < host.length()) {
+            int end = host.indexOf('.', start);
+            if (end < 0) {
+                end = host.length();
+            }
+            if (!isIpv4Number(host, start, end)) {
+                return false;
+            }
+            start = end + 1;
+        }
+        return true;
+    }
+
+    /// Returns whether a substring is an IPv4 number in decimal, octal, or hexadecimal form.
+    private static boolean isIpv4Number(String value, int start, int end) {
+        if (start >= end) {
+            return false;
+        }
+        if (start + 2 < end && value.charAt(start) == '0'
+                && (value.charAt(start + 1) == 'x' || value.charAt(start + 1) == 'X')) {
+            return isAsciiHex(value, start + 2, end);
+        }
+        return isAsciiDecimal(value, start, end);
+    }
+
+    /// Returns whether a host has a single label.
+    private static boolean isSingleLabelHost(String host) {
+        return !host.isEmpty() && !host.startsWith("[") && !containsDomainDot(host);
+    }
+
+    /// Returns whether a host uses a reserved local or test name.
+    private static boolean isReservedAddressHost(String host) {
+        return equalsIgnoreCase(host, "localhost")
+                || equalsIgnoreCase(host, "test")
+                || equalsIgnoreCase(host, "example")
+                || equalsIgnoreCase(host, "invalid")
+                || endsWithReservedSuffix(host, ".localhost")
+                || endsWithReservedSuffix(host, ".test")
+                || endsWithReservedSuffix(host, ".example")
+                || endsWithReservedSuffix(host, ".invalid");
+    }
+
+    /// Returns whether a host ends with a reserved suffix.
+    private static boolean endsWithReservedSuffix(String host, String suffix) {
+        return host.length() > suffix.length() && host.regionMatches(true,
+                host.length() - suffix.length(), suffix, 0, suffix.length());
     }
 
     /// Returns whether a string contains a domain-label separator.
@@ -185,7 +270,12 @@ public final class WebURLParsing {
 
     /// Returns the first delimiter after the address authority.
     private static int firstAddressAuthorityDelimiter(String input) {
-        for (int i = 0; i < input.length(); i++) {
+        return firstAddressAuthorityDelimiter(input, 0);
+    }
+
+    /// Returns the first delimiter after the address authority starting at an index.
+    private static int firstAddressAuthorityDelimiter(String input, int start) {
+        for (int i = start; i < input.length(); i++) {
             char c = input.charAt(i);
             if (c == '/' || c == '\\' || c == '?' || c == '#') {
                 return i;
@@ -255,6 +345,42 @@ public final class WebURLParsing {
     /// Returns whether a character is an ASCII letter or digit.
     private static boolean isAsciiAlphanumeric(char c) {
         return isAsciiAlpha(c) || c >= '0' && c <= '9';
+    }
+
+    /// Returns whether two strings are equal ignoring ASCII case.
+    private static boolean equalsIgnoreCase(String left, String right) {
+        return left.equalsIgnoreCase(right);
+    }
+
+    /// Returns whether a substring contains only ASCII decimal digits.
+    private static boolean isAsciiDecimal(String value, int start, int end) {
+        if (start >= end) {
+            return false;
+        }
+        for (int i = start; i < end; i++) {
+            char c = value.charAt(i);
+            if (c < '0' || c > '9') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// Returns whether a substring contains only ASCII hexadecimal digits.
+    private static boolean isAsciiHex(String value, int start, int end) {
+        if (start >= end) {
+            return false;
+        }
+        for (int i = start; i < end; i++) {
+            char c = value.charAt(i);
+            if (!isAsciiAlphanumeric(c)
+                    || c > '9' && c < 'A'
+                    || c > 'F' && c < 'a'
+                    || c > 'f') {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// Returns the implementation object for a `WebURL`.

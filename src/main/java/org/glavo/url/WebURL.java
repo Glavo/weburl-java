@@ -225,9 +225,11 @@ public sealed interface WebURL extends Comparable<WebURL> permits WebURLImpl {
     /// Parses a browser-style URL input and returns the parsed URL.
     ///
     /// This method accepts standard absolute URL strings and a deterministic subset of browser address bar
-    /// style URL inputs, such as bare domain names, `//`-prefixed authorities, `localhost` with a port, IP
-    /// addresses, and bracketed IPv6 addresses. Inputs recognized as URL-like but lacking an explicit scheme
-    /// are completed with `https` before normal URL processing.
+    /// style URL inputs, such as bare domain names, `//`-prefixed authorities, single-label hosts, IP
+    /// addresses, and bracketed IPv6 addresses. Public-looking domain names recognized as URL-like but lacking
+    /// an explicit scheme are completed with `https` before normal URL processing. IP addresses, single-label
+    /// hosts, and reserved local or test hosts such as `localhost`, `test`, and names below `.localhost` are
+    /// completed with `http`.
     ///
     /// This method is not a complete browser omnibox or navigation algorithm. It performs no DNS lookup, no
     /// HTTP(S) probing, no HSTS or policy checks, no history or search suggestion lookup, no search fallback,
