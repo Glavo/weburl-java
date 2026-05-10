@@ -1,5 +1,6 @@
 # WebURL for Java
 
+[![](https://img.shields.io/maven-central/v/org.glavo/weburl?label=Maven%20Central)](https://search.maven.org/artifact/org.glavo/weburl)
 [![codecov](https://codecov.io/gh/Glavo/weburl-java/graph/badge.svg?token=YH1WL9LMVO)](https://codecov.io/gh/Glavo/weburl-java)
 
 **WebURL for Java** is a URL library for Java, providing URL support that
@@ -49,18 +50,14 @@ While both can parse IDN URLs, `URI` fails to recognize the host at all:
 
 ```java
 URI uri = new URI("https://münchen.de");
-System.out.
-
-println(uri.getHost()); // --> null
+uri.getHost(); // null
 ```
 
 `URL` does recognise the host, but returns the raw Unicode string instead of the ACE form:
 
 ```java
 URL url = new URL("https://münchen.de");
-System.out.
-
-println(url.getHost()); // --> "münchen.de"
+url.getHost(); // "münchen.de"
 ```
 
 Although the Java standard library provides `java.net.IDN` for manually converting IDN to the ACE form,
@@ -90,7 +87,7 @@ for `new URI(String)` to improve compatibility.
 - Good interoperability with Java `URI` and `URL`, with straightforward conversion utilities.
 - Full IDN support conforming to UTS #46, implemented from Unicode-provided mapping tables without requiring ICU4J.
 - Default parsing strictly follows the specification, with additional convenience methods for parsing user input that
-  simulate heuristic browser address-bar behavior, handling scheme-less URIs and local file paths intelligently.
+  simulate heuristic browser address-bar behavior, handling scheme-fewer URIs and local file paths intelligently.
 
 ## Add to Your Project
 
