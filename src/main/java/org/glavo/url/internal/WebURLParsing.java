@@ -54,7 +54,7 @@ public final class WebURLParsing {
 
     /// Parses an input string against a base URL string and returns `null` on failure.
     public static @Nullable WebURL tryParse(String input, String base) {
-        WebURLImpl parsedBase = parseBaseNullable(base);
+        WebURLImpl parsedBase = parseNullable(base, null);
         return parsedBase == null ? null : parseNullable(input, parsedBase);
     }
 
@@ -108,11 +108,6 @@ public final class WebURLParsing {
     private static @Nullable WebURLImpl parseNullable(String input, @Nullable WebURLImpl base) {
         Objects.requireNonNull(input, "input");
         return UrlParser.basicParse(input, base, null, null);
-    }
-
-    /// Parses a base URL string and returns `null` when parsing fails.
-    private static @Nullable WebURLImpl parseBaseNullable(String base) {
-        return parseNullable(base, null);
     }
 
     /// Converts a browser-style URL input to an absolute URL input, or returns `null` for standard URL input.
