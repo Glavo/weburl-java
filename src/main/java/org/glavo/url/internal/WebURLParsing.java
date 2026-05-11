@@ -87,7 +87,7 @@ public final class WebURLParsing {
         } catch (WebURLParseException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
-            throw new WebURLParseException(input, WebURLParseException.INVALID_URL, reason, -1, exception);
+            throw new WebURLParseException(input, WebURLParseException.ErrorType.INVALID_URL, reason, -1, exception);
         }
     }
 
@@ -99,7 +99,7 @@ public final class WebURLParsing {
         } catch (WebURLParseException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
-            throw new WebURLParseException(base, WebURLParseException.INVALID_URL, "Invalid base URL", -1, exception);
+            throw new WebURLParseException(base, WebURLParseException.ErrorType.INVALID_URL, "Invalid base URL", -1, exception);
         }
     }
 

@@ -92,7 +92,9 @@ public final class WebURLTest {
     public void reportsParseExceptionDetails() {
         WebURLParseException missingScheme =
                 assertThrows(WebURLParseException.class, () -> WebURL.parse("/en-US/docs"));
-        assertEquals(WebURLParseException.MISSING_SCHEME_NON_RELATIVE_URL, missingScheme.getErrorName());
+        assertEquals(WebURLParseException.ErrorType.MISSING_SCHEME_NON_RELATIVE_URL, missingScheme.getErrorType());
+        assertEquals("missing-scheme-non-relative-URL", missingScheme.getErrorName());
+        assertEquals("missing-scheme-non-relative-URL", missingScheme.getErrorType().getErrorName());
         assertEquals("/en-US/docs", missingScheme.getInput());
         assertEquals(0, missingScheme.getIndex());
         assertEquals("The input is missing a scheme and cannot be parsed relative to a base URL",
@@ -100,21 +102,21 @@ public final class WebURLTest {
         assertEquals("The input is missing a scheme and cannot be parsed relative to a base URL at index 0: /en-US/docs",
                 missingScheme.getMessage());
 
-        assertEquals(WebURLParseException.PORT_OUT_OF_RANGE,
+        assertEquals(WebURLParseException.ErrorType.PORT_OUT_OF_RANGE,
                 assertThrows(WebURLParseException.class,
-                        () -> WebURL.parse("http://example.com:65536/")).getErrorName());
-        assertEquals(WebURLParseException.PORT_INVALID,
+                        () -> WebURL.parse("http://example.com:65536/")).getErrorType());
+        assertEquals(WebURLParseException.ErrorType.PORT_INVALID,
                 assertThrows(WebURLParseException.class,
-                        () -> WebURL.parse("http://example.com:7z/")).getErrorName());
-        assertEquals(WebURLParseException.HOST_MISSING,
+                        () -> WebURL.parse("http://example.com:7z/")).getErrorType());
+        assertEquals(WebURLParseException.ErrorType.HOST_MISSING,
                 assertThrows(WebURLParseException.class,
-                        () -> WebURL.parse("https://:443")).getErrorName());
-        assertEquals(WebURLParseException.IPV6_UNCLOSED,
+                        () -> WebURL.parse("https://:443")).getErrorType());
+        assertEquals(WebURLParseException.ErrorType.IPV6_UNCLOSED,
                 assertThrows(WebURLParseException.class,
-                        () -> WebURL.parse("https://[::1")).getErrorName());
-        assertEquals(WebURLParseException.IPV4_TOO_MANY_PARTS,
+                        () -> WebURL.parse("https://[::1")).getErrorType());
+        assertEquals(WebURLParseException.ErrorType.IPV4_TOO_MANY_PARTS,
                 assertThrows(WebURLParseException.class,
-                        () -> WebURL.parse("https://1.2.3.4.5/")).getErrorName());
+                        () -> WebURL.parse("https://1.2.3.4.5/")).getErrorType());
     }
 
     /// Tests that already canonical input strings are adopted as the URL serialization.
@@ -404,9 +406,9 @@ public final class WebURLTest {
         assertEquals(-1, nonSpecialWithoutDefaultPort.getPort());
         assertNull(nonSpecialWithoutDefaultPort.getRawPort());
 
-        assertEquals(WebURLParseException.PORT_OUT_OF_RANGE,
+        assertEquals(WebURLParseException.ErrorType.PORT_OUT_OF_RANGE,
                 assertThrows(WebURLParseException.class,
-                        () -> WebURL.parse("http://example.com:65536/")).getErrorName());
+                        () -> WebURL.parse("http://example.com:65536/")).getErrorType());
     }
 
     /// Tests opaque base URL fragment-only parsing and blob origin serialization.
