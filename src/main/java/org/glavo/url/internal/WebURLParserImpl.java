@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /// Implementation object behind the public `WebURLParser` API.
 @NotNullByDefault
@@ -32,17 +34,9 @@ public final class WebURLParserImpl implements WebURLParser {
 
     /// The validation errors rejected by the strict parser.
     private static final @Unmodifiable Set<WebURLParseException.ErrorType> STRICT_REJECTED_VALIDATION_ERRORS =
-            Set.of(
-                    WebURLParseException.ErrorType.DOMAIN_TO_UNICODE,
-                    WebURLParseException.ErrorType.IPV4_EMPTY_PART,
-                    WebURLParseException.ErrorType.IPV4_NON_DECIMAL_PART,
-                    WebURLParseException.ErrorType.INVALID_URL_UNIT,
-                    WebURLParseException.ErrorType.SPECIAL_SCHEME_MISSING_FOLLOWING_SOLIDUS,
-                    WebURLParseException.ErrorType.INVALID_REVERSE_SOLIDUS,
-                    WebURLParseException.ErrorType.INVALID_CREDENTIALS,
-                    WebURLParseException.ErrorType.FILE_INVALID_WINDOWS_DRIVE_LETTER,
-                    WebURLParseException.ErrorType.FILE_INVALID_WINDOWS_DRIVE_LETTER_HOST
-            );
+            Stream.of(WebURLParseException.ErrorType.values())
+                    .filter(WebURLParseException.ErrorType::isRecoverable)
+                    .collect(Collectors.toUnmodifiableSet());
 
     /// The default parser implementation.
     public static final WebURLParser DEFAULT = new WebURLParserImpl(DEFAULT_REJECTED_VALIDATION_ERRORS);
