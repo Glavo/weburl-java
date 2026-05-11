@@ -76,9 +76,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
         return new IPv6(highBits, lowBits);
     }
 
-    /// Returns whether this host is an empty domain host.
-    boolean isEmptyDomain();
-
     /// Serializes the host into the supplied builder.
     void serialize(StringBuilder output);
 
@@ -93,12 +90,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
         /// Creates a domain host.
         public Domain {
             Objects.requireNonNull(value, "value");
-        }
-
-        /// Returns whether this host is an empty domain host.
-        @Override
-        public boolean isEmptyDomain() {
-            return value.isEmpty();
         }
 
         /// Serializes the host into the supplied builder.
@@ -137,12 +128,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
             Objects.requireNonNull(value, "value");
         }
 
-        /// Returns whether this host is an empty domain host.
-        @Override
-        public boolean isEmptyDomain() {
-            return false;
-        }
-
         /// Serializes the host into the supplied builder.
         @Override
         public void serialize(StringBuilder output) {
@@ -166,12 +151,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
     record IPv4(int address) implements UrlHost {
         /// Creates an IPv4 host.
         public IPv4 {
-        }
-
-        /// Returns whether this host is an empty domain host.
-        @Override
-        public boolean isEmptyDomain() {
-            return false;
         }
 
         /// Serializes the host into the supplied builder.
@@ -216,12 +195,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
     record IPv6(long highBits, long lowBits) implements UrlHost {
         /// Creates an IPv6 host.
         public IPv6 {
-        }
-
-        /// Returns whether this host is an empty domain host.
-        @Override
-        public boolean isEmptyDomain() {
-            return false;
         }
 
         /// Serializes the host into the supplied builder.

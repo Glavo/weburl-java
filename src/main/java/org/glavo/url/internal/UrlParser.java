@@ -1153,7 +1153,7 @@ public final class UrlParser {
                     if ((includesCredentials() || record.port != -1) && buffer.equals("file")) {
                         return Result.STOP;
                     }
-                    if (record.scheme.equals("file") && record.host != null && record.host.isEmptyDomain()) {
+                    if (record.scheme.equals("file") && record.host == UrlHost.EMPTY_DOMAIN) {
                         return Result.STOP;
                     }
                 }
