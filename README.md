@@ -25,8 +25,9 @@ Both have well-known, serious shortcomings.
 [RFC 3986](https://www.ietf.org/rfc/rfc3986.txt) in 2005 and is a far cry from how URLs are handled on the modern
 web. Many URLs that browsers accept every day are rejected or mishandled by the standard Java classes.
 
-For example, `URI.create("https://example.com/a b")` throws an `IllegalArgumentException` because the unencoded
-space is not allowed by RFC 2396, even though every major browser accepts this URL without complaint.
+For example, `URI.create("https://example.com/a b")` throws an `IllegalArgumentException` because 
+RFC 2396 does not allow the unencoded space,
+even though every major browser accepts this URL without complaint.
 
 ### 2. `URI` and `URL` have subtle, incompatible semantics
 
@@ -35,16 +36,10 @@ round-trip conversion unreliable:
 
 - `new URL("https://example.com/a b")` succeeds (URL is lenient about spaces), but calling `.toURI()` on it
   throws a `URISyntaxException` because URI refuses the unencoded space.
-- Conversely, some URIs that `URI` can parse successfully will cause `URI.toURL()` to throw, depending on the
-  scheme or the presence of a registered `URLStreamHandler`.
+- Conversely, some URLs that `URI` can parse will throw an exception when `URI.toURL()` is called on them — for example,
+  URLs with an invalid port such as `https://example.com:not-a-number`, or URLs whose scheme has no registered `URLStreamHandler`.
 
-### 3. `java.net.URL` has dangerous network-aware equality
-
-`URL.equals()` and `URL.hashCode()` may perform DNS resolution to decide whether two URLs are equal (for example,
-`http://example.com/` and `http://93.184.216.34/` could be considered equal). This makes `URL` objects unsafe to
-use as keys in hash maps or sets, and can cause unexpected latency or failures in network-restricted environments.
-
-### 4. No internationalized domain name (IDN) support
+### 3. No internationalized domain name (IDN) support
 
 Neither class handles internationalized domain names (IDN) correctly. Neither supports IDNA processing.
 
@@ -66,7 +61,7 @@ Although the Java standard library provides `java.net.IDN` for manually converti
 it is based on the outdated IDNA 2003 specification and does not support the newer IDNA 2008 or the
 widely used UTS #46 specification.
 
-### 5. Only fully structured URLs are supported
+### 4. Only fully structured URLs are supported
 
 Both `URL` and `URI` require a complete URL structure — the scheme field in particular is mandatory.
 
@@ -78,6 +73,12 @@ as `http://localhost:8080` rather than a URL whose scheme is `localhost`.
 
 The absence of a lenient, browser-like parsing mode means that both classes frequently behave in unexpected ways
 when used to process user-supplied input.
+
+### 5. `java.net.URL` has dangerous network-aware equality
+
+`URL.equals()` and `URL.hashCode()` may perform DNS resolution to decide whether two URLs are equal (for example,
+`http://example.com/` and `http://93.184.216.34/` could be considered equal). This makes `URL` objects unsafe to
+use as keys in hash maps or sets, and can cause unexpected latency or failures in network-restricted environments.
 
 ### WebURL for Java solves this problem
 
@@ -92,10 +93,6 @@ its behavior is tested against thousands of real-world URL inputs that a browser
 semantics. There is no `URI`/`URL` split to navigate, no surprising round-trip failures, and no
 checked exceptions for URLs that are perfectly valid in practice.
 
-**Safe equality.** `WebURL.equals()` and `WebURL.hashCode()` are purely structural — they compare
-the serialized URL string and never touch the network. `WebURL` objects are safe to use as keys in
-`HashMap` or `HashSet`.
-
 **Full IDN support.** WebURL implements UTS #46 (Unicode IDNA Compatibility Processing) directly
 from the Unicode-provided mapping tables, without requiring ICU4J or any external dependency.
 Internationalized domain names like `münchen.de` are automatically normalized to their ACE form
@@ -105,6 +102,10 @@ Internationalized domain names like `münchen.de` are automatically normalized t
 provides `parseBrowserInput()`, which applies the same heuristics a browser address bar uses —
 auto-detecting the scheme, handling scheme-free hostnames such as `example.com`, and converting
 local file paths into `file://` URLs — making it straightforward to process user-supplied input.
+
+**Safe equality.** `WebURL.equals()` and `WebURL.hashCode()` are purely structural — they compare
+the serialized URL string and never touch the network. `WebURL` objects are safe to use as keys in
+`HashMap` or `HashSet`.
 
 ## Features
 
