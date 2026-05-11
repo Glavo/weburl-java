@@ -200,7 +200,7 @@ final class UrlSerializer {
             }
 
             hostStartValue = output.length();
-            output.append(record.host.serialize());
+            record.host.serialize(output);
             hostEndValue = output.length();
             if (record.port != -1) {
                 output.append(':');

@@ -82,8 +82,8 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
     /// Returns whether this host serializes to an empty string.
     boolean isEmpty();
 
-    /// Serializes the host.
-    String serialize();
+    /// Serializes the host into the supplied builder.
+    void serialize(StringBuilder output);
 
     /// Returns a Unicode display form for a domain host, or `null` when the serialized host should be used.
     @Nullable String displayString();
@@ -110,10 +110,10 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
             return value.isEmpty();
         }
 
-        /// Serializes the host.
+        /// Serializes the host into the supplied builder.
         @Override
-        public String serialize() {
-            return value;
+        public void serialize(StringBuilder output) {
+            output.append(value);
         }
 
         /// Returns a Unicode display form for a domain host, or `null` when the serialized host should be used.
@@ -158,10 +158,10 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
             return value.isEmpty();
         }
 
-        /// Serializes the host.
+        /// Serializes the host into the supplied builder.
         @Override
-        public String serialize() {
-            return value;
+        public void serialize(StringBuilder output) {
+            output.append(value);
         }
 
         /// Returns no display override for opaque hosts.
@@ -195,13 +195,16 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
             return false;
         }
 
-        /// Serializes the host.
+        /// Serializes the host into the supplied builder.
         @Override
-        public String serialize() {
-            return ((address >>> 24) & 0xff) + "."
-                    + ((address >>> 16) & 0xff) + "."
-                    + ((address >>> 8) & 0xff) + "."
-                    + (address & 0xff);
+        public void serialize(StringBuilder output) {
+            output.append((address >>> 24) & 0xff)
+                    .append('.')
+                    .append((address >>> 16) & 0xff)
+                    .append('.')
+                    .append((address >>> 8) & 0xff)
+                    .append('.')
+                    .append(address & 0xff);
         }
 
         /// Returns no display override for IPv4 hosts.
@@ -248,10 +251,9 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
             return false;
         }
 
-        /// Serializes the host.
+        /// Serializes the host into the supplied builder.
         @Override
-        public String serialize() {
-            StringBuilder output = new StringBuilder(41);
+        public void serialize(StringBuilder output) {
             output.append('[');
 
             int compress = findCompressedPieceIndex(highBits, lowBits);
@@ -278,7 +280,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
             }
 
             output.append(']');
-            return output.toString();
         }
 
         /// Returns no display override for IPv6 hosts.
