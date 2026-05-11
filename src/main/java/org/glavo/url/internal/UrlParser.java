@@ -45,8 +45,19 @@ public final class UrlParser {
             @Nullable UrlRecord url,
             @Nullable State stateOverride
     ) {
+        return basicParse(input, baseUrl, url, stateOverride, false);
+    }
+
+    /// Runs the basic URL parser.
+    public static @Nullable WebURLImpl basicParse(
+            String input,
+            @Nullable WebURLImpl baseUrl,
+            @Nullable UrlRecord url,
+            @Nullable State stateOverride,
+            boolean strictValidation
+    ) {
         try {
-            return basicParseRequired(input, baseUrl, url, stateOverride);
+            return basicParseRequired(input, baseUrl, url, stateOverride, strictValidation);
         } catch (IllegalArgumentException ignored) {
             return null;
         }
@@ -59,13 +70,24 @@ public final class UrlParser {
             @Nullable UrlRecord url,
             @Nullable State stateOverride
     ) {
-        if (baseUrl == null && url == null && stateOverride == null) {
+        return basicParseRequired(input, baseUrl, url, stateOverride, false);
+    }
+
+    /// Runs the basic URL parser and throws when parsing fails.
+    public static WebURLImpl basicParseRequired(
+            String input,
+            @Nullable WebURLImpl baseUrl,
+            @Nullable UrlRecord url,
+            @Nullable State stateOverride,
+            boolean strictValidation
+    ) {
+        if (!strictValidation && baseUrl == null && url == null && stateOverride == null) {
             @Nullable WebURLImpl fastUrl = UrlFastParser.parse(input);
             if (fastUrl != null) {
                 return fastUrl;
             }
         }
-        StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride);
+        StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride, strictValidation);
         return stateMachine.toUrl();
     }
 
@@ -554,6 +576,15 @@ public final class UrlParser {
         return string.substring(start, end);
     }
 
+    /// Returns the first trimmed C0 control or space index, or `-1` when none would be trimmed.
+    private static int firstTrimmedControlCharIndex(String string) {
+        int end = string.length();
+        if (end > 0 && string.charAt(0) <= 0x20) {
+            return 0;
+        }
+        return end > 0 && string.charAt(end - 1) <= 0x20 ? end - 1 : -1;
+    }
+
     /// Removes ASCII tabs and newlines.
     private static String trimTabAndNewline(String url) {
         int firstSkipped = -1;
@@ -577,6 +608,17 @@ public final class UrlParser {
             }
         }
         return output.toString();
+    }
+
+    /// Returns the first ASCII tab or newline index, or `-1` when none is present.
+    private static int firstTabOrNewlineIndex(String string) {
+        for (int i = 0; i < string.length(); i++) {
+            char c = string.charAt(i);
+            if (c == '\t' || c == '\n' || c == '\r') {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /// Returns the code point at a UTF-16 index, or EOF.
@@ -874,6 +916,8 @@ public final class UrlParser {
         private final @Nullable WebURLImpl base;
         /// State override.
         private final @Nullable State stateOverride;
+        /// Whether non-fatal validation errors are parse failures.
+        private final boolean strictValidation;
         /// Mutable URL record produced by this parser run.
         private final UrlRecord record;
         /// Current parser state.
@@ -892,28 +936,48 @@ public final class UrlParser {
                 String inputText,
                 @Nullable WebURLImpl base,
                 @Nullable UrlRecord url,
-                @Nullable State stateOverride
+                @Nullable State stateOverride,
+                boolean strictValidation
         ) {
             this.pointer = 0;
             this.base = base;
             this.stateOverride = stateOverride;
+            this.strictValidation = strictValidation;
             this.record = url == null ? new UrlRecord() : url;
             this.state = stateOverride == null ? State.SCHEME_START : stateOverride;
 
             String text = inputText;
+            boolean trimmedChanged = false;
             if (url == null) {
                 String trimmed = trimControlChars(text);
                 if (!trimmed.equals(text)) {
-                    recordValidationError(WebURLParseException.ErrorType.INVALID_URL_UNIT);
+                    if (strictValidation) {
+                        throw new WebURLParseException(
+                                inputText,
+                                WebURLParseException.ErrorType.INVALID_URL_UNIT,
+                                firstTrimmedControlCharIndex(inputText)
+                        );
+                    }
+                    trimmedChanged = true;
                 }
                 text = trimmed;
             }
 
             String withoutTabsAndNewlines = trimTabAndNewline(text);
+            if (strictValidation && !withoutTabsAndNewlines.equals(text)) {
+                throw new WebURLParseException(
+                        inputText,
+                        WebURLParseException.ErrorType.INVALID_URL_UNIT,
+                        firstTabOrNewlineIndex(inputText)
+                );
+            }
+            this.input = withoutTabsAndNewlines;
+            if (trimmedChanged) {
+                recordValidationError(WebURLParseException.ErrorType.INVALID_URL_UNIT);
+            }
             if (!withoutTabsAndNewlines.equals(text)) {
                 recordValidationError(WebURLParseException.ErrorType.INVALID_URL_UNIT);
             }
-            this.input = withoutTabsAndNewlines;
 
             run();
         }
@@ -962,6 +1026,9 @@ public final class UrlParser {
 
         /// Records a validation error without forcing parser failure.
         private void recordValidationError(WebURLParseException.ErrorType errorType) {
+            if (strictValidation) {
+                throw error(errorType);
+            }
         }
 
         /// Creates a parser exception at the current input pointer.

@@ -36,54 +36,100 @@ public final class WebURLParsing {
 
     /// Parses an input string and returns the parsed URL.
     public static WebURL parse(String input) {
-        return parseRequired(input, null, "Invalid URL");
+        return parse(input, false);
+    }
+
+    /// Parses an input string and returns the parsed URL.
+    public static WebURL parse(String input, boolean strictValidation) {
+        return parseRequired(input, null, strictValidation, "Invalid URL");
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
     public static WebURL parse(String input, String base) {
-        return parseRequired(input, parseBaseRequired(base), "Invalid URL");
+        return parse(input, base, false);
+    }
+
+    /// Parses an input string against a base URL string and returns the parsed URL.
+    public static WebURL parse(String input, String base, boolean strictValidation) {
+        return parseRequired(input, parseBaseRequired(base, strictValidation), strictValidation, "Invalid URL");
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
     public static WebURL parse(String input, WebURL base) {
-        return parseRequired(input, implementation(base), "Invalid URL");
+        return parse(input, base, false);
+    }
+
+    /// Parses an input string against a base URL and returns the parsed URL.
+    public static WebURL parse(String input, WebURL base, boolean strictValidation) {
+        return parseRequired(input, implementation(base), strictValidation, "Invalid URL");
     }
 
     /// Parses an input string and returns `null` on failure.
     public static @Nullable WebURL tryParse(String input) {
-        return parseNullable(input, null);
+        return tryParse(input, false);
+    }
+
+    /// Parses an input string and returns `null` on failure.
+    public static @Nullable WebURL tryParse(String input, boolean strictValidation) {
+        return parseNullable(input, null, strictValidation);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
     public static @Nullable WebURL tryParse(String input, String base) {
-        WebURLImpl parsedBase = parseNullable(base, null);
-        return parsedBase == null ? null : parseNullable(input, parsedBase);
+        return tryParse(input, base, false);
+    }
+
+    /// Parses an input string against a base URL string and returns `null` on failure.
+    public static @Nullable WebURL tryParse(String input, String base, boolean strictValidation) {
+        WebURLImpl parsedBase = parseNullable(base, null, strictValidation);
+        return parsedBase == null ? null : parseNullable(input, parsedBase, strictValidation);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
     public static @Nullable WebURL tryParse(String input, WebURL base) {
-        return parseNullable(input, implementation(base));
+        return tryParse(input, base, false);
+    }
+
+    /// Parses an input string against a base URL and returns `null` on failure.
+    public static @Nullable WebURL tryParse(String input, WebURL base, boolean strictValidation) {
+        return parseNullable(input, implementation(base), strictValidation);
     }
 
     /// Parses a browser-style URL input and returns the parsed URL.
     public static WebURL parseBrowserInput(String input) {
+        return parseBrowserInput(input, false);
+    }
+
+    /// Parses a browser-style URL input and returns the parsed URL.
+    public static WebURL parseBrowserInput(String input, boolean strictValidation) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
-        return parseRequired(Objects.requireNonNullElse(addressInput, input), null, "Invalid browser input");
+        return parseRequired(Objects.requireNonNullElse(addressInput, input), null, strictValidation,
+                "Invalid browser input");
     }
 
     /// Parses a browser-style URL input and returns `null` on failure.
     public static @Nullable WebURL tryParseBrowserInput(String input) {
+        return tryParseBrowserInput(input, false);
+    }
+
+    /// Parses a browser-style URL input and returns `null` on failure.
+    public static @Nullable WebURL tryParseBrowserInput(String input, boolean strictValidation) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
-        return parseNullable(Objects.requireNonNullElse(addressInput, input), null);
+        return parseNullable(Objects.requireNonNullElse(addressInput, input), null, strictValidation);
     }
 
     /// Parses an input string and throws when parsing fails.
-    private static WebURL parseRequired(String input, @Nullable WebURLImpl base, String reason) {
+    private static WebURL parseRequired(
+            String input,
+            @Nullable WebURLImpl base,
+            boolean strictValidation,
+            String reason
+    ) {
         Objects.requireNonNull(input, "input");
         try {
-            return UrlParser.basicParseRequired(input, base, null, null);
+            return UrlParser.basicParseRequired(input, base, null, null, strictValidation);
         } catch (WebURLParseException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
@@ -92,10 +138,10 @@ public final class WebURLParsing {
     }
 
     /// Parses a base URL string and throws when parsing fails.
-    private static WebURLImpl parseBaseRequired(String base) {
+    private static WebURLImpl parseBaseRequired(String base, boolean strictValidation) {
         Objects.requireNonNull(base, "base");
         try {
-            return UrlParser.basicParseRequired(base, null, null, null);
+            return UrlParser.basicParseRequired(base, null, null, null, strictValidation);
         } catch (WebURLParseException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
@@ -104,9 +150,13 @@ public final class WebURLParsing {
     }
 
     /// Parses an input string and returns `null` when parsing fails.
-    private static @Nullable WebURLImpl parseNullable(String input, @Nullable WebURLImpl base) {
+    private static @Nullable WebURLImpl parseNullable(
+            String input,
+            @Nullable WebURLImpl base,
+            boolean strictValidation
+    ) {
         Objects.requireNonNull(input, "input");
-        return UrlParser.basicParse(input, base, null, null);
+        return UrlParser.basicParse(input, base, null, null, strictValidation);
     }
 
     /// Converts a browser-style URL input to an absolute URL input, or returns `null` for standard URL input.

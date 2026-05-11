@@ -3,6 +3,7 @@
 # 0.2.0 (In development)
 
 - Added `WebURL.resolve(String)` for resolving absolute or relative URL inputs against an existing `WebURL`.
+- Added `WebURLParser` with default and strict parser instances.
 - Changed `WebURLParseException` to a single final exception type with `ErrorType` enum constants, retained input,
   and error indexes.
 - Changed `WebURL.getPort()` to return the known default port for schemes such as `http`, `https`, `ws`,

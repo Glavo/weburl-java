@@ -16,7 +16,6 @@
 package org.glavo.url;
 
 import org.glavo.url.internal.WebURLImpl;
-import org.glavo.url.internal.WebURLParsing;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,7 +166,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @return the parsed URL
     /// @throws WebURLParseException when the input is not a valid absolute URL
     static WebURL parse(String input) {
-        return WebURLParsing.parse(input);
+        return WebURLParser.DEFAULT.parse(input);
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
@@ -179,7 +178,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @return the parsed URL
     /// @throws WebURLParseException when either input fails
     static WebURL parse(String input, String base) {
-        return WebURLParsing.parse(input, base);
+        return WebURLParser.DEFAULT.parse(input, base);
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
@@ -191,7 +190,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @return the parsed URL
     /// @throws WebURLParseException when the input cannot be resolved against the base URL
     static WebURL parse(String input, WebURL base) {
-        return WebURLParsing.parse(input, base);
+        return WebURLParser.DEFAULT.parse(input, base);
     }
 
     /// Resolves an input string against this URL and returns the parsed URL.
@@ -203,7 +202,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @return the parsed URL
     /// @throws WebURLParseException when the input cannot be resolved against this URL
     default WebURL resolve(String input) {
-        return WebURLParsing.parse(input, this);
+        return WebURLParser.DEFAULT.parse(input, this);
     }
 
     /// Parses an absolute input string and returns `null` on failure.
@@ -214,7 +213,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if the input is not a valid absolute URL
     static @Nullable WebURL tryParse(String input) {
-        return WebURLParsing.tryParse(input);
+        return WebURLParser.DEFAULT.tryParse(input);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
@@ -226,7 +225,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param base  the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
     static @Nullable WebURL tryParse(String input, String base) {
-        return WebURLParsing.tryParse(input, base);
+        return WebURLParser.DEFAULT.tryParse(input, base);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
@@ -238,7 +237,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param base  the base URL
     /// @return the parsed URL, or `null` if the input cannot be parsed against the base
     static @Nullable WebURL tryParse(String input, WebURL base) {
-        return WebURLParsing.tryParse(input, base);
+        return WebURLParser.DEFAULT.tryParse(input, base);
     }
 
     /// Parses a user-entered browser-style URL input and returns the parsed URL.
@@ -281,7 +280,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// failure. Inputs that are neither URL strings nor recognized browser-style URL inputs fail instead of
     /// being interpreted as search terms.
     static WebURL parseBrowserInput(String input) {
-        return WebURLParsing.parseBrowserInput(input);
+        return WebURLParser.DEFAULT.parseBrowserInput(input);
     }
 
     /// Parses a user-entered browser-style URL input and returns `null` on failure.
@@ -296,7 +295,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @implSpec This method has the same URL processing behavior as {@link #parseBrowserInput(String)}, except
     /// failures are represented by `null` instead of an exception.
     static @Nullable WebURL tryParseBrowserInput(String input) {
-        return WebURLParsing.tryParseBrowserInput(input);
+        return WebURLParser.DEFAULT.tryParseBrowserInput(input);
     }
 
     /// Returns the complete serialized URL.
