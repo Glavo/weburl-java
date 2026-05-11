@@ -26,8 +26,8 @@ import java.util.Set;
 ///
 /// `WebURLParser` represents the parsing policy used by the URL parser. The default parser follows normal URL
 /// Standard behavior: non-fatal validation errors are accepted, and the parser continues with the normalized URL.
-/// The strict parser rejects all recoverable validation errors. Validation errors for which
-/// `WebURLParseException.ErrorType.isRejectionRequired()` returns `true` are always rejected by every parser.
+/// The strict parser rejects all validation errors for which `WebURLParseException.ErrorType.isRecoverable()` returns
+/// `true`. Non-recoverable validation errors are always rejected by every parser.
 ///
 /// Implementations are immutable and thread-safe. Static convenience methods on `WebURL` use [#getDefault()].
 ///
@@ -51,8 +51,8 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// Returns the recoverable validation errors that this parser treats as parse failures.
     ///
     /// The returned set contains configurable validation errors only. Error types for which
-    /// `WebURLParseException.ErrorType.isRejectionRequired()` returns `true` are parse failures and are rejected by
-    /// every parser regardless of whether they appear in this set.
+    /// `WebURLParseException.ErrorType.isRecoverable()` returns `false` are parse failures and are rejected by every
+    /// parser regardless of whether they appear in this set.
     ///
     /// @return an immutable set of recoverable validation errors rejected by this parser
     @Unmodifiable Set<WebURLParseException.ErrorType> getRejectedValidationErrors();

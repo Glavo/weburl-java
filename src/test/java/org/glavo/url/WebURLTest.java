@@ -95,7 +95,6 @@ public final class WebURLTest {
         assertEquals(WebURLParseException.ErrorType.MISSING_SCHEME_NON_RELATIVE_URL, missingScheme.getErrorType());
         assertEquals("missing-scheme-non-relative-URL", missingScheme.getErrorName());
         assertEquals("missing-scheme-non-relative-URL", missingScheme.getErrorType().getErrorName());
-        assertTrue(missingScheme.getErrorType().isRejectionRequired());
         assertEquals(false, missingScheme.getErrorType().isRecoverable());
         assertEquals("/en-US/docs", missingScheme.getInput());
         assertEquals(0, missingScheme.getIndex());
@@ -103,7 +102,6 @@ public final class WebURLTest {
                 missingScheme.getReason());
         assertEquals("The input is missing a scheme and cannot be parsed relative to a base URL at index 0: /en-US/docs",
                 missingScheme.getMessage());
-        assertEquals(false, WebURLParseException.ErrorType.INVALID_CREDENTIALS.isRejectionRequired());
         assertTrue(WebURLParseException.ErrorType.INVALID_CREDENTIALS.isRecoverable());
 
         assertEquals(WebURLParseException.ErrorType.PORT_OUT_OF_RANGE,
