@@ -18,13 +18,16 @@ package org.glavo.url;
 import org.glavo.url.internal.WebURLParserImpl;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.Set;
 
 /// A reusable parser for creating `WebURL` values from URL strings.
 ///
 /// `WebURLParser` represents the parsing policy used by the URL parser. The default parser follows normal URL
 /// Standard behavior: non-fatal validation errors are accepted, and the parser continues with the normalized URL.
-/// The strict parser treats those non-fatal validation errors as parse failures and throws
-/// `WebURLParseException`.
+/// The strict parser rejects all recoverable validation errors. Validation errors for which
+/// `WebURLParseException.ErrorType.isRejectionRequired()` returns `true` are always rejected by every parser.
 ///
 /// Implementations are immutable and thread-safe. Static convenience methods on `WebURL` use [#getDefault()].
 ///
@@ -45,8 +48,14 @@ public sealed interface WebURLParser permits WebURLParserImpl {
         return WebURLParserImpl.STRICT;
     }
 
-    /// Returns whether this parser treats non-fatal validation errors as parse failures.
-    boolean isStrictValidationEnabled();
+    /// Returns the recoverable validation errors that this parser treats as parse failures.
+    ///
+    /// The returned set contains configurable validation errors only. Error types for which
+    /// `WebURLParseException.ErrorType.isRejectionRequired()` returns `true` are parse failures and are rejected by
+    /// every parser regardless of whether they appear in this set.
+    ///
+    /// @return an immutable set of recoverable validation errors rejected by this parser
+    @Unmodifiable Set<WebURLParseException.ErrorType> getRejectedValidationErrors();
 
     /// Parses an absolute input string and returns the parsed URL.
     ///

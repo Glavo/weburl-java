@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -64,8 +66,12 @@ public final class WebURLParsingTest {
     /// Tests reusable parser instances and strict validation behavior.
     @Test
     public void parsesWithReusableParsers() {
-        assertEquals(false, WebURLParser.getDefault().isStrictValidationEnabled());
-        assertEquals(true, WebURLParser.getStrict().isStrictValidationEnabled());
+        assertEquals(Set.of(), WebURLParser.getDefault().getRejectedValidationErrors());
+        for (WebURLParseException.ErrorType errorType : WebURLParseException.ErrorType.values()) {
+            assertEquals(errorType.isRecoverable(),
+                    WebURLParser.getStrict().getRejectedValidationErrors().contains(errorType),
+                    errorType.getErrorName());
+        }
 
         assertEquals(WebURL.parse("https://example.com/"), WebURLParser.getDefault().parse("https://example.com/"));
         assertEquals("http://user@example.com/", WebURLParser.getDefault().parse("http://user@example.com/").href());
@@ -91,6 +97,13 @@ public final class WebURLParsingTest {
 
         assertNull(WebURLParser.getStrict().tryParse("http://user@example.com/"));
         assertNull(WebURLParser.getStrict().tryParseBrowserInput("http://user@example.com/"));
+
+        assertEquals(WebURLParseException.ErrorType.IPV4_EMPTY_PART,
+                assertThrows(WebURLParseException.class,
+                        () -> WebURLParser.getStrict().parse("http://127.0.0.1./")).getErrorType());
+        assertEquals(WebURLParseException.ErrorType.IPV4_NON_DECIMAL_PART,
+                assertThrows(WebURLParseException.class,
+                        () -> WebURLParser.getStrict().parse("http://0x7f.0.0.1/")).getErrorType());
     }
 
     /// Tests that browser input leaves complete absolute URL strings to standard URL parsing.

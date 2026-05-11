@@ -47,13 +47,13 @@ public final class WebURLParseException extends IllegalArgumentException {
         DOMAIN_INVALID_CODE_POINT("domain-invalid-code-point", "The host contains a forbidden domain code point"),
 
         /// The `domain-to-Unicode` validation error.
-        DOMAIN_TO_UNICODE("domain-to-Unicode", "Unicode ToUnicode recorded an error"),
+        DOMAIN_TO_UNICODE("domain-to-Unicode", "Unicode ToUnicode recorded an error", false),
 
         /// The `host-invalid-code-point` validation error.
         HOST_INVALID_CODE_POINT("host-invalid-code-point", "The opaque host contains a forbidden host code point"),
 
         /// The `IPv4-empty-part` validation error.
-        IPV4_EMPTY_PART("IPv4-empty-part", "The IPv4 address ends with a dot"),
+        IPV4_EMPTY_PART("IPv4-empty-part", "The IPv4 address ends with a dot", false),
 
         /// The `IPv4-too-many-parts` validation error.
         IPV4_TOO_MANY_PARTS("IPv4-too-many-parts", "The IPv4 address has more than four parts"),
@@ -62,7 +62,11 @@ public final class WebURLParseException extends IllegalArgumentException {
         IPV4_NON_NUMERIC_PART("IPv4-non-numeric-part", "An IPv4 address part is not numeric"),
 
         /// The `IPv4-non-decimal-part` validation error.
-        IPV4_NON_DECIMAL_PART("IPv4-non-decimal-part", "The IPv4 address contains hexadecimal or octal notation"),
+        IPV4_NON_DECIMAL_PART(
+                "IPv4-non-decimal-part",
+                "The IPv4 address contains hexadecimal or octal notation",
+                false
+        ),
 
         /// The `IPv4-out-of-range-part` validation error.
         IPV4_OUT_OF_RANGE_PART("IPv4-out-of-range-part", "An IPv4 address part is out of range"),
@@ -107,12 +111,13 @@ public final class WebURLParseException extends IllegalArgumentException {
         IPV4_IN_IPV6_TOO_FEW_PARTS("IPv4-in-IPv6-too-few-parts", "The embedded IPv4 address contains too few parts"),
 
         /// The `invalid-URL-unit` validation error.
-        INVALID_URL_UNIT("invalid-URL-unit", "The input contains a code point that is not a URL unit"),
+        INVALID_URL_UNIT("invalid-URL-unit", "The input contains a code point that is not a URL unit", false),
 
         /// The `special-scheme-missing-following-solidus` validation error.
         SPECIAL_SCHEME_MISSING_FOLLOWING_SOLIDUS(
                 "special-scheme-missing-following-solidus",
-                "The special scheme is not followed by two solidus characters"
+                "The special scheme is not followed by two solidus characters",
+                false
         ),
 
         /// The `missing-scheme-non-relative-URL` validation error.
@@ -122,10 +127,14 @@ public final class WebURLParseException extends IllegalArgumentException {
         ),
 
         /// The `invalid-reverse-solidus` validation error.
-        INVALID_REVERSE_SOLIDUS("invalid-reverse-solidus", "A special URL uses a reverse solidus instead of a solidus"),
+        INVALID_REVERSE_SOLIDUS(
+                "invalid-reverse-solidus",
+                "A special URL uses a reverse solidus instead of a solidus",
+                false
+        ),
 
         /// The `invalid-credentials` validation error.
-        INVALID_CREDENTIALS("invalid-credentials", "The input includes credentials"),
+        INVALID_CREDENTIALS("invalid-credentials", "The input includes credentials", false),
 
         /// The `host-missing` validation error.
         HOST_MISSING("host-missing", "The input has a special scheme but does not contain a host"),
@@ -139,13 +148,15 @@ public final class WebURLParseException extends IllegalArgumentException {
         /// The `file-invalid-Windows-drive-letter` validation error.
         FILE_INVALID_WINDOWS_DRIVE_LETTER(
                 "file-invalid-Windows-drive-letter",
-                "The relative file URL starts with a Windows drive letter"
+                "The relative file URL starts with a Windows drive letter",
+                false
         ),
 
         /// The `file-invalid-Windows-drive-letter-host` validation error.
         FILE_INVALID_WINDOWS_DRIVE_LETTER_HOST(
                 "file-invalid-Windows-drive-letter-host",
-                "The file URL host is a Windows drive letter"
+                "The file URL host is a Windows drive letter",
+                false
         );
 
         /// The URL Standard validation error name.
@@ -154,10 +165,19 @@ public final class WebURLParseException extends IllegalArgumentException {
         /// The default human-readable parse failure reason.
         private final String reason;
 
+        /// Whether this error must be rejected by every parser.
+        private final boolean rejectionRequired;
+
         /// Creates an error type.
         ErrorType(String errorName, String reason) {
+            this(errorName, reason, true);
+        }
+
+        /// Creates an error type.
+        ErrorType(String errorName, String reason, boolean rejectionRequired) {
             this.errorName = errorName;
             this.reason = reason;
+            this.rejectionRequired = rejectionRequired;
         }
 
         /// Returns the URL Standard validation error name.
@@ -168,6 +188,19 @@ public final class WebURLParseException extends IllegalArgumentException {
         /// Returns the default human-readable parse failure reason.
         public String getReason() {
             return reason;
+        }
+
+        /// Returns whether this validation error is a parse failure that every parser must reject.
+        ///
+        /// When this method returns `true`, parser configuration cannot make the input acceptable. When it returns
+        /// `false`, the error is recoverable and may be accepted or rejected according to a parser policy.
+        public boolean isRejectionRequired() {
+            return rejectionRequired;
+        }
+
+        /// Returns whether this validation error is recoverable by a non-strict parser.
+        public boolean isRecoverable() {
+            return !rejectionRequired;
         }
     }
 

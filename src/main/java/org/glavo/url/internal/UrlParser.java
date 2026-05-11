@@ -145,7 +145,11 @@ public final class UrlParser {
     }
 
     /// Parses a host string.
-    private static UrlHost parseHost(String input, boolean opaque) {
+    private static UrlHost parseHost(
+            String input,
+            boolean opaque,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
         if (input.startsWith("[")) {
             if (!input.endsWith("]")) {
                 throw parseError(input, WebURLParseException.ErrorType.IPV6_UNCLOSED, input.length());
@@ -164,7 +168,7 @@ public final class UrlParser {
         String asciiDomain = domainToAscii(domain);
 
         if (endsInANumber(asciiDomain)) {
-            return UrlHost.ipv4(parseIpv4(asciiDomain));
+            return UrlHost.ipv4(parseIpv4(asciiDomain, rejectedValidationErrors));
         }
 
         return UrlHost.domain(asciiDomain);
@@ -347,8 +351,19 @@ public final class UrlParser {
 
     /// Parses an IPv4 address.
     private static long parseIpv4(String input) {
+        return parseIpv4(input, Set.of());
+    }
+
+    /// Parses an IPv4 address.
+    private static long parseIpv4(
+            String input,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
         int end = input.length();
         if (end > 1 && input.charAt(end - 1) == '.') {
+            if (rejectedValidationErrors.contains(WebURLParseException.ErrorType.IPV4_EMPTY_PART)) {
+                throw parseError(input, WebURLParseException.ErrorType.IPV4_EMPTY_PART, end - 1);
+            }
             end--;
         }
 
@@ -368,6 +383,10 @@ public final class UrlParser {
             Long number = parseIpv4Number(input, partStart, partEnd);
             if (number == null) {
                 throw parseError(input, WebURLParseException.ErrorType.IPV4_NON_NUMERIC_PART, partStart);
+            }
+            if (isNonDecimalIpv4Number(input, partStart, partEnd)
+                    && rejectedValidationErrors.contains(WebURLParseException.ErrorType.IPV4_NON_DECIMAL_PART)) {
+                throw parseError(input, WebURLParseException.ErrorType.IPV4_NON_DECIMAL_PART, partStart);
             }
             numbers[numbersCount] = number;
             numbersCount++;
@@ -394,6 +413,15 @@ public final class UrlParser {
             ipv4 += numbers[i] << (8 * (3 - i));
         }
         return ipv4;
+    }
+
+    /// Returns whether an IPv4 number uses hexadecimal or octal notation.
+    private static boolean isNonDecimalIpv4Number(String input, int start, int end) {
+        if (end - start < 2 || input.charAt(start) != '0') {
+            return false;
+        }
+        char next = input.charAt(start + 1);
+        return next == 'x' || next == 'X' || next >= '0' && next <= '9';
     }
 
     /// Parses an IPv6 address.
@@ -1157,7 +1185,7 @@ public final class UrlParser {
         private UrlHost parseBufferedHost(int hostEndIndex) {
             String hostInput = buffer.toString();
             try {
-                return parseHost(hostInput, isNotSpecial());
+                return parseHost(hostInput, isNotSpecial(), rejectedValidationErrors);
             } catch (WebURLParseException exception) {
                 int hostStartIndex = hostEndIndex - hostInput.length();
                 int index = exception.getIndex() < 0 ? hostStartIndex : hostStartIndex + exception.getIndex();

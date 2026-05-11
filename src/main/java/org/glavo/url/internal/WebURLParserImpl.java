@@ -32,7 +32,17 @@ public final class WebURLParserImpl implements WebURLParser {
 
     /// The validation errors rejected by the strict parser.
     private static final @Unmodifiable Set<WebURLParseException.ErrorType> STRICT_REJECTED_VALIDATION_ERRORS =
-            Set.of(WebURLParseException.ErrorType.values());
+            Set.of(
+                    WebURLParseException.ErrorType.DOMAIN_TO_UNICODE,
+                    WebURLParseException.ErrorType.IPV4_EMPTY_PART,
+                    WebURLParseException.ErrorType.IPV4_NON_DECIMAL_PART,
+                    WebURLParseException.ErrorType.INVALID_URL_UNIT,
+                    WebURLParseException.ErrorType.SPECIAL_SCHEME_MISSING_FOLLOWING_SOLIDUS,
+                    WebURLParseException.ErrorType.INVALID_REVERSE_SOLIDUS,
+                    WebURLParseException.ErrorType.INVALID_CREDENTIALS,
+                    WebURLParseException.ErrorType.FILE_INVALID_WINDOWS_DRIVE_LETTER,
+                    WebURLParseException.ErrorType.FILE_INVALID_WINDOWS_DRIVE_LETTER_HOST
+            );
 
     /// The default parser implementation.
     public static final WebURLParser DEFAULT = new WebURLParserImpl(DEFAULT_REJECTED_VALIDATION_ERRORS);
@@ -48,10 +58,10 @@ public final class WebURLParserImpl implements WebURLParser {
         this.rejectedValidationErrors = rejectedValidationErrors;
     }
 
-    /// Returns whether non-fatal validation errors are parse failures.
+    /// Returns the recoverable validation errors rejected by this parser.
     @Override
-    public boolean isStrictValidationEnabled() {
-        return rejectedValidationErrors.equals(STRICT_REJECTED_VALIDATION_ERRORS);
+    public @Unmodifiable Set<WebURLParseException.ErrorType> getRejectedValidationErrors() {
+        return rejectedValidationErrors;
     }
 
     /// Parses an absolute input string and returns the parsed URL.
