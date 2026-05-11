@@ -19,9 +19,11 @@ import org.glavo.url.WebURLParseException;
 import org.glavo.url.internal.idna.UTS46;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Set;
 
 /// WHATWG URL parser, serializer, and related internal algorithms.
 @NotNullByDefault
@@ -45,7 +47,7 @@ public final class UrlParser {
             @Nullable UrlRecord url,
             @Nullable State stateOverride
     ) {
-        return basicParse(input, baseUrl, url, stateOverride, false);
+        return basicParse(input, baseUrl, url, stateOverride, Set.of());
     }
 
     /// Runs the basic URL parser.
@@ -54,10 +56,10 @@ public final class UrlParser {
             @Nullable WebURLImpl baseUrl,
             @Nullable UrlRecord url,
             @Nullable State stateOverride,
-            boolean strictValidation
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
     ) {
         try {
-            return basicParseRequired(input, baseUrl, url, stateOverride, strictValidation);
+            return basicParseRequired(input, baseUrl, url, stateOverride, rejectedValidationErrors);
         } catch (IllegalArgumentException ignored) {
             return null;
         }
@@ -70,7 +72,7 @@ public final class UrlParser {
             @Nullable UrlRecord url,
             @Nullable State stateOverride
     ) {
-        return basicParseRequired(input, baseUrl, url, stateOverride, false);
+        return basicParseRequired(input, baseUrl, url, stateOverride, Set.of());
     }
 
     /// Runs the basic URL parser and throws when parsing fails.
@@ -79,15 +81,15 @@ public final class UrlParser {
             @Nullable WebURLImpl baseUrl,
             @Nullable UrlRecord url,
             @Nullable State stateOverride,
-            boolean strictValidation
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
     ) {
-        if (!strictValidation && baseUrl == null && url == null && stateOverride == null) {
+        if (rejectedValidationErrors.isEmpty() && baseUrl == null && url == null && stateOverride == null) {
             @Nullable WebURLImpl fastUrl = UrlFastParser.parse(input);
             if (fastUrl != null) {
                 return fastUrl;
             }
         }
-        StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride, strictValidation);
+        StateMachine stateMachine = new StateMachine(input, baseUrl, url, stateOverride, rejectedValidationErrors);
         return stateMachine.toUrl();
     }
 
@@ -916,8 +918,8 @@ public final class UrlParser {
         private final @Nullable WebURLImpl base;
         /// State override.
         private final @Nullable State stateOverride;
-        /// Whether non-fatal validation errors are parse failures.
-        private final boolean strictValidation;
+        /// Validation errors that are treated as parse failures.
+        private final @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors;
         /// Mutable URL record produced by this parser run.
         private final UrlRecord record;
         /// Current parser state.
@@ -937,12 +939,12 @@ public final class UrlParser {
                 @Nullable WebURLImpl base,
                 @Nullable UrlRecord url,
                 @Nullable State stateOverride,
-                boolean strictValidation
+                @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
         ) {
             this.pointer = 0;
             this.base = base;
             this.stateOverride = stateOverride;
-            this.strictValidation = strictValidation;
+            this.rejectedValidationErrors = rejectedValidationErrors;
             this.record = url == null ? new UrlRecord() : url;
             this.state = stateOverride == null ? State.SCHEME_START : stateOverride;
 
@@ -951,7 +953,7 @@ public final class UrlParser {
             if (url == null) {
                 String trimmed = trimControlChars(text);
                 if (!trimmed.equals(text)) {
-                    if (strictValidation) {
+                    if (rejectsValidationError(WebURLParseException.ErrorType.INVALID_URL_UNIT)) {
                         throw new WebURLParseException(
                                 inputText,
                                 WebURLParseException.ErrorType.INVALID_URL_UNIT,
@@ -964,7 +966,8 @@ public final class UrlParser {
             }
 
             String withoutTabsAndNewlines = trimTabAndNewline(text);
-            if (strictValidation && !withoutTabsAndNewlines.equals(text)) {
+            if (rejectsValidationError(WebURLParseException.ErrorType.INVALID_URL_UNIT)
+                    && !withoutTabsAndNewlines.equals(text)) {
                 throw new WebURLParseException(
                         inputText,
                         WebURLParseException.ErrorType.INVALID_URL_UNIT,
@@ -1026,9 +1029,14 @@ public final class UrlParser {
 
         /// Records a validation error without forcing parser failure.
         private void recordValidationError(WebURLParseException.ErrorType errorType) {
-            if (strictValidation) {
+            if (rejectsValidationError(errorType)) {
                 throw error(errorType);
             }
+        }
+
+        /// Returns whether a validation error is treated as a parse failure.
+        private boolean rejectsValidationError(WebURLParseException.ErrorType errorType) {
+            return rejectedValidationErrors.contains(errorType);
         }
 
         /// Creates a parser exception at the current input pointer.

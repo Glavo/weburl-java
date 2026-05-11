@@ -19,8 +19,10 @@ import org.glavo.url.WebURL;
 import org.glavo.url.WebURLParseException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Objects;
+import java.util.Set;
 
 /// Internal parsing helpers used by `WebURL` static factory methods.
 @NotNullByDefault
@@ -36,100 +38,129 @@ public final class WebURLParsing {
 
     /// Parses an input string and returns the parsed URL.
     public static WebURL parse(String input) {
-        return parse(input, false);
+        return parse(input, Set.of());
     }
 
     /// Parses an input string and returns the parsed URL.
-    public static WebURL parse(String input, boolean strictValidation) {
-        return parseRequired(input, null, strictValidation, "Invalid URL");
+    public static WebURL parse(
+            String input,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
+        return parseRequired(input, null, rejectedValidationErrors, "Invalid URL");
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
     public static WebURL parse(String input, String base) {
-        return parse(input, base, false);
+        return parse(input, base, Set.of());
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
-    public static WebURL parse(String input, String base, boolean strictValidation) {
-        return parseRequired(input, parseBaseRequired(base, strictValidation), strictValidation, "Invalid URL");
+    public static WebURL parse(
+            String input,
+            String base,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
+        return parseRequired(input, parseBaseRequired(base, rejectedValidationErrors), rejectedValidationErrors,
+                "Invalid URL");
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
     public static WebURL parse(String input, WebURL base) {
-        return parse(input, base, false);
+        return parse(input, base, Set.of());
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
-    public static WebURL parse(String input, WebURL base, boolean strictValidation) {
-        return parseRequired(input, implementation(base), strictValidation, "Invalid URL");
+    public static WebURL parse(
+            String input,
+            WebURL base,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
+        return parseRequired(input, implementation(base), rejectedValidationErrors, "Invalid URL");
     }
 
     /// Parses an input string and returns `null` on failure.
     public static @Nullable WebURL tryParse(String input) {
-        return tryParse(input, false);
+        return tryParse(input, Set.of());
     }
 
     /// Parses an input string and returns `null` on failure.
-    public static @Nullable WebURL tryParse(String input, boolean strictValidation) {
-        return parseNullable(input, null, strictValidation);
+    public static @Nullable WebURL tryParse(
+            String input,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
+        return parseNullable(input, null, rejectedValidationErrors);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
     public static @Nullable WebURL tryParse(String input, String base) {
-        return tryParse(input, base, false);
+        return tryParse(input, base, Set.of());
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
-    public static @Nullable WebURL tryParse(String input, String base, boolean strictValidation) {
-        WebURLImpl parsedBase = parseNullable(base, null, strictValidation);
-        return parsedBase == null ? null : parseNullable(input, parsedBase, strictValidation);
+    public static @Nullable WebURL tryParse(
+            String input,
+            String base,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
+        WebURLImpl parsedBase = parseNullable(base, null, rejectedValidationErrors);
+        return parsedBase == null ? null : parseNullable(input, parsedBase, rejectedValidationErrors);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
     public static @Nullable WebURL tryParse(String input, WebURL base) {
-        return tryParse(input, base, false);
+        return tryParse(input, base, Set.of());
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
-    public static @Nullable WebURL tryParse(String input, WebURL base, boolean strictValidation) {
-        return parseNullable(input, implementation(base), strictValidation);
+    public static @Nullable WebURL tryParse(
+            String input,
+            WebURL base,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
+        return parseNullable(input, implementation(base), rejectedValidationErrors);
     }
 
     /// Parses a browser-style URL input and returns the parsed URL.
     public static WebURL parseBrowserInput(String input) {
-        return parseBrowserInput(input, false);
+        return parseBrowserInput(input, Set.of());
     }
 
     /// Parses a browser-style URL input and returns the parsed URL.
-    public static WebURL parseBrowserInput(String input, boolean strictValidation) {
+    public static WebURL parseBrowserInput(
+            String input,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
-        return parseRequired(Objects.requireNonNullElse(addressInput, input), null, strictValidation,
+        return parseRequired(Objects.requireNonNullElse(addressInput, input), null, rejectedValidationErrors,
                 "Invalid browser input");
     }
 
     /// Parses a browser-style URL input and returns `null` on failure.
     public static @Nullable WebURL tryParseBrowserInput(String input) {
-        return tryParseBrowserInput(input, false);
+        return tryParseBrowserInput(input, Set.of());
     }
 
     /// Parses a browser-style URL input and returns `null` on failure.
-    public static @Nullable WebURL tryParseBrowserInput(String input, boolean strictValidation) {
+    public static @Nullable WebURL tryParseBrowserInput(
+            String input,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
-        return parseNullable(Objects.requireNonNullElse(addressInput, input), null, strictValidation);
+        return parseNullable(Objects.requireNonNullElse(addressInput, input), null, rejectedValidationErrors);
     }
 
     /// Parses an input string and throws when parsing fails.
     private static WebURL parseRequired(
             String input,
             @Nullable WebURLImpl base,
-            boolean strictValidation,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors,
             String reason
     ) {
         Objects.requireNonNull(input, "input");
         try {
-            return UrlParser.basicParseRequired(input, base, null, null, strictValidation);
+            return UrlParser.basicParseRequired(input, base, null, null, rejectedValidationErrors);
         } catch (WebURLParseException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
@@ -138,10 +169,13 @@ public final class WebURLParsing {
     }
 
     /// Parses a base URL string and throws when parsing fails.
-    private static WebURLImpl parseBaseRequired(String base, boolean strictValidation) {
+    private static WebURLImpl parseBaseRequired(
+            String base,
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
+    ) {
         Objects.requireNonNull(base, "base");
         try {
-            return UrlParser.basicParseRequired(base, null, null, null, strictValidation);
+            return UrlParser.basicParseRequired(base, null, null, null, rejectedValidationErrors);
         } catch (WebURLParseException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
@@ -153,10 +187,10 @@ public final class WebURLParsing {
     private static @Nullable WebURLImpl parseNullable(
             String input,
             @Nullable WebURLImpl base,
-            boolean strictValidation
+            @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
     ) {
         Objects.requireNonNull(input, "input");
-        return UrlParser.basicParse(input, base, null, null, strictValidation);
+        return UrlParser.basicParse(input, base, null, null, rejectedValidationErrors);
     }
 
     /// Converts a browser-style URL input to an absolute URL input, or returns `null` for standard URL input.

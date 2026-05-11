@@ -16,78 +16,89 @@
 package org.glavo.url.internal;
 
 import org.glavo.url.WebURL;
+import org.glavo.url.WebURLParseException;
 import org.glavo.url.WebURLParser;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.Set;
 
 /// Implementation object behind the public `WebURLParser` API.
 @NotNullByDefault
 public final class WebURLParserImpl implements WebURLParser {
+    /// The validation errors accepted by the default parser.
+    private static final @Unmodifiable Set<WebURLParseException.ErrorType> DEFAULT_REJECTED_VALIDATION_ERRORS = Set.of();
+
+    /// The validation errors rejected by the strict parser.
+    private static final @Unmodifiable Set<WebURLParseException.ErrorType> STRICT_REJECTED_VALIDATION_ERRORS =
+            Set.of(WebURLParseException.ErrorType.values());
+
     /// The default parser implementation.
-    public static final WebURLParser DEFAULT = new WebURLParserImpl(false);
+    public static final WebURLParser DEFAULT = new WebURLParserImpl(DEFAULT_REJECTED_VALIDATION_ERRORS);
 
     /// The strict parser implementation.
-    public static final WebURLParser STRICT = new WebURLParserImpl(true);
+    public static final WebURLParser STRICT = new WebURLParserImpl(STRICT_REJECTED_VALIDATION_ERRORS);
 
-    /// Whether non-fatal validation errors are parse failures.
-    private final boolean strictValidation;
+    /// Non-fatal validation errors that should be treated as parse failures.
+    private final @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors;
 
     /// Creates a parser implementation.
-    private WebURLParserImpl(boolean strictValidation) {
-        this.strictValidation = strictValidation;
+    private WebURLParserImpl(@Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors) {
+        this.rejectedValidationErrors = rejectedValidationErrors;
     }
 
     /// Returns whether non-fatal validation errors are parse failures.
     @Override
     public boolean isStrictValidationEnabled() {
-        return strictValidation;
+        return rejectedValidationErrors.equals(STRICT_REJECTED_VALIDATION_ERRORS);
     }
 
     /// Parses an absolute input string and returns the parsed URL.
     @Override
     public WebURL parse(String input) {
-        return WebURLParsing.parse(input, strictValidation);
+        return WebURLParsing.parse(input, rejectedValidationErrors);
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
     @Override
     public WebURL parse(String input, String base) {
-        return WebURLParsing.parse(input, base, strictValidation);
+        return WebURLParsing.parse(input, base, rejectedValidationErrors);
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
     @Override
     public WebURL parse(String input, WebURL base) {
-        return WebURLParsing.parse(input, base, strictValidation);
+        return WebURLParsing.parse(input, base, rejectedValidationErrors);
     }
 
     /// Parses an absolute input string and returns `null` on failure.
     @Override
     public @Nullable WebURL tryParse(String input) {
-        return WebURLParsing.tryParse(input, strictValidation);
+        return WebURLParsing.tryParse(input, rejectedValidationErrors);
     }
 
     /// Parses an input string against a base URL string and returns `null` on failure.
     @Override
     public @Nullable WebURL tryParse(String input, String base) {
-        return WebURLParsing.tryParse(input, base, strictValidation);
+        return WebURLParsing.tryParse(input, base, rejectedValidationErrors);
     }
 
     /// Parses an input string against a base URL and returns `null` on failure.
     @Override
     public @Nullable WebURL tryParse(String input, WebURL base) {
-        return WebURLParsing.tryParse(input, base, strictValidation);
+        return WebURLParsing.tryParse(input, base, rejectedValidationErrors);
     }
 
     /// Parses a browser-style URL input and returns the parsed URL.
     @Override
     public WebURL parseBrowserInput(String input) {
-        return WebURLParsing.parseBrowserInput(input, strictValidation);
+        return WebURLParsing.parseBrowserInput(input, rejectedValidationErrors);
     }
 
     /// Parses a browser-style URL input and returns `null` on failure.
     @Override
     public @Nullable WebURL tryParseBrowserInput(String input) {
-        return WebURLParsing.tryParseBrowserInput(input, strictValidation);
+        return WebURLParsing.tryParseBrowserInput(input, rejectedValidationErrors);
     }
 }
