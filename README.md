@@ -12,10 +12,24 @@ Chrome, Firefox, and Safari do, giving Java applications the same URL behavior a
 > Despite the name, WebURL is not limited to `http`/`https` — it handles any URL scheme,
 > including `file`, `ws`, `wss`, `ftp`, `data`, `blob`, `mailto`, `tel`, `urn` and more.
 
+## Contents
+
+- [Why WebURL?](#why-weburl)
+- [Add to Your Project](#add-to-your-project)
+- [Quick Start](#quick-start)
+    - [Parsing URLs](#parsing-urls)
+    - [URL Components](#url-components)
+    - [URL Normalization](#url-normalization)
+    - [Error Handling](#error-handling)
+    - [Converting to and from `java.net.URI` / `java.net.URL`](#converting-to-and-from-javaneturi--javaneturl)
+    - [Parsing User Input](#parsing-user-input)
+    - [Display](#display)
+- [License](#license)
+
 ## Why WebURL?
 
-The Java standard library ships two classes for representing URLs: 
-[`java.net.URI`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URI.html) 
+The Java standard library ships two classes for representing URLs:
+[`java.net.URI`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URI.html)
 and [`java.net.URL`](https://docs.oracle.com/en/java/javase/25/docs//api/java.base/java/net/URL.html).
 Both have well-known, serious shortcomings.
 
@@ -25,7 +39,7 @@ Both have well-known, serious shortcomings.
 [RFC 3986](https://www.ietf.org/rfc/rfc3986.txt) in 2005 and is a far cry from how URLs are handled on the modern
 web. Many URLs that browsers accept every day are rejected or mishandled by the standard Java classes.
 
-For example, `URI.create("https://example.com/a b")` throws an `IllegalArgumentException` because 
+For example, `URI.create("https://example.com/a b")` throws an `IllegalArgumentException` because
 RFC 2396 does not allow the unencoded space,
 even though every major browser accepts this URL without complaint.
 
@@ -80,43 +94,36 @@ when used to process user-supplied input.
 `http://example.com/` and `http://93.184.216.34/` could be considered equal). This makes `URL` objects unsafe to
 use as keys in hash maps or sets, and can cause unexpected latency or failures in network-restricted environments.
 
-### WebURL for Java solves this problem
-
-WebURL for Java is designed to address all of the shortcomings described above.
+### WebURL for Java solves these problems
 
 **Modern standard.** WebURL follows the [WHATWG URL Standard](https://url.spec.whatwg.org/), the same
 specification implemented by every major browser. It passes the full
 [web-platform-tests](https://github.com/web-platform-tests/wpt/tree/master/url) URL test suite, so
 its behavior is tested against thousands of real-world URL inputs that a browser would accept.
 
-**Single, consistent API.** WebURL exposes one core class — `WebURL` — with unambiguous, well-defined
-semantics. There is no `URI`/`URL` split to navigate, no surprising round-trip failures, and no
-checked exceptions for URLs that are perfectly valid in practice.
+**Single, consistent, familiar API.** WebURL exposes one core class — `WebURL` — whose API closely mirrors
+`java.net.URI`, making it easy to learn and migrate to. There is no `URI`/`URL` split to navigate,
+no surprising round-trip failures, and no checked exceptions for URLs that are perfectly valid in practice.
 
 **Full IDN support.** WebURL implements UTS #46 (Unicode IDNA Compatibility Processing) directly
-from the Unicode-provided mapping tables, without requiring ICU4J or any external dependency.
-Internationalized domain names like `münchen.de` are automatically normalized to their ACE form
-`xn--mnchen-3ya.de` during parsing.
+from the Unicode-provided mapping tables. Internationalized domain names like `münchen.de` are
+automatically normalized to their ACE form `xn--mnchen-3ya.de` during parsing.
 
 **Lenient, browser-like input handling.** In addition to the strict standard parser, WebURL
 provides `parseBrowserInput()`, which applies the same heuristics a browser address bar uses —
 auto-detecting the scheme, handling scheme-free hostnames such as `example.com`, and converting
-local file paths into `file://` URLs — making it straightforward to process user-supplied input.
+local file paths into `file://` URLs.
 
 **Safe equality.** `WebURL.equals()` and `WebURL.hashCode()` are purely structural — they compare
 the serialized URL string and never touch the network. `WebURL` objects are safe to use as keys in
 `HashMap` or `HashSet`.
 
-## Features
+**Zero dependencies.** WebURL has no runtime dependencies beyond the `java.base` module, making it
+lightweight and compatible with any Java environment.
 
-- Full conformance with the WHATWG URL Standard, passing
-  the [web-platform-tests](https://github.com/web-platform-tests/wpt/tree/master/url) URL test suite.
-- No dependencies beyond the `java.base` module.
-- API closely mirrors Java `URI`, making it easy to learn and migrate to.
-- Good interoperability with Java `URI` and `URL`, with straightforward conversion utilities.
-- Full IDN support conforming to UTS #46, implemented from Unicode-provided mapping tables without requiring ICU4J.
-- Default parsing strictly follows the specification, with additional convenience methods for parsing user input that
-  simulate heuristic browser address-bar behavior, handling scheme-fewer URIs and local file paths intelligently.
+**Interoperable with the standard library.** `WebURL` provides straightforward conversion to and from
+`java.net.URI`, `java.net.URL`, and `java.nio.file.Path` — easy to adopt incrementally in existing
+codebases.
 
 ## Add to Your Project
 
@@ -131,7 +138,6 @@ dependencies {
 Maven:
 
 ```xml
-
 <dependency>
     <groupId>org.glavo</groupId>
     <artifactId>weburl</artifactId>
@@ -164,7 +170,7 @@ WebURL next = docs.resolve("guide/");
 
 ### URL Components
 
-WebURL provides an API similar to `java.net.URI` for reading URL components: 
+WebURL provides an API similar to `java.net.URI` for reading URL components:
 
 ```java
 WebURL url = WebURL.parse("https://user:pass@example.com:8080/a%2Fb?x=a%26b#frag%23ment");
@@ -185,7 +191,7 @@ Use `getRawPort()` to inspect the normalized serialized port component.
 
 ### URL Normalization
 
-`WebURL` normalizes URLs according to the WHATWG specification during parsing, 
+`WebURL` normalizes URLs according to the WHATWG specification during parsing,
 so all `WebURL` instances are always normalized.
 
 You can obtain the normalized URL string via `href()` or `toString()`.
@@ -256,22 +262,10 @@ WebURL.parseBrowserInput("/tmp/a b#c").href();
 // -> "file:///tmp/a%20b%23c"
 ```
 
-We recommend using this method to parse and normalize user input, but when serializing you should save the
-normalized result rather than the user's original input.
-
-Because this method is not part of the WHATWG URL Standard, we may adjust its behavior at any time to better
-match user expectations, so you should not assume that its parsing rules are stable across different versions of
-WebURL for Java.
-
-This method makes its best effort to match browser address-bar behavior. However, different browsers — or even
-different versions of the same browser — may behave differently, so this goal is inherently fuzzy, and we can
-only approximate it rather than achieve full consistency.
-
-In addition, the heuristic algorithms used by browser address bars may take into account complex factors such as
-browsing history, and can support multi-step operations such as first trying `https` and then falling back to
-`http`. `parseBrowserInput`, by design, is a simple, side-effect-free conversion from `String` to `WebURL` that
-performs no actual network access and records no history, so some behaviors achievable in a browser address bar
-may not be reachable with this method.
+`parseBrowserInput()` is not part of the WHATWG URL Standard — its heuristics may change across versions
+to better match browser address-bar behavior. It is a side-effect-free conversion that performs no network
+access and records no history, so it can only approximate browser behavior. When persisting results, save
+the normalized `href()` rather than the original user input.
 
 ### Display
 
