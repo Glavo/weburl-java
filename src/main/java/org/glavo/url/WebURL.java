@@ -85,12 +85,14 @@ import java.nio.file.Path;
 /// parser from {@link WebURLParser#getStrict()}:
 ///
 /// ```java
-/// // Default: recovers from non-fatal issues
-/// WebURL defaultUrl = WebURL.parse("https://example.com:443/");
+/// // Default: accepts recoverable validation errors and returns the normalized URL
+/// WebURL defaultUrl = WebURL.parse("https://example.com\\path");
+/// // defaultUrl.href() == "https://example.com/path"
 ///
-/// // Strict: rejects all validation errors
+/// // Strict: rejects the same input because the reverse solidus is a validation error
 /// WebURLParser strict = WebURLParser.getStrict();
-/// WebURL strictUrl = strict.parse("https://example.com/path");
+/// WebURL strictUrl = strict.parse("https://example.com\\path");
+/// // throws WebURLParseException: A special URL uses a reverse solidus instead of a solidus at index 19: https://example.com\path
 /// ```
 ///
 /// The default and strict parsers are both immutable and thread-safe.
