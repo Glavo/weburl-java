@@ -14,62 +14,44 @@
  * limitations under the License.
  */
 
-/// A modern, zero-dependency Java URL library that implements the
-/// [WHATWG URL Standard](https://url.spec.whatwg.org/).
+
+/// Browser-grade WHATWG URL parsing, normalization, and serialization for Java.
 ///
 /// # Overview
 ///
-/// This module provides URL parsing, normalization, and serialization through the {@code org.glavo.url}
-/// package. It follows the WHATWG URL Standard implemented by modern browsers, making it suitable for
-/// applications that need URL handling aligned with the web platform.
+/// The `org.glavo.url` module provides a modern, zero-dependency URL library that implements the
+/// [WHATWG URL Living Standard](https://url.spec.whatwg.org/) — the same specification followed
+/// by Chrome, Firefox, and Safari. It is designed as a drop-in improvement over
+/// `java.net.URI` and `java.net.URL` for applications that need URL handling aligned with the
+/// web platform.
 ///
-/// # Exported Packages
+/// # Module Contents
 ///
-/// | Package           | Contents                                                   |
-/// |-------------------|------------------------------------------------------------|
-/// | {@code org.glavo.url} | Core API: {@code WebURL}, {@code WebURLParser}, {@code WebURLParseException} |
+/// The single exported package is [org.glavo.url].
+/// It contains three public types:
 ///
-/// Internal implementation classes in {@code org.glavo.url.internal} are not exported.
+/// | Type | Role |
+/// |------|------|
+/// | [org.glavo.url.WebURL] | Immutable, normalized, absolute URL value |
+/// | [org.glavo.url.WebURLParser] | Reusable parser with configurable validation policy |
+/// | [org.glavo.url.WebURLParseException] | Unchecked exception carrying structured parse-error details |
 ///
-/// # Module Dependencies
+/// # Dependencies
 ///
-/// This module requires only {@code java.base} at runtime.
+/// This module requires **only `java.base`** at runtime.
+/// [JetBrains Annotations](https://github.com/JetBrains/java-annotations) (`org.jetbrains.annotations`)
+/// are used for compile-time nullability checking and are declared as a static (`compileOnly`)
+/// dependency; they are not required on the module path at runtime.
 ///
-/// # Design Principles
+/// # Thread Safety
 ///
-/// - **WHATWG URL processing:** The module is tested against web-platform-tests URL and IDNA data covering
-///   thousands of real-world URL inputs.
-/// - **IDNA UTS #46:** Internationalized domain names are processed with Unicode 17.0.0 IDNA mapping tables,
-///   including Punycode encoding and decoding.
-/// - **Zero runtime dependencies:** Beyond {@code java.base}, no other module or library is required.
-/// - **Immutable value types:** {@code WebURL} is deeply immutable and thread-safe. Parsers are also
-///   immutable and thread-safe.
-/// - **Safe equality:** No network I/O is ever performed by {@code equals()} or {@code hashCode()}.
-/// - **Interoperable:** Seamless conversion to and from {@code java.net.URI}, {@code java.net.URL}, and
-///   {@code java.nio.file.Path}.
-///
-/// # Usage
-///
-/// Add this module to your module path and declare a dependency:
-///
-/// ```java
-/// module my.app {
-///     requires org.glavo.url;
-/// }
-/// ```
-///
-/// Then use the public API:
-///
-/// ```java
-/// import org.glavo.url.WebURL;
-///
-/// WebURL url = WebURL.parse("https://example.com/path");
-/// String host = url.getHost();   // "example.com"
-/// String href = url.href();      // "https://example.com/path"
-/// ```
+/// [org.glavo.url.WebURL] instances are deeply immutable and safe for concurrent use without
+/// additional synchronization. The built-in parsers exposed by
+/// [org.glavo.url.WebURLParser#getDefault()] and
+/// [org.glavo.url.WebURLParser#getStrict()] are likewise immutable and thread-safe.
 ///
 /// @see <a href="https://url.spec.whatwg.org/">WHATWG URL Living Standard</a>
-/// @see <a href="https://github.com/Glavo/weburl-java">Project repository</a>
+/// @see org.glavo.url
 module org.glavo.url {
     requires static org.jetbrains.annotations;
 
