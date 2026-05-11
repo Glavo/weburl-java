@@ -25,65 +25,308 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 
-/// An immutable Java representation of a WHATWG URL.
+/// An immutable, absolute URL value parsed and normalized according to the
+/// [WHATWG URL Standard](https://url.spec.whatwg.org/).
 ///
-/// A URL identifies or locates a resource using the syntax and processing rules of the WHATWG URL Standard.
-/// Every `WebURL` is absolute: it has a scheme, and any relative reference supplied to a base-aware `parse` or
-/// `tryParse` method is resolved against that base before a `WebURL` is returned. Once created, a `WebURL` is
-/// immutable and its complete identity is the serialized URL returned by {@link #href()}.
+/// # Overview
 ///
-/// A URL has the following components:
+/// `WebURL` provides browser-compatible URL handling in Java. It implements the same URL parsing,
+/// normalization, and serialization rules used by Chrome, Firefox, and Safari, making it a modern
+/// alternative to `java.net.URI` and `java.net.URL` when WHATWG URL conformance matters.
 ///
-/// - A `scheme`, always present and returned by {@link #getScheme()} without the trailing colon. The scheme is
-///   stored in lower-case ASCII.
-/// - Optional credentials made from a `username` and an optional `password`. These are serialized before the
-///   host as `username[:password]@` and are exposed through username, password, and user-info getters.
-/// - An optional `host`. A present host makes the URL hierarchical and gives it an authority component. Domain
-///   hosts are processed with URL Standard domain-to-ASCII rules, IPv4 hosts are normalized to dotted decimal
-///   form, and IPv6 hosts are serialized in brackets. Some hierarchical URLs, such as `file:///path`, have an
-///   empty host; opaque URLs such as `data:text/plain,hi` have no host.
-/// - An optional `port` component. Default ports are removed as part of URL normalization, so
-///   `https://example.com:443/` has no serialized port component. {@link #getRawPort()} exposes the
-///   normalized port component, while {@link #getPort()} returns either that stored port or the known default
-///   port for the URL's scheme.
-/// - A `path`, always present as a string. Hierarchical URLs have a path made from path segments; many special
-///   URLs serialize that path with a leading slash. Non-special URLs can have an opaque path whose syntax is
-///   not a slash-separated path hierarchy.
-/// - An optional `query`, serialized after `?`. An absent query is `null`; a present empty query is the empty
-///   string.
-/// - An optional `fragment`, serialized after `#`. An absent fragment is `null`; a present empty fragment is
-///   the empty string.
+/// Every `WebURL` is **absolute**: it has a non-empty scheme, and any relative reference passed
+/// to a base-aware {@code parse} or {@code tryParse} method is resolved against the base *before*
+/// a `WebURL` is returned. Once created, a `WebURL` is deeply immutable — its complete identity is
+/// the [serialized URL](https://url.spec.whatwg.org/#concept-url-serializer) returned by
+/// {@link #href()}.
 ///
-/// For a hierarchical URL with a host, the main serialization shape is:
+/// This library has **no runtime dependencies** beyond the `java.base` module.
 ///
-/// `scheme://[username[:password]@]host[:port]path[?query][#fragment]`
+/// # Quick Start
 ///
-/// For a URL without a host, the URL Standard serialization depends on whether the path is opaque or
-/// hierarchical. The exact serialization is available from {@link #href()}.
+/// The simplest way to create a `WebURL` is {@link #parse(String)}:
 ///
-/// Component getters follow Java {@link URI}-style naming, but their values are based on URL Standard
-/// normalization. Methods whose names contain `Raw` return the normalized serialized component with
-/// percent-encoding preserved. Decoded component getters decode valid percent triplets as UTF-8 and leave
-/// invalid or incomplete percent sequences unchanged. Decoding never applies `application/x-www-form-urlencoded`
-/// rules; plus (`+`) remains plus. The port is the main exception to the raw/decoded naming pattern:
-/// {@link #getRawPort()} returns the serialized port component, while {@link #getPort()} returns the stored port
-/// or the known default port for the scheme.
+/// ```java
+/// WebURL url = WebURL.parse("https://example.com/path?q=1#frag");
+/// ```
 ///
-/// `WebURL` differs from {@link URI} in several important ways. `URI` is a generic RFC 2396-oriented syntax
-/// object and can represent relative references; `WebURL` is an absolute URL value with URL Standard
-/// normalization. Creating a `WebURL` can change the input by lower-casing schemes and domain hosts, applying
-/// IDNA processing, normalizing IPv4 and IPv6 hosts, removing default ports, resolving dot segments, and
-/// percent-encoding characters according to URL Standard encode sets. A `WebURL` therefore does not preserve
-/// the original input spelling. Use {@link #toURI()} or {@link #toRFC2396String()} when an equivalent Java
-/// `URI` representation is needed.
+/// Resolve relative references against a base URL with {@link #parse(String, String)} or
+/// {@link #parse(String, WebURL)}:
 ///
-/// `WebURL` also differs from {@link URL}. Java `URL` is tied to protocol handlers and may perform host name
-/// resolution in operations such as equality checks. `WebURL` performs no network I/O, has no stream-handler
-/// dependency, and defines equality, hash code, and ordering only by the complete WHATWG serialization.
+/// ```java
+/// WebURL base = WebURL.parse("https://example.com/a/b/c");
+/// WebURL resolved = WebURL.parse("../d?e#f", base);
+/// // resolved.href() == "https://example.com/a/d?e#f"
+/// ```
 ///
-/// Equality, hash code, and natural ordering are defined by the complete WHATWG URL serialization returned by
-/// `href()`. Two URL objects are equal when their serialized URLs are equal, and `compareTo(WebURL)` orders
-/// URLs by the lexicographic order of those serialized strings.
+/// The {@link #tryParse} variants return `null` on failure instead of throwing
+/// {@link WebURLParseException}:
+///
+/// ```java
+/// WebURL url = WebURL.tryParse(userInput);
+/// if (url == null) {
+///     // handle invalid input
+/// }
+/// ```
+///
+/// {@link #parseBrowserInput(String)} handles user-typed address-bar-style input, automatically
+/// prepending `https://` or `http://` when appropriate. It is intended for interactive text
+/// entry only, *not* for stable serialization:
+///
+/// ```java
+/// WebURL url = WebURL.parseBrowserInput("example.com/search?q=hello");
+/// // url.href() == "https://example.com/search?q=hello"
+/// ```
+///
+/// # Parser Modes
+///
+/// The static convenience methods on this interface use the **default parser**, which accepts
+/// recoverable validation errors per the WHATWG URL Standard. For stricter parsing, obtain a strict
+/// parser from {@link WebURLParser#getStrict()}:
+///
+/// ```java
+/// // Default: recovers from non-fatal issues
+/// WebURL url = WebURL.parse("https://example.com:443/");
+///
+/// // Strict: rejects all validation errors
+/// WebURLParser strict = WebURLParser.getStrict();
+/// WebURL url = strict.parse("https://example.com/path");
+/// ```
+///
+/// The default and strict parsers are both immutable and thread-safe.
+///
+/// # URL Components
+///
+/// A WHATWG URL has these logical components, each with dedicated getters:
+///
+/// | Component  | Always present? | Raw getter        | Decoded getter  | Null when absent?       |
+/// |------------|:---------------:|-------------------|-----------------|-------------------------|
+/// | scheme     | Yes             | `getScheme()`     | —               | Never                   |
+/// | username   | No              | `getRawUsername()`| `getUsername()` | Yes                     |
+/// | password   | No              | `getRawPassword()`| `getPassword()` | Yes                     |
+/// | host       | No              | `getHost()`       | —               | Yes                     |
+/// | port       | No              | `getRawPort()`    | `getPort()`     | `getRawPort()` only     |
+/// | path       | Yes             | `getRawPath()`    | `getPath()`     | Never                   |
+/// | query      | No              | `getRawQuery()`   | `getQuery()`    | Yes                     |
+/// | fragment   | No              | `getRawFragment()`| `getFragment()` | Yes                     |
+///
+/// Getters named `Raw` return the component exactly as serialized, with percent-encoding
+/// preserved. Decoded getters (without `Raw`) decode valid percent triplets as UTF-8; invalid
+/// or incomplete triplets are left unchanged. The {@code application/x-www-form-urlencoded}
+/// rules are **never** applied — plus (`+`) remains plus.
+///
+/// The main serialization shape for a URL with a host is:
+///
+/// ```
+/// scheme://[username[:password]@]host[:port]path[?query][#fragment]
+/// ```
+///
+/// ### Scheme
+///
+/// Identifies the URL's processing and serialization rules (e.g., `http`, `https`, `file`,
+/// `data`, `blob`, `ws`). The scheme is always present, stored in lowercase ASCII, and returned
+/// by {@link #getScheme()} without the trailing colon. Special schemes recognized by the URL
+/// Standard (`http`, `https`, `file`, `ws`, `wss`, `ftp`) receive special processing rules for
+/// hosts, ports, and path serialization.
+///
+/// ### Username and Password
+///
+/// The optional credentials are stored and serialized as `username[:password]@` before the
+/// host. When the URL was constructed without credentials, {@link #getRawUsername()} returns
+/// `null`. A present but empty username (e.g., `://@host` or `://:p@host`) returns the empty
+/// string.
+///
+/// ### Host
+///
+/// An optional component that makes the URL hierarchical and gives it an authority portion.
+/// Four host types exist:
+///
+/// - **Domain hosts** are processed with IDNA domain-to-ASCII rules (Punycode encoding for
+///   non-ASCII labels). The returned host string is ASCII, even when the original input
+///   contained Unicode characters.
+/// - **IPv4 hosts** are always normalized to dotted decimal form. Non-decimal forms such as
+///   hex (`0x7f000001`), octal, and integer (decimal) are all normalized to dotted decimal
+///   (e.g., `127.0.0.1`).
+/// - **IPv6 hosts** are compressed per RFC 5952 and enclosed in square brackets.
+/// - **Opaque hosts** are used by non-special URLs and are rendered without brackets.
+///
+/// Some hierarchical URLs (such as `file:///path`) have an empty host. Opaque URLs (such as
+/// `data:text/plain,hi`) have no host at all. {@link #getHost()} returns `null` when there is
+/// no host component, and the empty string when the host is explicitly empty.
+///
+/// ### Port
+///
+/// An optional decimal port number. The URL Standard removes default ports during
+/// normalization — `https://example.com:443/` has no serialized port component even though
+/// the underlying port is 443. Use {@link #getRawPort()} to check whether a port is stored
+/// in the serialized URL; use {@link #getPort()} to obtain the effective port (stored port,
+/// default port for the scheme, or `-1`).
+///
+/// ### Path
+///
+/// Always present. Hierarchical URLs (those with a host) have a slash-separated path made
+/// from path segments. Special URLs always serialize the path with a leading `/`. Non-special
+/// URLs can have an opaque path whose syntax is not a slash-separated hierarchy.
+///
+/// ### Query and Fragment
+///
+/// Both are optional. An absent query/fragment returns `null`; a present but empty one
+/// (e.g., trailing `?` or `#`) returns the empty string. Raw getters do not include the
+/// leading delimiters (`?` and `#`).
+///
+/// # Normalization
+///
+/// Creating a `WebURL` applies the following normalizations, which may change the input
+/// string substantially:
+///
+/// - **Scheme** is lowercased to ASCII.
+/// - **Tab (`\t`) and newline (`\n`, `\r`)** are stripped from the input before parsing.
+/// - **Backslash (`\`)** is converted to forward slash (`/`) in special URLs.
+/// - **Domain hosts** are processed through IDNA ToASCII: Unicode labels are mapped and
+///   Punycode-encoded. The input `https://münchen.de/` becomes `https://xn--mnchen-3ya.de/`.
+/// - **IPv4 hosts** are normalized to dotted decimal: hex, octal, and integer forms are
+///   all reduced to `a.b.c.d` notation.
+/// - **IPv6 hosts** are compressed per RFC 5952.
+/// - **Default ports** are removed from the serialization. The scheme's default port is
+///   still available via {@link #getPort()}.
+/// - **Dot segments** (`..` and `.`) in the path are resolved.
+/// - **Percent-encoding** is applied according to URL Standard encode sets, and certain
+///   already-encoded characters may be re-encoded when they belong to a component's encode
+///   set.
+///
+/// As a result, the input `"HTTPS://EXAMPLE.COM:443/../a/./b?c"` becomes
+/// `"https://example.com/a/b?c"`.
+///
+/// This normalization means that `WebURL` **does not preserve the original input spelling**.
+/// Use `java.net.URI` when round-tripping the original input string is required, or serialize
+/// with {@link #href()} and parse back for a stable canonical form.
+///
+/// # Comparison with `java.net.URI`
+///
+/// `WebURL` and {@link java.net.URI} differ in specification, normalization, and semantics.
+/// Understanding these differences is essential when choosing between them.
+///
+/// ## Specification and Philosophy
+///
+/// | Aspect             | `WebURL`                              | `java.net.URI`                             |
+/// |--------------------|---------------------------------------|--------------------------------------------|
+/// | Specification      | WHATWG URL Living Standard            | RFC 2396, updated by RFC 2732             |
+/// | Design goal        | Match browser behavior for the web    | Model the generic hierarchical URI syntax  |
+/// | Relative references | Resolved against a base; `WebURL` is always absolute | URIs can be either absolute or relative |
+/// | Input preservation | Always normalized; original input may be rewritten | Preserves original input string        |
+///
+/// ## Normalization Differences
+///
+/// | Behavior               | `WebURL`                                            | `java.net.URI`                                       |
+/// |------------------------|-----------------------------------------------------|------------------------------------------------------|
+/// | Scheme case            | Always lowercased                                   | Preserved as-is                                      |
+/// | Domain host            | IDNA ToASCII (Punycode) applied to non-ASCII labels  | No IDNA processing; `new URI(String)` treats non-ASCII host as opaque |
+/// | Non-ASCII in host      | Converted to Punycode (e.g., `münchen` → `xn--mnchen-3ya`) | Rejected by `new URI(String)` unless percent-encoded |
+/// | IPv4 normalization     | Always dotted decimal (hex/octal/integer → dotted)  | Does not normalize hex/octal/decimal forms          |
+/// | IPv6 compression       | RFC 5952 compression applied                        | Does not apply RFC 5952 compression                 |
+/// | Default port           | Removed from serialization                          | Preserved                                            |
+/// | Backslash in path      | Converted to `/` in special URLs                    | Treated literally                                    |
+/// | Tab and newline        | Stripped from input                                 | Treated literally; passed through                    |
+/// | Percent-encoding       | Applied per URL Standard encode sets; may re-encode | Minimal encoding by `new URI(String)`; raw constructors preserve input |
+///
+/// ## Component Semantics
+///
+/// | Aspect              | `WebURL`                                                      | `java.net.URI`                                |
+/// |---------------------|---------------------------------------------------------------|-----------------------------------------------|
+/// | Empty vs absent host | Hierarchical URLs can have an empty host; opaque URLs have no host | Host is always `null` for opaque URIs    |
+/// | Path                | Always present; never `null`                                  | Always present; never `null`                  |
+/// | Username/Password   | Separate `username` and `password` components                 | Single `user-info` string; `:` separates them |
+/// | Query and Fragment  | `null` when absent, empty string when delimiter is present with nothing after | Same convention |
+///
+/// ### Equality Semantics
+///
+/// `WebURL` equality is defined by the complete serialized URL string ({@link #href()}).
+/// Two `WebURL` objects are equal when their serializations are character-by-character identical.
+///
+/// `java.net.URI` equality is component-based: two URIs are equal when their schemes,
+/// authorities, paths, queries, and fragments are all equal. `URI.equals()` uses case-insensitive
+/// host comparison per RFC 3986 and may produce different results from `WebURL.equals()` for the
+/// same logical URL.
+///
+/// ```java
+/// // WebURL: serialization-based equality
+/// WebURL a = WebURL.parse("https://EXAMPLE.COM/");  // → "https://example.com/"
+/// WebURL b = WebURL.parse("https://example.com/");  // → "https://example.com/"
+/// assert a.equals(b);  // true — both serialize to the same string
+///
+/// // URI: component-based equality
+/// URI ua = new URI("https://EXAMPLE.COM/");
+/// URI ub = new URI("https://example.com/");
+/// assert ua.equals(ub);  // true — host comparison is case-insensitive
+/// assert !ua.toString().equals(ub.toString());  // toString() preserves original case
+/// ```
+///
+/// ### Opaque and Non-Special URLs
+///
+/// `URI` has a concept of "opaque" URIs (those without a scheme-specific-part starting with
+/// `/`). `WebURL` has "non-special" URLs whose host handling and path serialization differ
+/// from special URLs. An opaque `URI` and a non-special `WebURL` for the same input string
+/// may have different component representations.
+///
+/// ### Conversion
+///
+/// Use {@link #toURI()} or {@link #toRFC2396String()} when a `java.net.URI` is required:
+///
+/// ```java
+/// WebURL url = WebURL.parse("https://example.com/path?a=1");
+/// URI uri = url.toURI();
+/// ```
+///
+/// A one-step static convenience method is also available:
+///
+/// ```java
+/// URI uri = WebURL.toURI("https://example.com/path");
+/// ```
+///
+/// Not all WHATWG URLs have a valid RFC 2396 representation. Non-special URLs with an empty
+/// opaque path and no query, for example, have no absolute RFC 2396 URI (Java `URI` requires a
+/// non-empty scheme-specific part). Calling `toURI()` or `toRFC2396String()` on such URLs throws
+/// {@link IllegalStateException}.
+///
+/// # Comparison with `java.net.URL`
+///
+/// `WebURL` differs from {@link java.net.URL} even more substantially than from `URI`:
+///
+/// - **No network I/O.** `java.net.URL` may perform host name resolution during `equals()`,
+///   `hashCode()`, and `sameFile()`. `WebURL` never performs network I/O of any kind.
+/// - **No protocol handlers.** `java.net.URL` requires a `URLStreamHandler` for each scheme.
+///   Schemes without a handler cannot be constructed. `WebURL` supports all schemes.
+/// - **No DNS caching.** `java.net.URL` caches DNS results internally, making it unsafe for
+///   DNS rebinding protection and problematic in concurrent environments. `WebURL` does not
+///   cache any network state.
+/// - **Equality.** `java.net.URL` equality can be hostname-resolution-dependent: two URLs
+///   with different host names that resolve to the same IP address may compare equal.
+///   `WebURL` equality is always based on the serialized string alone.
+///
+/// Use `WebURL` for any URL handling beyond low-level `URL.openConnection()` calls. Convert
+/// via {@link #toURL()} when a `java.net.URL` is required by an existing API.
+///
+/// # Thread Safety
+///
+/// `WebURL` objects are immutable and safe for concurrent use from multiple threads without
+/// external synchronization. All state is fixed at construction time. The parsers returned
+/// by {@link WebURLParser#getDefault()} and {@link WebURLParser#getStrict()} are also
+/// thread-safe.
+///
+/// # Serialization
+///
+/// `WebURL` implements {@link Serializable}. It uses the serialization proxy pattern: only
+/// the `href()` string is written, and deserialization re-parses it through
+/// {@link #parse(String)}. This ensures cross-version compatibility without exposing
+/// internal representation details.
+///
+/// # Equality, Hash Code, and Ordering
+///
+/// Equality, hash code, and natural ordering are all defined by the complete WHATWG URL
+/// serialization returned by {@link #href()}. Two `WebURL` objects are equal when their
+/// serialized URLs are equal character by character. {@link #compareTo(WebURL)} orders URLs
+/// by the lexicographic order of those serialized strings. These definitions are consistent:
+/// `compareTo` returning zero implies `equals` returning `true`.
 @NotNullByDefault
 public sealed interface WebURL extends Comparable<WebURL>, Serializable
         permits WebURLImpl {
