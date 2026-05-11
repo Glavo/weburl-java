@@ -22,22 +22,26 @@ import org.jetbrains.annotations.Nullable;
 /// A reusable parser for creating `WebURL` values from URL strings.
 ///
 /// `WebURLParser` represents the parsing policy used by the URL parser. The default parser follows normal URL
-/// Standard behavior: non-fatal validation errors are accepted and the parser continues with the normalized URL.
+/// Standard behavior: non-fatal validation errors are accepted, and the parser continues with the normalized URL.
 /// The strict parser treats those non-fatal validation errors as parse failures and throws
 /// `WebURLParseException`.
 ///
-/// Implementations are immutable and thread-safe. Static convenience methods on `WebURL` use [#DEFAULT].
+/// Implementations are immutable and thread-safe. Static convenience methods on `WebURL` use [#defaultParser()].
 @NotNullByDefault
 public sealed interface WebURLParser permits WebURLParserImpl {
-    /// The default parser.
+    /// Returns the default parser.
     ///
     /// This parser ignores non-fatal validation errors and continues parsing according to the URL Standard.
-    WebURLParser DEFAULT = WebURLParserImpl.DEFAULT;
+    static WebURLParser defaultParser() {
+        return WebURLParserImpl.defaultParser();
+    }
 
-    /// The strict parser.
+    /// Returns the strict parser.
     ///
     /// This parser treats non-fatal validation errors as parse failures and throws `WebURLParseException`.
-    WebURLParser STRICT = WebURLParserImpl.STRICT;
+    static WebURLParser strictParser() {
+        return WebURLParserImpl.strictParser();
+    }
 
     /// Returns whether this parser treats non-fatal validation errors as parse failures.
     boolean isStrictValidationEnabled();
