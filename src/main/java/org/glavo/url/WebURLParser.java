@@ -55,7 +55,8 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// parser regardless of whether they appear in this set.
     ///
     /// @return an immutable set of recoverable validation errors rejected by this parser
-    @Unmodifiable Set<WebURLParseException.ErrorType> getRejectedValidationErrors();
+    @Unmodifiable
+    Set<WebURLParseException.ErrorType> getRejectedValidationErrors();
 
     /// Parses an absolute input string and returns the parsed URL.
     ///
