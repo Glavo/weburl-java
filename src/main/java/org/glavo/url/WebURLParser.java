@@ -33,14 +33,14 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     ///
     /// This parser ignores non-fatal validation errors and continues parsing according to the URL Standard.
     static WebURLParser defaultParser() {
-        return WebURLParserImpl.defaultParser();
+        return WebURLParserImpl.DEFAULT;
     }
 
     /// Returns the strict parser.
     ///
     /// This parser treats non-fatal validation errors as parse failures and throws `WebURLParseException`.
     static WebURLParser strictParser() {
-        return WebURLParserImpl.strictParser();
+        return WebURLParserImpl.STRICT;
     }
 
     /// Returns whether this parser treats non-fatal validation errors as parse failures.

@@ -24,10 +24,10 @@ import org.jetbrains.annotations.Nullable;
 @NotNullByDefault
 public final class WebURLParserImpl implements WebURLParser {
     /// The default parser implementation.
-    private static final WebURLParser DEFAULT = new WebURLParserImpl(false);
+    public static final WebURLParser DEFAULT = new WebURLParserImpl(false);
 
     /// The strict parser implementation.
-    private static final WebURLParser STRICT = new WebURLParserImpl(true);
+    public static final WebURLParser STRICT = new WebURLParserImpl(true);
 
     /// Whether non-fatal validation errors are parse failures.
     private final boolean strictValidation;
@@ -35,16 +35,6 @@ public final class WebURLParserImpl implements WebURLParser {
     /// Creates a parser implementation.
     private WebURLParserImpl(boolean strictValidation) {
         this.strictValidation = strictValidation;
-    }
-
-    /// Returns the default parser implementation.
-    public static WebURLParser defaultParser() {
-        return DEFAULT;
-    }
-
-    /// Returns the strict parser implementation.
-    public static WebURLParser strictParser() {
-        return STRICT;
     }
 
     /// Returns whether non-fatal validation errors are parse failures.
