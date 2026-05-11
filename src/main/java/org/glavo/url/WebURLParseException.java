@@ -166,7 +166,7 @@ public final class WebURLParseException extends IllegalArgumentException {
         }
 
         /// Returns the default human-readable parse failure reason.
-        private String reason() {
+        public String getReason() {
             return reason;
         }
     }
@@ -190,7 +190,7 @@ public final class WebURLParseException extends IllegalArgumentException {
     ///
     /// @throws IllegalArgumentException if `index` is less than `-1`
     public WebURLParseException(String input, ErrorType errorType, int index) {
-        this(input, errorType, Objects.requireNonNull(errorType, "errorType").reason(), index, null);
+        this(input, errorType, Objects.requireNonNull(errorType, "errorType").getReason(), index, null);
     }
 
     /// Creates a URL parse exception with an explicit reason.
