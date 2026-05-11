@@ -253,16 +253,16 @@ public final class UTS46 {
             error = true;
         }
 
-        int[] codePoints = toCodePoints(label);
-        if (codePoints.length > 0 && DATA.isMark(codePoints[0])) {
+        if (!label.isEmpty() && DATA.isMark(label.codePointAt(0))) {
             error = true;
         }
 
         boolean allowDeviation = decodedLabel || !transitionalProcessing;
-        for (int i = 0; i < codePoints.length; i++) {
-            int codePoint = codePoints[i];
+        for (int i = 0; i < label.length(); ) {
+            int codePoint = label.codePointAt(i);
             if (isSurrogateCodePoint(codePoint)) {
                 error = true;
+                i++;
                 continue;
             }
             byte status = DATA.status(codePoint);
@@ -279,12 +279,13 @@ public final class UTS46 {
             }
 
             if (checkJoiners && (codePoint == 0x200C || codePoint == 0x200D)
-                    && !hasValidContextJ(codePoints, i)) {
+                    && !hasValidContextJ(label, i, codePoint)) {
                 error = true;
             }
+            i += Character.charCount(codePoint);
         }
 
-        if (bidiDomain && !hasValidBidiLabel(codePoints)) {
+        if (bidiDomain && !hasValidBidiLabel(label)) {
             error = true;
         }
         return error;
@@ -299,37 +300,43 @@ public final class UTS46 {
     }
 
     /// Returns whether a ZERO WIDTH JOINER or ZERO WIDTH NON-JOINER is valid in its context.
-    private static boolean hasValidContextJ(int @Unmodifiable [] label, int index) {
-        if (index > 0 && DATA.isVirama(label[index - 1])) {
+    private static boolean hasValidContextJ(String label, int offset, int codePoint) {
+        if (offset > 0 && DATA.isVirama(label.codePointBefore(offset))) {
             return true;
         }
-        if (label[index] == 0x200D) {
+        if (codePoint == 0x200D) {
             return false;
         }
 
-        int before = index - 1;
-        while (before >= 0 && DATA.joiningType(label[before]) == IdnaData.JOINING_TYPE_TRANSPARENT) {
-            before--;
+        int before = previousCodePointOffset(label, offset);
+        while (before >= 0 && DATA.joiningType(label.codePointAt(before)) == IdnaData.JOINING_TYPE_TRANSPARENT) {
+            before = previousCodePointOffset(label, before);
         }
         if (before < 0) {
             return false;
         }
-        byte beforeJoiningType = DATA.joiningType(label[before]);
+        byte beforeJoiningType = DATA.joiningType(label.codePointAt(before));
         if (beforeJoiningType != IdnaData.JOINING_TYPE_LEFT
                 && beforeJoiningType != IdnaData.JOINING_TYPE_DUAL) {
             return false;
         }
 
-        int after = index + 1;
-        while (after < label.length && DATA.joiningType(label[after]) == IdnaData.JOINING_TYPE_TRANSPARENT) {
-            after++;
+        int after = offset + Character.charCount(codePoint);
+        while (after < label.length()
+                && DATA.joiningType(label.codePointAt(after)) == IdnaData.JOINING_TYPE_TRANSPARENT) {
+            after += Character.charCount(label.codePointAt(after));
         }
-        if (after >= label.length) {
+        if (after >= label.length()) {
             return false;
         }
-        byte afterJoiningType = DATA.joiningType(label[after]);
+        byte afterJoiningType = DATA.joiningType(label.codePointAt(after));
         return afterJoiningType == IdnaData.JOINING_TYPE_RIGHT
                 || afterJoiningType == IdnaData.JOINING_TYPE_DUAL;
+    }
+
+    /// Returns the UTF-16 offset of the previous code point, or `-1` when there is none.
+    private static int previousCodePointOffset(String input, int offset) {
+        return offset <= 0 ? -1 : offset - Character.charCount(input.codePointBefore(offset));
     }
 
     /// Returns whether a domain contains any RTL bidi label.
@@ -350,12 +357,12 @@ public final class UTS46 {
     }
 
     /// Returns whether one label satisfies RFC 5893 bidi rules.
-    private static boolean hasValidBidiLabel(int @Unmodifiable [] label) {
-        if (label.length == 0) {
+    private static boolean hasValidBidiLabel(String label) {
+        if (label.isEmpty()) {
             return false;
         }
 
-        byte firstClass = DATA.bidiClass(label[0]);
+        byte firstClass = DATA.bidiClass(label.codePointAt(0));
         if (firstClass == IdnaData.BIDI_CLASS_RIGHT_TO_LEFT
                 || firstClass == IdnaData.BIDI_CLASS_ARABIC_LETTER) {
             return hasValidRightToLeftBidiLabel(label);
@@ -367,16 +374,18 @@ public final class UTS46 {
     }
 
     /// Returns whether a label that starts with `R` or `AL` satisfies bidi rules.
-    private static boolean hasValidRightToLeftBidiLabel(int @Unmodifiable [] label) {
+    private static boolean hasValidRightToLeftBidiLabel(String label) {
         boolean hasEuropeanNumber = false;
         boolean hasArabicNumber = false;
-        for (int codePoint : label) {
+        for (int i = 0; i < label.length(); ) {
+            int codePoint = label.codePointAt(i);
             byte bidiClass = DATA.bidiClass(codePoint);
             if (!isAllowedRightToLeftBidiClass(bidiClass)) {
                 return false;
             }
             hasEuropeanNumber |= bidiClass == IdnaData.BIDI_CLASS_EUROPEAN_NUMBER;
             hasArabicNumber |= bidiClass == IdnaData.BIDI_CLASS_ARABIC_NUMBER;
+            i += Character.charCount(codePoint);
         }
 
         if (hasEuropeanNumber && hasArabicNumber) {
@@ -391,12 +400,14 @@ public final class UTS46 {
     }
 
     /// Returns whether a label that starts with `L` satisfies bidi rules.
-    private static boolean hasValidLeftToRightBidiLabel(int @Unmodifiable [] label) {
-        for (int codePoint : label) {
+    private static boolean hasValidLeftToRightBidiLabel(String label) {
+        for (int i = 0; i < label.length(); ) {
+            int codePoint = label.codePointAt(i);
             byte bidiClass = DATA.bidiClass(codePoint);
             if (!isAllowedLeftToRightBidiClass(bidiClass)) {
                 return false;
             }
+            i += Character.charCount(codePoint);
         }
 
         byte lastClass = lastNonSpacingMarkBidiClass(label);
@@ -405,9 +416,11 @@ public final class UTS46 {
     }
 
     /// Returns the bidi class of the last code point that is not `NSM`.
-    private static byte lastNonSpacingMarkBidiClass(int @Unmodifiable [] label) {
-        for (int i = label.length - 1; i >= 0; i--) {
-            byte bidiClass = DATA.bidiClass(label[i]);
+    private static byte lastNonSpacingMarkBidiClass(String label) {
+        for (int i = label.length(); i > 0; ) {
+            int codePoint = label.codePointBefore(i);
+            i -= Character.charCount(codePoint);
+            byte bidiClass = DATA.bidiClass(codePoint);
             if (bidiClass != IdnaData.BIDI_CLASS_NONSPACING_MARK) {
                 return bidiClass;
             }
@@ -468,18 +481,6 @@ public final class UTS46 {
         }
         labels.add(domain.substring(start));
         return labels.toArray(String[]::new);
-    }
-
-    /// Converts a label to code points.
-    private static int @Unmodifiable [] toCodePoints(String label) {
-        int[] codePoints = new int[label.codePointCount(0, label.length())];
-        int outputIndex = 0;
-        for (int i = 0; i < label.length(); ) {
-            int codePoint = label.codePointAt(i);
-            codePoints[outputIndex++] = codePoint;
-            i += Character.charCount(codePoint);
-        }
-        return codePoints;
     }
 
     /// Returns whether an ASCII code point is allowed by STD3 host syntax.
