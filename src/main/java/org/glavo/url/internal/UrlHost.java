@@ -79,9 +79,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
     /// Returns whether this host is an empty domain host.
     boolean isEmptyDomain();
 
-    /// Returns whether this host serializes to an empty string.
-    boolean isEmpty();
-
     /// Serializes the host into the supplied builder.
     void serialize(StringBuilder output);
 
@@ -101,12 +98,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
         /// Returns whether this host is an empty domain host.
         @Override
         public boolean isEmptyDomain() {
-            return value.isEmpty();
-        }
-
-        /// Returns whether this host serializes to an empty string.
-        @Override
-        public boolean isEmpty() {
             return value.isEmpty();
         }
 
@@ -152,12 +143,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
             return false;
         }
 
-        /// Returns whether this host serializes to an empty string.
-        @Override
-        public boolean isEmpty() {
-            return value.isEmpty();
-        }
-
         /// Serializes the host into the supplied builder.
         @Override
         public void serialize(StringBuilder output) {
@@ -186,12 +171,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
         /// Returns whether this host is an empty domain host.
         @Override
         public boolean isEmptyDomain() {
-            return false;
-        }
-
-        /// Returns whether this host serializes to an empty string.
-        @Override
-        public boolean isEmpty() {
             return false;
         }
 
@@ -242,12 +221,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
         /// Returns whether this host is an empty domain host.
         @Override
         public boolean isEmptyDomain() {
-            return false;
-        }
-
-        /// Returns whether this host serializes to an empty string.
-        @Override
-        public boolean isEmpty() {
             return false;
         }
 
