@@ -93,11 +93,6 @@ public final class UrlParser {
         return stateMachine.toUrl();
     }
 
-    /// Serializes a URL host.
-    public static String serializeHost(UrlHost host) {
-        return host.serialize();
-    }
-
     /// Returns whether the scheme is a special URL scheme.
     public static boolean isSpecialScheme(String scheme) {
         return switch (scheme) {
@@ -132,16 +127,6 @@ public final class UrlParser {
             return -1;
         }
         return Math.min(index, input.length());
-    }
-
-    /// Serializes a tuple origin.
-    private static String serializeTupleOrigin(String scheme, UrlHost host, int port) {
-        StringBuilder output = new StringBuilder();
-        output.append(scheme).append("://").append(serializeHost(host));
-        if (port != -1) {
-            output.append(':').append(port);
-        }
-        return output.toString();
     }
 
     /// Parses a host string.
@@ -1585,7 +1570,7 @@ public final class UrlParser {
                     state = State.PATH_START;
                 } else {
                     UrlHost parsedHost = parseBufferedHost(hostEndIndex);
-                    if (serializeHost(parsedHost).equals("localhost")) {
+                    if (parsedHost.serialize().equals("localhost")) {
                         parsedHost = UrlHost.domain("");
                     }
                     record.host = parsedHost;
