@@ -185,7 +185,10 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
         /// Serializes the host.
         @Override
         public String serialize() {
-            return serializeIpv4(address);
+            return ((address >>> 24) & 0xff) + "."
+                    + ((address >>> 16) & 0xff) + "."
+                    + ((address >>> 8) & 0xff) + "."
+                    + (address & 0xff);
         }
 
         /// Returns no display override for IPv4 hosts.
@@ -197,7 +200,20 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
         /// Matches the serialized host at the given index and returns the end index, or `-1`.
         @Override
         public int matchSerialized(String input, int start) {
-            return matchSerializedIpv4(input, start, address);
+            int index = start;
+            for (int shift = 24; shift >= 0; shift -= 8) {
+                if (shift != 24) {
+                    if (!hasChar(input, index, '.')) {
+                        return -1;
+                    }
+                    index++;
+                }
+                index = matchDecimalByte(input, index, (address >>> shift) & 0xff);
+                if (index < 0) {
+                    return -1;
+                }
+            }
+            return index;
         }
     }
 
@@ -222,7 +238,34 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
         /// Serializes the host.
         @Override
         public String serialize() {
-            return "[" + serializeIpv6(highBits, lowBits) + "]";
+            StringBuilder output = new StringBuilder(41);
+            output.append('[');
+
+            int compress = findCompressedPieceIndex(highBits, lowBits);
+            boolean ignoreZero = false;
+
+            for (int pieceIndex = 0; pieceIndex <= 7; pieceIndex++) {
+                int piece = ipv6Piece(highBits, lowBits, pieceIndex);
+                if (ignoreZero && piece == 0) {
+                    continue;
+                } else if (ignoreZero) {
+                    ignoreZero = false;
+                }
+
+                if (compress == pieceIndex) {
+                    output.append(pieceIndex == 0 ? "::" : ":");
+                    ignoreZero = true;
+                    continue;
+                }
+
+                output.append(Integer.toHexString(piece));
+                if (pieceIndex != 7) {
+                    output.append(':');
+                }
+            }
+
+            output.append(']');
+            return output.toString();
         }
 
         /// Returns no display override for IPv6 hosts.
@@ -234,7 +277,54 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
         /// Matches the serialized host at the given index and returns the end index, or `-1`.
         @Override
         public int matchSerialized(String input, int start) {
-            return matchSerializedIpv6(input, start, highBits, lowBits);
+            if (!hasChar(input, start, '[')) {
+                return -1;
+            }
+
+            int index = start + 1;
+            int compress = findCompressedPieceIndex(highBits, lowBits);
+            boolean ignoreZero = false;
+
+            for (int pieceIndex = 0; pieceIndex <= 7; pieceIndex++) {
+                int piece = ipv6Piece(highBits, lowBits, pieceIndex);
+                if (ignoreZero && piece == 0) {
+                    continue;
+                } else if (ignoreZero) {
+                    ignoreZero = false;
+                }
+
+                if (compress == pieceIndex) {
+                    if (pieceIndex == 0) {
+                        if (!hasChar(input, index, ':') || !hasChar(input, index + 1, ':')) {
+                            return -1;
+                        }
+                        index += 2;
+                    } else {
+                        if (!hasChar(input, index, ':')) {
+                            return -1;
+                        }
+                        index++;
+                    }
+                    ignoreZero = true;
+                    continue;
+                }
+
+                index = matchHexPiece(input, index, piece);
+                if (index < 0) {
+                    return -1;
+                }
+                if (pieceIndex != 7) {
+                    if (!hasChar(input, index, ':')) {
+                        return -1;
+                    }
+                    index++;
+                }
+            }
+
+            if (!hasChar(input, index, ']')) {
+                return -1;
+            }
+            return index + 1;
         }
     }
 
@@ -242,113 +332,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
     private static int matchText(String input, int start, String value) {
         int end = start + value.length();
         return end <= input.length() && input.regionMatches(start, value, 0, value.length()) ? end : -1;
-    }
-
-    /// Serializes an IPv4 address.
-    private static String serializeIpv4(int address) {
-        return ((address >>> 24) & 0xff) + "."
-                + ((address >>> 16) & 0xff) + "."
-                + ((address >>> 8) & 0xff) + "."
-                + (address & 0xff);
-    }
-
-    /// Matches a serialized IPv4 address and returns the end index, or `-1`.
-    private static int matchSerializedIpv4(String input, int start, int address) {
-        int index = start;
-        for (int shift = 24; shift >= 0; shift -= 8) {
-            if (shift != 24) {
-                if (!hasChar(input, index, '.')) {
-                    return -1;
-                }
-                index++;
-            }
-            index = matchDecimalByte(input, index, (address >>> shift) & 0xff);
-            if (index < 0) {
-                return -1;
-            }
-        }
-        return index;
-    }
-
-    /// Serializes an IPv6 address.
-    private static String serializeIpv6(long highBits, long lowBits) {
-        StringBuilder output = new StringBuilder();
-        int compress = findCompressedPieceIndex(highBits, lowBits);
-        boolean ignoreZero = false;
-
-        for (int pieceIndex = 0; pieceIndex <= 7; pieceIndex++) {
-            int piece = ipv6Piece(highBits, lowBits, pieceIndex);
-            if (ignoreZero && piece == 0) {
-                continue;
-            } else if (ignoreZero) {
-                ignoreZero = false;
-            }
-
-            if (compress == pieceIndex) {
-                output.append(pieceIndex == 0 ? "::" : ":");
-                ignoreZero = true;
-                continue;
-            }
-
-            output.append(Integer.toHexString(piece));
-            if (pieceIndex != 7) {
-                output.append(':');
-            }
-        }
-
-        return output.toString();
-    }
-
-    /// Matches a serialized IPv6 address and returns the end index, or `-1`.
-    private static int matchSerializedIpv6(String input, int start, long highBits, long lowBits) {
-        if (!hasChar(input, start, '[')) {
-            return -1;
-        }
-
-        int index = start + 1;
-        int compress = findCompressedPieceIndex(highBits, lowBits);
-        boolean ignoreZero = false;
-
-        for (int pieceIndex = 0; pieceIndex <= 7; pieceIndex++) {
-            int piece = ipv6Piece(highBits, lowBits, pieceIndex);
-            if (ignoreZero && piece == 0) {
-                continue;
-            } else if (ignoreZero) {
-                ignoreZero = false;
-            }
-
-            if (compress == pieceIndex) {
-                if (pieceIndex == 0) {
-                    if (!hasChar(input, index, ':') || !hasChar(input, index + 1, ':')) {
-                        return -1;
-                    }
-                    index += 2;
-                } else {
-                    if (!hasChar(input, index, ':')) {
-                        return -1;
-                    }
-                    index++;
-                }
-                ignoreZero = true;
-                continue;
-            }
-
-            index = matchHexPiece(input, index, piece);
-            if (index < 0) {
-                return -1;
-            }
-            if (pieceIndex != 7) {
-                if (!hasChar(input, index, ':')) {
-                    return -1;
-                }
-                index++;
-            }
-        }
-
-        if (!hasChar(input, index, ']')) {
-            return -1;
-        }
-        return index + 1;
     }
 
     /// Returns one 16-bit IPv6 address piece.
