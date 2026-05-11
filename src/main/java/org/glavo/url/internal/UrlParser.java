@@ -76,33 +76,20 @@ public final class UrlParser {
 
     /// Returns whether the scheme is a special URL scheme.
     public static boolean isSpecialScheme(String scheme) {
-        switch (scheme) {
-            case "ftp":
-            case "file":
-            case "http":
-            case "https":
-            case "ws":
-            case "wss":
-                return true;
-            default:
-                return false;
-        }
+        return switch (scheme) {
+            case "ftp", "file", "http", "https", "ws", "wss" -> true;
+            default -> false;
+        };
     }
 
     /// Returns the default port for a special scheme.
     static int defaultPort(String scheme) {
-        switch (scheme) {
-            case "ftp":
-                return 21;
-            case "http":
-            case "ws":
-                return 80;
-            case "https":
-            case "wss":
-                return 443;
-            default:
-                return -1;
-        }
+        return switch (scheme) {
+            case "ftp" -> 21;
+            case "http", "ws" -> 80;
+            case "https", "wss" -> 443;
+            default -> -1;
+        };
     }
 
     /// Serializes a tuple origin.
@@ -352,12 +339,11 @@ public final class UrlParser {
     }
 
     /// Parses an IPv6 address.
-    private static int[] parseIpv6(String inputString) {
+    private static int[] parseIpv6(String input) {
         int[] address = new int[8];
         int pieceIndex = 0;
         int compress = -1;
         int pointer = 0;
-        String input = inputString;
 
         if (codePoint(input, pointer) == ':') {
             if (codePoint(input, pointer + 1) != ':') {
@@ -989,51 +975,28 @@ public final class UrlParser {
 
         /// Executes the current parser state.
         private Result execute(int c) {
-            switch (state) {
-                case SCHEME_START:
-                    return parseSchemeStart(c);
-                case SCHEME:
-                    return parseScheme(c);
-                case NO_SCHEME:
-                    return parseNoScheme(c);
-                case SPECIAL_RELATIVE_OR_AUTHORITY:
-                    return parseSpecialRelativeOrAuthority(c);
-                case PATH_OR_AUTHORITY:
-                    return parsePathOrAuthority(c);
-                case RELATIVE:
-                    return parseRelative(c);
-                case RELATIVE_SLASH:
-                    return parseRelativeSlash(c);
-                case SPECIAL_AUTHORITY_SLASHES:
-                    return parseSpecialAuthoritySlashes(c);
-                case SPECIAL_AUTHORITY_IGNORE_SLASHES:
-                    return parseSpecialAuthorityIgnoreSlashes(c);
-                case AUTHORITY:
-                    return parseAuthority(c);
-                case HOST:
-                case HOSTNAME:
-                    return parseHostName(c);
-                case PORT:
-                    return parsePort(c);
-                case FILE:
-                    return parseFile(c);
-                case FILE_SLASH:
-                    return parseFileSlash(c);
-                case FILE_HOST:
-                    return parseFileHost(c);
-                case PATH_START:
-                    return parsePathStart(c);
-                case PATH:
-                    return parsePath(c);
-                case OPAQUE_PATH:
-                    return parseOpaquePath(c);
-                case QUERY:
-                    return parseQuery(c);
-                case FRAGMENT:
-                    return parseFragment(c);
-                default:
-                    throw new AssertionError(state);
-            }
+            return switch (state) {
+                case SCHEME_START -> parseSchemeStart(c);
+                case SCHEME -> parseScheme(c);
+                case NO_SCHEME -> parseNoScheme(c);
+                case SPECIAL_RELATIVE_OR_AUTHORITY -> parseSpecialRelativeOrAuthority(c);
+                case PATH_OR_AUTHORITY -> parsePathOrAuthority(c);
+                case RELATIVE -> parseRelative(c);
+                case RELATIVE_SLASH -> parseRelativeSlash(c);
+                case SPECIAL_AUTHORITY_SLASHES -> parseSpecialAuthoritySlashes(c);
+                case SPECIAL_AUTHORITY_IGNORE_SLASHES -> parseSpecialAuthorityIgnoreSlashes(c);
+                case AUTHORITY -> parseAuthority(c);
+                case HOST, HOSTNAME -> parseHostName(c);
+                case PORT -> parsePort(c);
+                case FILE -> parseFile(c);
+                case FILE_SLASH -> parseFileSlash(c);
+                case FILE_HOST -> parseFileHost(c);
+                case PATH_START -> parsePathStart(c);
+                case PATH -> parsePath(c);
+                case OPAQUE_PATH -> parseOpaquePath(c);
+                case QUERY -> parseQuery(c);
+                case FRAGMENT -> parseFragment(c);
+            };
         }
 
         /// Appends the current input code point to the temporary buffer unchanged.
