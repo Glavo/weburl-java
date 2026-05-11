@@ -220,8 +220,7 @@ import java.nio.file.Path;
 /// | Behavior               | `WebURL`                                            | `java.net.URI`                                       |
 /// |------------------------|-----------------------------------------------------|------------------------------------------------------|
 /// | Scheme case            | Always lowercased                                   | Preserved as-is                                      |
-/// | Domain host            | IDNA ToASCII (Punycode) applied to non-ASCII labels  | No IDNA processing; host parsing is limited to URI server-based authority syntax |
-/// | Non-ASCII in host      | Converted to Punycode (e.g., `münchen` → `xn--mnchen-3ya`) | Accepted in the authority string, but `URI.getHost()` can return `null` |
+/// | Domain host            | IDNA ToASCII is applied; non-ASCII labels are converted to Punycode (e.g., `münchen` → `xn--mnchen-3ya`) | No IDNA processing; non-ASCII authority text can be accepted, but `URI.getHost()` can return `null` |
 /// | IPv4 normalization     | Always dotted decimal (hex/octal/integer → dotted)  | Does not normalize hex/octal/decimal forms          |
 /// | IPv6 compression       | RFC 5952 compression applied                        | Does not apply RFC 5952 compression                 |
 /// | Default port           | Removed from serialization                          | Preserved                                            |
