@@ -154,8 +154,7 @@ public final class UrlParser {
             if (!input.endsWith("]")) {
                 throw parseError(input, WebURLParseException.ErrorType.IPV6_UNCLOSED, input.length());
             }
-            int[] address = parseBracketedIpv6(input);
-            return UrlHost.ipv6(address);
+            return parseBracketedIpv6(input);
         }
 
         if (opaque) {
@@ -180,7 +179,7 @@ public final class UrlParser {
             if (!input.endsWith("]")) {
                 throw parseError(input, WebURLParseException.ErrorType.IPV6_UNCLOSED, input.length());
             }
-            return UrlHost.ipv6(parseBracketedIpv6(input));
+            return parseBracketedIpv6(input);
         }
         if (opaque) {
             return UrlHost.opaque(input);
@@ -201,9 +200,9 @@ public final class UrlParser {
     }
 
     /// Parses a bracketed IPv6 host and maps IPv6 parser indexes back to the brackets.
-    private static int[] parseBracketedIpv6(String input) {
+    private static UrlHost.Ipv6 parseBracketedIpv6(String input) {
         try {
-            return parseIpv6(input.substring(1, input.length() - 1));
+            return UrlHost.ipv6(parseIpv6(input.substring(1, input.length() - 1)));
         } catch (WebURLParseException exception) {
             int index = exception.getIndex() < 0 ? -1 : exception.getIndex() + 1;
             throw new WebURLParseException(

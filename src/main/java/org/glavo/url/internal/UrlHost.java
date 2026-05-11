@@ -40,7 +40,7 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
     }
 
     /// Creates an IPv6 host from eight 16-bit address pieces.
-    static UrlHost ipv6(int[] value) {
+    static Ipv6 ipv6(int[] value) {
         if (value.length != 8) {
             throw new IllegalArgumentException("IPv6 address must contain eight pieces");
         }
@@ -59,7 +59,7 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
     }
 
     /// Creates an IPv6 host from the high and low 64-bit halves of the address.
-    static UrlHost ipv6(long highBits, long lowBits) {
+    static Ipv6 ipv6(long highBits, long lowBits) {
         return new Ipv6(highBits, lowBits);
     }
 
