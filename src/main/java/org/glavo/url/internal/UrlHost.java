@@ -23,7 +23,7 @@ import java.util.Objects;
 
 /// Internal representation of a WHATWG URL host.
 @NotNullByDefault
-public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.Ipv4, UrlHost.Ipv6 {
+public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.IPv4, UrlHost.IPv6 {
     /// Creates a domain host.
     static UrlHost domain(String value) {
         return new Domain(value);
@@ -36,11 +36,11 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
 
     /// Creates an IPv4 host.
     static UrlHost ipv4(int value) {
-        return new Ipv4(value);
+        return new IPv4(value);
     }
 
     /// Creates an IPv6 host from eight 16-bit address pieces.
-    static Ipv6 ipv6(int[] value) {
+    static IPv6 ipv6(int[] value) {
         if (value.length != 8) {
             throw new IllegalArgumentException("IPv6 address must contain eight pieces");
         }
@@ -59,8 +59,8 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
     }
 
     /// Creates an IPv6 host from the high and low 64-bit halves of the address.
-    static Ipv6 ipv6(long highBits, long lowBits) {
-        return new Ipv6(highBits, lowBits);
+    static IPv6 ipv6(long highBits, long lowBits) {
+        return new IPv6(highBits, lowBits);
     }
 
     /// Returns whether this host is an empty domain host.
@@ -165,9 +165,9 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
     }
 
     /// An IPv4 host.
-    record Ipv4(int address) implements UrlHost {
+    record IPv4(int address) implements UrlHost {
         /// Creates an IPv4 host.
-        public Ipv4 {
+        public IPv4 {
         }
 
         /// Returns whether this host is an empty domain host.
@@ -202,9 +202,9 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
     }
 
     /// An IPv6 host.
-    record Ipv6(long highBits, long lowBits) implements UrlHost {
+    record IPv6(long highBits, long lowBits) implements UrlHost {
         /// Creates an IPv6 host.
-        public Ipv6 {
+        public IPv6 {
         }
 
         /// Returns whether this host is an empty domain host.

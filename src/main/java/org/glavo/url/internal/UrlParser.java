@@ -200,7 +200,7 @@ public final class UrlParser {
     }
 
     /// Parses a bracketed IPv6 host and maps IPv6 parser indexes back to the brackets.
-    private static UrlHost.Ipv6 parseBracketedIpv6(String input) {
+    private static UrlHost.IPv6 parseBracketedIpv6(String input) {
         try {
             return UrlHost.ipv6(parseIpv6(input.substring(1, input.length() - 1)));
         } catch (WebURLParseException exception) {
