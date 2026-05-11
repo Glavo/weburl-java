@@ -40,9 +40,6 @@ public final class WebURLImpl implements WebURL {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /// Upper-case hexadecimal digits used by RFC 2396 escaping.
-    private static final char @Unmodifiable [] HEX = "0123456789ABCDEF".toCharArray();
-
     /// URL scheme without the trailing colon.
     private final String scheme;
     /// URL host, or `null` when absent.
@@ -700,12 +697,10 @@ public final class WebURLImpl implements WebURL {
         for (int index = start; index < end; ) {
             char c = value.charAt(index);
             int next = index + 1;
-            if (c == '%' && index + 2 < end
-                    && Infra.isAsciiHex(value.charAt(index + 1))
-                    && Infra.isAsciiHex(value.charAt(index + 2))) {
+            if (PercentEncoding.isValidPercentTriplet(value, index, end)) {
                 int decoded = displayDecodeUtf8CodePoint(value, index, end);
                 if (decoded >= 0) {
-                    int decodedLength = displayUtf8Length(value.charAt(index + 1), value.charAt(index + 2));
+                    int decodedLength = displayUtf8Length(PercentEncoding.percentEncodedByte(value, index));
                     int decodedEnd = index + decodedLength * 3;
                     if (output == null) {
                         output = new StringBuilder(end - start);
@@ -728,7 +723,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Decodes one display-safe UTF-8 code point from percent escapes, or returns `-1`.
     private static int displayDecodeUtf8CodePoint(String value, int start, int end) {
-        int b0 = hexByte(value, start);
+        int b0 = PercentEncoding.percentEncodedByte(value, start);
         int codePoint;
         int length;
         if (b0 < 0x80) {
@@ -765,42 +760,23 @@ public final class WebURLImpl implements WebURL {
     }
 
     /// Returns the UTF-8 sequence length implied by the first escaped byte.
-    private static int displayUtf8Length(char high, char low) {
-        int value = hexValue(high) * 16 + hexValue(low);
-        if (value < 0x80) {
+    private static int displayUtf8Length(int firstByte) {
+        if (firstByte < 0x80) {
             return 1;
         }
-        if (value < 0xe0) {
+        if (firstByte < 0xe0) {
             return 2;
         }
-        return value < 0xf0 ? 3 : 4;
+        return firstByte < 0xf0 ? 3 : 4;
     }
 
     /// Returns a continuation byte from a percent escape, or `-1`.
     private static int continuationByte(String value, int start, int end) {
-        if (start + 2 >= end || value.charAt(start) != '%'
-                || !Infra.isAsciiHex(value.charAt(start + 1))
-                || !Infra.isAsciiHex(value.charAt(start + 2))) {
+        if (!PercentEncoding.isValidPercentTriplet(value, start, end)) {
             return -1;
         }
-        int b = hexByte(value, start);
+        int b = PercentEncoding.percentEncodedByte(value, start);
         return b >= 0x80 && b <= 0xbf ? b : -1;
-    }
-
-    /// Decodes one percent-encoded byte.
-    private static int hexByte(String value, int start) {
-        return hexValue(value.charAt(start + 1)) * 16 + hexValue(value.charAt(start + 2));
-    }
-
-    /// Returns the numeric value of an ASCII hexadecimal digit.
-    private static int hexValue(char c) {
-        if (c >= '0' && c <= '9') {
-            return c - '0';
-        }
-        if (c >= 'A' && c <= 'F') {
-            return c - 'A' + 10;
-        }
-        return c - 'a' + 10;
     }
 
     /// Returns whether a code point may be decoded for display.
@@ -913,9 +889,7 @@ public final class WebURLImpl implements WebURL {
     ) {
         for (int index = start; index < end; ) {
             int c = value.codePointAt(index);
-            if (c == '%' && index + 2 < end
-                    && Infra.isAsciiHex(value.charAt(index + 1))
-                    && Infra.isAsciiHex(value.charAt(index + 2))) {
+            if (PercentEncoding.isValidPercentTriplet(value, index, end)) {
                 index += 3;
                 continue;
             }
@@ -937,9 +911,7 @@ public final class WebURLImpl implements WebURL {
     ) {
         for (int index = start; index < end; ) {
             int c = value.codePointAt(index);
-            if (c == '%' && index + 2 < end
-                    && Infra.isAsciiHex(value.charAt(index + 1))
-                    && Infra.isAsciiHex(value.charAt(index + 2))) {
+            if (PercentEncoding.isValidPercentTriplet(value, index, end)) {
                 output.append('%').append(value.charAt(index + 1)).append(value.charAt(index + 2));
                 index += 3;
                 continue;
@@ -948,38 +920,10 @@ public final class WebURLImpl implements WebURL {
             if (c <= 0x7f && allowed.test(c)) {
                 output.append((char) c);
             } else {
-                appendRfc2396EscapedUtf8(output, c);
+                PercentEncoding.appendUtf8PercentEncodedCodePoint(output, c);
             }
             index += Character.charCount(c);
         }
-    }
-
-    /// Appends the UTF-8 bytes of one code point as RFC 2396 percent escapes.
-    private static void appendRfc2396EscapedUtf8(StringBuilder output, int codePoint) {
-        if (codePoint <= 0x7f) {
-            appendRfc2396Escape(output, codePoint);
-        } else if (codePoint <= 0x7ff) {
-            appendRfc2396Escape(output, 0xc0 | (codePoint >>> 6));
-            appendRfc2396Escape(output, 0x80 | (codePoint & 0x3f));
-        } else if (codePoint >= Character.MIN_SURROGATE && codePoint <= Character.MAX_SURROGATE) {
-            appendRfc2396Escape(output, '?');
-        } else if (codePoint <= 0xffff) {
-            appendRfc2396Escape(output, 0xe0 | (codePoint >>> 12));
-            appendRfc2396Escape(output, 0x80 | ((codePoint >>> 6) & 0x3f));
-            appendRfc2396Escape(output, 0x80 | (codePoint & 0x3f));
-        } else {
-            appendRfc2396Escape(output, 0xf0 | (codePoint >>> 18));
-            appendRfc2396Escape(output, 0x80 | ((codePoint >>> 12) & 0x3f));
-            appendRfc2396Escape(output, 0x80 | ((codePoint >>> 6) & 0x3f));
-            appendRfc2396Escape(output, 0x80 | (codePoint & 0x3f));
-        }
-    }
-
-    /// Appends one RFC 2396 percent escape.
-    private static void appendRfc2396Escape(StringBuilder output, int value) {
-        output.append('%');
-        output.append(HEX[(value >>> 4) & 0xf]);
-        output.append(HEX[value & 0xf]);
     }
 
     /// Returns whether a character is an RFC 2396 path character.

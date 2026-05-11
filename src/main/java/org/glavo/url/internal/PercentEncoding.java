@@ -55,9 +55,7 @@ final class PercentEncoding {
     /// Decodes valid percent triplets in a URL component as UTF-8.
     static String percentDecodeUtf8(String input) {
         for (int i = 0; i < input.length(); i++) {
-            if (input.charAt(i) == '%' && i + 2 < input.length()
-                    && Infra.isAsciiHex(input.charAt(i + 1))
-                    && Infra.isAsciiHex(input.charAt(i + 2))) {
+            if (isValidPercentTriplet(input, i, input.length())) {
                 return Encoding.utf8Decode(percentDecodeString(input));
             }
         }
@@ -68,7 +66,7 @@ final class PercentEncoding {
     static String utf8PercentEncodeCodePoint(int codePoint, BytePredicate percentEncodePredicate) {
         if (codePoint >= 0 && codePoint <= 0x7f) {
             return percentEncodePredicate.test(codePoint)
-                    ? percentEncoded(codePoint)
+                    ? percentEncodedByteString(codePoint)
                     : Character.toString((char) codePoint);
         }
         return utf8PercentEncodeString(new String(Character.toChars(codePoint)), percentEncodePredicate);
@@ -98,7 +96,7 @@ final class PercentEncoding {
             int codePoint = input.codePointAt(index);
             if (codePoint <= 0x7f) {
                 if (percentEncodePredicate.test(codePoint)) {
-                    appendPercentEncoded(output, codePoint);
+                    appendPercentEncodedByte(output, codePoint);
                 } else {
                     output.append((char) codePoint);
                 }
@@ -107,7 +105,7 @@ final class PercentEncoding {
                 for (byte b : bytes) {
                     int value = b & 0xff;
                     if (percentEncodePredicate.test(value)) {
-                        appendPercentEncoded(output, value);
+                        appendPercentEncodedByte(output, value);
                     } else {
                         output.append((char) value);
                     }
@@ -162,9 +160,33 @@ final class PercentEncoding {
     /// Returns whether the character starts an invalid percent triplet at the given UTF-16 index.
     static boolean startsInvalidPercentTriplet(String input, int pointer) {
         return input.charAt(pointer) == '%'
-                && (pointer + 2 >= input.length()
-                || !Infra.isAsciiHex(input.charAt(pointer + 1))
-                || !Infra.isAsciiHex(input.charAt(pointer + 2)));
+                && !isValidPercentTriplet(input, pointer, input.length());
+    }
+
+    /// Returns whether the string contains a valid percent triplet at the given UTF-16 index.
+    static boolean isValidPercentTriplet(String input, int pointer, int end) {
+        return pointer + 2 < end
+                && input.charAt(pointer) == '%'
+                && Infra.isAsciiHex(input.charAt(pointer + 1))
+                && Infra.isAsciiHex(input.charAt(pointer + 2));
+    }
+
+    /// Decodes the byte value represented by a valid percent triplet.
+    static int percentEncodedByte(String input, int pointer) {
+        return hexValue(input.charAt(pointer + 1)) * 16 + hexValue(input.charAt(pointer + 2));
+    }
+
+    /// Appends the UTF-8 bytes of one code point as percent escapes.
+    static void appendUtf8PercentEncodedCodePoint(StringBuilder output, int codePoint) {
+        if (codePoint <= 0x7f) {
+            appendPercentEncodedByte(output, codePoint);
+            return;
+        }
+
+        byte[] bytes = Encoding.utf8Encode(new String(Character.toChars(codePoint)));
+        for (byte b : bytes) {
+            appendPercentEncodedByte(output, b & 0xff);
+        }
     }
 
     /// Converts an ASCII hexadecimal digit to its numeric value.
@@ -179,14 +201,14 @@ final class PercentEncoding {
     }
 
     /// Appends one percent-encoded byte.
-    private static void appendPercentEncoded(StringBuilder output, int value) {
+    static void appendPercentEncodedByte(StringBuilder output, int value) {
         output.append('%');
         output.append(HEX[(value >>> 4) & 0xf]);
         output.append(HEX[value & 0xf]);
     }
 
     /// Returns one percent-encoded byte as a string.
-    private static String percentEncoded(int value) {
+    private static String percentEncodedByteString(int value) {
         return new String(new char[]{'%', HEX[(value >>> 4) & 0xf], HEX[value & 0xf]});
     }
 
