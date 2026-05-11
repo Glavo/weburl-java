@@ -36,17 +36,17 @@ public final class WebURLParsing {
 
     /// Parses an input string and returns the parsed URL.
     public static WebURL parse(String input) {
-        return parseRequired(input, null, "Invalid URL: " + input);
+        return parseRequired(input, null, "Invalid URL");
     }
 
     /// Parses an input string against a base URL string and returns the parsed URL.
     public static WebURL parse(String input, String base) {
-        return parseRequired(input, parseBaseRequired(base), "Invalid URL: " + input);
+        return parseRequired(input, parseBaseRequired(base), "Invalid URL");
     }
 
     /// Parses an input string against a base URL and returns the parsed URL.
     public static WebURL parse(String input, WebURL base) {
-        return parseRequired(input, implementation(base), "Invalid URL: " + input);
+        return parseRequired(input, implementation(base), "Invalid URL");
     }
 
     /// Parses an input string and returns `null` on failure.
@@ -69,7 +69,7 @@ public final class WebURLParsing {
     public static WebURL parseBrowserInput(String input) {
         Objects.requireNonNull(input, "input");
         String addressInput = toAddressUrlInput(input);
-        return parseRequired(Objects.requireNonNullElse(addressInput, input), null, "Invalid browser input: " + input);
+        return parseRequired(Objects.requireNonNullElse(addressInput, input), null, "Invalid browser input");
     }
 
     /// Parses a browser-style URL input and returns `null` on failure.
@@ -80,14 +80,14 @@ public final class WebURLParsing {
     }
 
     /// Parses an input string and throws when parsing fails.
-    private static WebURL parseRequired(String input, @Nullable WebURLImpl base, String message) {
+    private static WebURL parseRequired(String input, @Nullable WebURLImpl base, String reason) {
         Objects.requireNonNull(input, "input");
         try {
             return UrlParser.basicParseRequired(input, base, null, null);
         } catch (WebURLParseException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
-            throw new WebURLParseException.InvalidURL(message, exception);
+            throw new WebURLParseException(input, WebURLParseException.INVALID_URL, reason, -1, exception);
         }
     }
 
@@ -99,7 +99,7 @@ public final class WebURLParsing {
         } catch (WebURLParseException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
-            throw new WebURLParseException.InvalidURL("Invalid base URL: " + base, exception);
+            throw new WebURLParseException(base, WebURLParseException.INVALID_URL, "Invalid base URL", -1, exception);
         }
     }
 

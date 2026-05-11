@@ -56,8 +56,9 @@ public final class WebURLParsingTest {
         assertEquals("https://example.com/a/b/?next", base.resolve("?next").href());
         assertEquals("https://example.com/a/b/?q=1#top", base.resolve("#top").href());
         assertEquals("https://example.net/x", base.resolve("https://example.net/x").href());
-        assertThrows(WebURLParseException.PortOutOfRange.class,
-                () -> base.resolve("https://example.com:999999/"));
+        assertEquals(WebURLParseException.PORT_OUT_OF_RANGE,
+                assertThrows(WebURLParseException.class,
+                        () -> base.resolve("https://example.com:999999/")).getErrorName());
     }
 
     /// Tests that browser input leaves complete absolute URL strings to standard URL parsing.
@@ -196,10 +197,12 @@ public final class WebURLParsingTest {
         assertNotNull(WebURL.tryParseBrowserInput("www.glavo.site"));
         assertNull(WebURL.tryParseBrowserInput("www.glavo.site:abc"));
         assertNull(WebURL.tryParseBrowserInput("example.com:123456"));
-        assertThrows(WebURLParseException.PortInvalid.class,
-                () -> WebURL.parseBrowserInput("www.glavo.site:abc"));
-        assertThrows(WebURLParseException.PortOutOfRange.class,
-                () -> WebURL.parseBrowserInput("example.com:123456"));
+        assertEquals(WebURLParseException.PORT_INVALID,
+                assertThrows(WebURLParseException.class,
+                        () -> WebURL.parseBrowserInput("www.glavo.site:abc")).getErrorName());
+        assertEquals(WebURLParseException.PORT_OUT_OF_RANGE,
+                assertThrows(WebURLParseException.class,
+                        () -> WebURL.parseBrowserInput("example.com:123456")).getErrorName());
     }
 
     /// Tests parse and tryParse failure handling.
@@ -207,8 +210,9 @@ public final class WebURLParsingTest {
     public void reportsParsingFailures() {
         assertNull(WebURL.tryParse("https://example.com:999999/"));
         assertNull(WebURL.tryParse("/relative", "not a url"));
-        assertThrows(WebURLParseException.PortOutOfRange.class,
-                () -> WebURL.parse("https://example.com:999999/"));
+        assertEquals(WebURLParseException.PORT_OUT_OF_RANGE,
+                assertThrows(WebURLParseException.class,
+                        () -> WebURL.parse("https://example.com:999999/")).getErrorName());
     }
 
     /// Tests UTS #46 domain processing.
