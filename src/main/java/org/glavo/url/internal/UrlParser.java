@@ -1496,7 +1496,7 @@ public final class UrlParser {
         /// Parses the file state.
         private Result parseFile(int c) {
             record.scheme = "file";
-            record.host = UrlHost.domain("");
+            record.host = UrlHost.EMPTY_DOMAIN;
 
             if (c == '/' || c == '\\') {
                 if (c == '\\') {
@@ -1563,15 +1563,15 @@ public final class UrlParser {
                     recordValidationError(WebURLParseException.ErrorType.FILE_INVALID_WINDOWS_DRIVE_LETTER_HOST);
                     state = State.PATH;
                 } else if (fileHost.isEmpty()) {
-                    record.host = UrlHost.domain("");
+                    record.host = UrlHost.EMPTY_DOMAIN;
                     if (stateOverride != null) {
                         return Result.STOP;
                     }
                     state = State.PATH_START;
                 } else {
                     UrlHost parsedHost = parseBufferedHost(hostEndIndex);
-                    if (parsedHost.serialize().equals("localhost")) {
-                        parsedHost = UrlHost.domain("");
+                    if (parsedHost == UrlHost.LOCALHOST_DOMAIN) {
+                        parsedHost = UrlHost.EMPTY_DOMAIN;
                     }
                     record.host = parsedHost;
                     if (stateOverride != null) {

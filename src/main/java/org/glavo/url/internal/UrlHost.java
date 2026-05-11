@@ -24,8 +24,21 @@ import java.util.Objects;
 /// Internal representation of a WHATWG URL host.
 @NotNullByDefault
 public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.IPv4, UrlHost.IPv6 {
+    /// The empty domain host.
+    Domain EMPTY_DOMAIN = new Domain("");
+
+    /// The `localhost` domain host.
+    Domain LOCALHOST_DOMAIN = new Domain("localhost");
+
     /// Creates a domain host.
     static UrlHost domain(String value) {
+        Objects.requireNonNull(value, "value");
+        if (value.isEmpty()) {
+            return EMPTY_DOMAIN;
+        }
+        if (value.equals("localhost")) {
+            return LOCALHOST_DOMAIN;
+        }
         return new Domain(value);
     }
 

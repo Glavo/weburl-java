@@ -155,7 +155,7 @@ final class UrlFastParser {
 
         UrlRecord record = new UrlRecord();
         record.scheme = "file";
-        record.host = UrlHost.domain("");
+        record.host = UrlHost.EMPTY_DOMAIN;
         record.path = pathAndSuffix.path;
         record.query = pathAndSuffix.query;
         record.fragment = pathAndSuffix.fragment;
