@@ -64,33 +64,33 @@ public final class WebURLParsingTest {
     /// Tests reusable parser instances and strict validation behavior.
     @Test
     public void parsesWithReusableParsers() {
-        assertEquals(false, WebURLParser.defaultParser().isStrictValidationEnabled());
-        assertEquals(true, WebURLParser.strictParser().isStrictValidationEnabled());
+        assertEquals(false, WebURLParser.getDefault().isStrictValidationEnabled());
+        assertEquals(true, WebURLParser.getStrict().isStrictValidationEnabled());
 
-        assertEquals(WebURL.parse("https://example.com/"), WebURLParser.defaultParser().parse("https://example.com/"));
-        assertEquals("http://user@example.com/", WebURLParser.defaultParser().parse("http://user@example.com/").href());
-        assertEquals("https://example.com/a", WebURLParser.defaultParser().parse("a", "https://example.com/").href());
-        assertEquals("https://example.com/a", WebURLParser.defaultParser().parse("a", WebURL.parse("https://example.com/")).href());
-        assertNotNull(WebURLParser.defaultParser().tryParse("https://example.com/"));
-        assertNotNull(WebURLParser.defaultParser().tryParse("a", "https://example.com/"));
-        assertNotNull(WebURLParser.defaultParser().tryParse("a", WebURL.parse("https://example.com/")));
-        assertEquals("https://example.com/", WebURLParser.defaultParser().parseBrowserInput("example.com").href());
-        assertNotNull(WebURLParser.defaultParser().tryParseBrowserInput("example.com"));
+        assertEquals(WebURL.parse("https://example.com/"), WebURLParser.getDefault().parse("https://example.com/"));
+        assertEquals("http://user@example.com/", WebURLParser.getDefault().parse("http://user@example.com/").href());
+        assertEquals("https://example.com/a", WebURLParser.getDefault().parse("a", "https://example.com/").href());
+        assertEquals("https://example.com/a", WebURLParser.getDefault().parse("a", WebURL.parse("https://example.com/")).href());
+        assertNotNull(WebURLParser.getDefault().tryParse("https://example.com/"));
+        assertNotNull(WebURLParser.getDefault().tryParse("a", "https://example.com/"));
+        assertNotNull(WebURLParser.getDefault().tryParse("a", WebURL.parse("https://example.com/")));
+        assertEquals("https://example.com/", WebURLParser.getDefault().parseBrowserInput("example.com").href());
+        assertNotNull(WebURLParser.getDefault().tryParseBrowserInput("example.com"));
 
         WebURLParseException exception = assertThrows(WebURLParseException.class,
-                () -> WebURLParser.strictParser().parse("http://user@example.com/"));
+                () -> WebURLParser.getStrict().parse("http://user@example.com/"));
         assertEquals(WebURLParseException.ErrorType.INVALID_CREDENTIALS, exception.getErrorType());
         assertEquals("http://user@example.com/", exception.getInput());
         assertEquals("http://user@example.com/".indexOf('@'), exception.getIndex());
 
         WebURLParseException whitespace = assertThrows(WebURLParseException.class,
-                () -> WebURLParser.strictParser().parse(" https://example.com/"));
+                () -> WebURLParser.getStrict().parse(" https://example.com/"));
         assertEquals(WebURLParseException.ErrorType.INVALID_URL_UNIT, whitespace.getErrorType());
         assertEquals(" https://example.com/", whitespace.getInput());
         assertEquals(0, whitespace.getIndex());
 
-        assertNull(WebURLParser.strictParser().tryParse("http://user@example.com/"));
-        assertNull(WebURLParser.strictParser().tryParseBrowserInput("http://user@example.com/"));
+        assertNull(WebURLParser.getStrict().tryParse("http://user@example.com/"));
+        assertNull(WebURLParser.getStrict().tryParseBrowserInput("http://user@example.com/"));
     }
 
     /// Tests that browser input leaves complete absolute URL strings to standard URL parsing.

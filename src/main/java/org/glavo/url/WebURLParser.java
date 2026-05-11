@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /// The strict parser treats those non-fatal validation errors as parse failures and throws
 /// `WebURLParseException`.
 ///
-/// Implementations are immutable and thread-safe. Static convenience methods on `WebURL` use [#defaultParser()].
+/// Implementations are immutable and thread-safe. Static convenience methods on `WebURL` use [#getDefault()].
 ///
 /// @since 0.2.0
 @NotNullByDefault
@@ -34,14 +34,14 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// Returns the default parser.
     ///
     /// This parser ignores non-fatal validation errors and continues parsing according to the URL Standard.
-    static WebURLParser defaultParser() {
+    static WebURLParser getDefault() {
         return WebURLParserImpl.DEFAULT;
     }
 
     /// Returns the strict parser.
     ///
     /// This parser treats non-fatal validation errors as parse failures and throws `WebURLParseException`.
-    static WebURLParser strictParser() {
+    static WebURLParser getStrict() {
         return WebURLParserImpl.STRICT;
     }
 
