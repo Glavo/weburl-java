@@ -31,18 +31,18 @@ public abstract sealed class WebURLParseException extends IllegalArgumentExcepti
 
     /// Creates a URL parse exception with a parse error name and description.
     protected WebURLParseException(String errorName, String description) {
-        super(errorName + ": " + description);
+        super(description);
         this.errorName = errorName;
     }
 
     /// Creates a URL parse exception with a parse error name, description, and cause.
     protected WebURLParseException(String errorName, String description, Throwable cause) {
-        super(errorName + ": " + description, cause);
+        super(description, cause);
         this.errorName = errorName;
     }
 
     /// Returns the URL parse error name.
-    public final String errorName() {
+    public final String getErrorName() {
         return errorName;
     }
 

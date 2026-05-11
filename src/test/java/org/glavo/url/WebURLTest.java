@@ -93,7 +93,9 @@ public final class WebURLTest {
         WebURLParseException missingScheme =
                 assertThrows(WebURLParseException.MissingSchemeNonRelativeURL.class,
                         () -> WebURL.parse("/en-US/docs"));
-        assertEquals("missing-scheme-non-relative-URL", missingScheme.errorName());
+        assertEquals("missing-scheme-non-relative-URL", missingScheme.getErrorName());
+        assertEquals("The input is missing a scheme and cannot be parsed relative to a base URL.",
+                missingScheme.getMessage());
 
         assertThrows(WebURLParseException.PortOutOfRange.class,
                 () -> WebURL.parse("http://example.com:65536/"));
