@@ -211,7 +211,7 @@ if (maybeUrl != null) {
 
 ### Converting to and from `java.net.URI` / `java.net.URL`
 
-`WebURL` seamlessly interoperates with the standard library:
+`WebURL` can be easily converted to and from the `java.net.URI`/`java.net.URL`:
 
 ```java
 // From java.net.URI or java.net.URL
@@ -228,6 +228,9 @@ URL javaUrl = url.toURL();
 // One-liner: parse and convert to URI
 URI uri = WebURL.toURI("https://example.com/a b?q=1#f");
 ```
+
+When converting a `WebURL` to `java.net.URI`/`java.net.URL`, the URL is normalized to the RFC 2396 standard,
+so using `WebURL.toURI(String)` instead of `java.net.URI.create(String)` allows parsing a wider range of real-world URLs.
 
 ### Parsing User Input
 
