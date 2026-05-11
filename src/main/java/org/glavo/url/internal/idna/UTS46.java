@@ -64,7 +64,7 @@ public final class UTS46 {
                 false,
                 false
         );
-        return new Result(joinLabels(labels.labels), error);
+        return new Result(String.join(".", labels.labels), error);
     }
 
     /// Converts a domain name to ASCII according to UTS #46.
@@ -468,18 +468,6 @@ public final class UTS46 {
         }
         labels.add(domain.substring(start));
         return labels.toArray(String[]::new);
-    }
-
-    /// Joins dot-separated labels into a domain.
-    private static String joinLabels(String @Unmodifiable [] labels) {
-        StringBuilder output = new StringBuilder();
-        for (int i = 0; i < labels.length; i++) {
-            if (i > 0) {
-                output.append('.');
-            }
-            output.append(labels[i]);
-        }
-        return output.toString();
     }
 
     /// Converts a label to code points.
