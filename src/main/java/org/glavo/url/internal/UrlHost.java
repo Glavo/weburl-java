@@ -71,17 +71,11 @@ public final class UrlHost {
 
     /// Serializes the host.
     public String serialize() {
-        switch (kind) {
-            case DOMAIN:
-            case OPAQUE:
-                return text == null ? "" : text;
-            case IPV4:
-                return serializeIpv4(ipv4Address);
-            case IPV6:
-                return "[" + serializeIpv6(ipv6Address == null ? new int[8] : ipv6Address) + "]";
-            default:
-                throw new AssertionError(kind);
-        }
+        return switch (kind) {
+            case DOMAIN, OPAQUE -> text == null ? "" : text;
+            case IPV4 -> serializeIpv4(ipv4Address);
+            case IPV6 -> "[" + serializeIpv6(ipv6Address == null ? new int[8] : ipv6Address) + "]";
+        };
     }
 
     /// Returns a Unicode display form for a domain host, or `null` when the serialized host should be used.
