@@ -64,6 +64,32 @@ public final class WebURLParserImpl implements WebURLParser {
         return rejectedValidationErrors;
     }
 
+    /// Compares this parser with another object for equality.
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        return this == obj
+                || obj instanceof WebURLParserImpl other
+                && rejectedValidationErrors.equals(other.rejectedValidationErrors);
+    }
+
+    /// Returns a hash code for this parser.
+    @Override
+    public int hashCode() {
+        return rejectedValidationErrors.hashCode();
+    }
+
+    /// Returns a string representation of this parser.
+    @Override
+    public String toString() {
+        if (this.equals(DEFAULT)) {
+            return "WebURLParser.DEFAULT";
+        }
+        if (this.equals(STRICT)) {
+            return "WebURLParser.STRICT";
+        }
+        return "WebURLParser[rejectedValidationErrors=" + rejectedValidationErrors + "]";
+    }
+
     /// Parses an absolute input string and returns the parsed URL.
     @Override
     public WebURL parse(String input) {

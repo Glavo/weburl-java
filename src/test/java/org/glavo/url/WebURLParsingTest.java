@@ -23,6 +23,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -67,6 +68,10 @@ public final class WebURLParsingTest {
     @Test
     public void parsesWithReusableParsers() {
         assertEquals(Set.of(), WebURLParser.getDefault().getRejectedValidationErrors());
+        assertEquals(WebURLParser.getDefault(), WebURLParser.getDefault());
+        assertNotEquals(WebURLParser.getDefault(), WebURLParser.getStrict());
+        assertEquals("WebURLParser.DEFAULT", WebURLParser.getDefault().toString());
+        assertEquals("WebURLParser.STRICT", WebURLParser.getStrict().toString());
         for (WebURLParseException.ErrorType errorType : WebURLParseException.ErrorType.values()) {
             assertEquals(errorType.isRecoverable(),
                     WebURLParser.getStrict().getRejectedValidationErrors().contains(errorType),
