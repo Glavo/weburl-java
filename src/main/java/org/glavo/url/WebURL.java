@@ -194,6 +194,18 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         return WebURLParsing.parse(input, base);
     }
 
+    /// Resolves an input string against this URL and returns the parsed URL.
+    ///
+    /// This is a convenience method equivalent to `WebURL.parse(input, this)`. The input may be either an
+    /// absolute URL or a relative URL reference. Relative references are resolved using this URL as the base.
+    ///
+    /// @param input the URL input string
+    /// @return the parsed URL
+    /// @throws WebURLParseException when the input cannot be resolved against this URL
+    default WebURL resolve(String input) {
+        return WebURLParsing.parse(input, this);
+    }
+
     /// Parses an absolute input string and returns `null` on failure.
     ///
     /// This method has the same URL processing behavior as `parse(String)`, except failures are represented by

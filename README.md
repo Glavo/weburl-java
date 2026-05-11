@@ -156,6 +156,10 @@ WebURL docs = WebURL.parse("/docs", "https://example.com/");
 // Relative URL resolved against a WebURL base
 WebURL page = WebURL.parse("api/v2", docs);
 // -> "https://example.com/api/v2"
+
+// Convenience instance method for resolving against an existing WebURL
+WebURL next = docs.resolve("guide/");
+// -> "https://example.com/guide/"
 ```
 
 ### URL Components

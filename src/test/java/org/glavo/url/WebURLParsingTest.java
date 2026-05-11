@@ -43,7 +43,21 @@ public final class WebURLParsingTest {
         WebURL base = WebURL.parse("https://example.org/x/y/");
 
         assertEquals("https://example.org/x/z", WebURL.parse("../z", base).href());
+        assertEquals("https://example.org/x/z", base.resolve("../z").href());
         assertEquals("https://example.net/z", WebURL.parse("/z", "https://example.net/base").href());
+    }
+
+    /// Tests resolving URL inputs against an existing URL.
+    @Test
+    public void resolvesAgainstThisUrl() {
+        WebURL base = WebURL.parse("https://example.com/a/b/?q=1#frag");
+
+        assertEquals("https://example.com/a/c", base.resolve("../c").href());
+        assertEquals("https://example.com/a/b/?next", base.resolve("?next").href());
+        assertEquals("https://example.com/a/b/?q=1#top", base.resolve("#top").href());
+        assertEquals("https://example.net/x", base.resolve("https://example.net/x").href());
+        assertThrows(WebURLParseException.PortOutOfRange.class,
+                () -> base.resolve("https://example.com:999999/"));
     }
 
     /// Tests that browser input leaves complete absolute URL strings to standard URL parsing.
