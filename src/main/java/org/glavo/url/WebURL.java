@@ -270,7 +270,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @implSpec The current implementation accepts standard absolute URL strings and a deterministic subset of
     /// browser address bar style URL inputs, such as bare domain names, `//`-prefixed authorities, single-label
     /// hosts, IP addresses, bracketed IPv6 addresses, and absolute local paths. Public-looking domain names
-    /// recognized as URL-like but lacking an explicit scheme are completed with `https` before normal URL
+    /// recognized as URL like but lacking an explicit scheme are completed with `https` before normal URL
     /// processing. When such a domain has an explicit decimal port, it is completed with `http`. IP addresses,
     /// single-label hosts, and reserved local or test hosts such as `localhost`, `test`, and names below
     /// `.localhost` are completed with `http`. Windows drive paths, Windows UNC paths, and POSIX-style absolute
@@ -329,7 +329,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///
     /// This method is for display only. The result is not a canonical serialization, is not guaranteed to be
     /// accepted by {@link #parse(String)}, and must not be used as an authority for security decisions. Use
-    /// {@link #href()} when a stable URL serialization is required.
+    /// {@link #href()} when stable URL serialization is required.
     ///
     /// @return a human-readable display string
     String toDisplayString();
@@ -368,7 +368,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// `application/x-www-form-urlencoded` rules and therefore does not treat plus (`+`) as a space.
     ///
     /// The result is `null` when the URL has no serialized credentials. When the URL has credentials with an
-    /// empty username, the result is the empty string. Percent escapes that are invalid or incomplete are left
+    /// empty username, the result is the empty string. The percentage of escapes that are invalid or incomplete is left
     /// unchanged.
     ///
     /// @return the decoded username component, or `null` when absent
@@ -401,8 +401,8 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// {@link #getRawPassword()} with valid percent triplets decoded as UTF-8. It does not apply
     /// `application/x-www-form-urlencoded` rules and therefore does not treat plus (`+`) as a space.
     ///
-    /// The result is `null` when the URL has no password component. Percent escapes that are invalid or
-    /// incomplete are left unchanged.
+    /// The result is `null` when the URL has no password component. The percentage of escapes that are invalid or
+    /// incomplete is left unchanged.
     ///
     /// @return the decoded password component, or `null` when absent
     @Nullable String getPassword();
@@ -434,8 +434,8 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// at-sign (`@`) that separates user-info from the host.
     ///
     /// User-info is present when the URL serialization contains credentials. When present, it consists of the
-    /// username and, if a password component is serialized, a colon (`:`) followed by the password. Percent
-    /// escapes that are invalid or incomplete are left unchanged.
+    /// username and, if a password component is serialized, a colon (`:`) followed by the password. The percentage of
+    /// escapes that are invalid or incomplete is left unchanged.
     ///
     /// The result is `null` when the URL has no serialized credentials.
     ///
@@ -466,8 +466,8 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// The authority is present when this URL has a host component. When present, it consists of the
     /// serialized credentials followed by at-sign (`@`) when credentials are present, the serialized host, and
     /// the serialized port prefixed by colon (`:`) when a non-default port is present. Domain hosts remain in
-    /// their URL Standard ASCII form; this method does not convert Punycode labels back to Unicode. Percent
-    /// escapes that are invalid or incomplete are left unchanged.
+    /// their URL Standard ASCII form; this method does not convert Punycode labels back to Unicode. The percentage of
+    /// escapes that are invalid or incomplete is left unchanged.
     ///
     /// The result is `null` when this URL has no host component. A URL with an explicitly empty authority,
     /// such as a `file` URL with an empty host, returns the empty string.
@@ -508,7 +508,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// Returns the port as an integer.
     ///
     /// This method returns the normalized port component when one is stored in this URL. If no port component
-    /// is stored but the scheme has a known default port, this method returns that default port. Otherwise it
+    /// is stored but the scheme has a known default port, this method returns that default port. Otherwise, it
     /// returns `-1`.
     ///
     /// URL Standard normalization removes default ports from the serialized URL. Therefore
@@ -528,6 +528,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// {@link #getPort()}, which may return a scheme default port even when no port component is serialized.
     ///
     /// @return the normalized raw port component, or `null` when absent
+    /// @since 0.2.0
     @Nullable String getRawPort();
 
     /// Returns the decoded path component.
@@ -556,7 +557,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// {@link #getRawQuery()} with valid percent triplets decoded as UTF-8. It does not include the leading
     /// question mark and does not apply `application/x-www-form-urlencoded` rules, so plus (`+`) remains plus.
     ///
-    /// The result is `null` when the query component is absent. An empty query component is returned as the
+    /// The result is `null` when the query component is absent. An empty query component is returned as an
     /// empty string.
     ///
     /// @return the decoded query component, or `null` when absent
@@ -566,7 +567,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///
     /// This method exposes the normalized, percent-encoded query stored in the URL without the leading
     /// question mark. It follows the Java `URI` convention of returning `null` when the query component is
-    /// absent. An empty query component is returned as the empty string.
+    /// absent. An empty query component is returned as an empty string.
     ///
     /// @return the raw query component, or `null` when absent
     @Nullable String getRawQuery();
@@ -644,7 +645,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// Compares this URL with another URL by serialized URL string.
     ///
     /// The comparison is equivalent to `this.href().compareTo(other.href())`. It is consistent with
-    /// `equals(Object)`: if this method returns zero, the two URL objects are equal according to this
+    /// `equals(Object)`: if this method returns zero, the two URL objects are equal, according to this
     /// interface's equality contract.
     ///
     /// @param other the URL to compare with this URL

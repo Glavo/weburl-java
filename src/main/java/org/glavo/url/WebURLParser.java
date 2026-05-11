@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 /// `WebURLParseException`.
 ///
 /// Implementations are immutable and thread-safe. Static convenience methods on `WebURL` use [#defaultParser()].
+///
+/// @since 0.2.0
 @NotNullByDefault
 public sealed interface WebURLParser permits WebURLParserImpl {
     /// Returns the default parser.
