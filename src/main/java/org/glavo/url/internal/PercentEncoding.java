@@ -16,15 +16,22 @@
 package org.glavo.url.internal;
 
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 
 /// Percent encoding and decoding helpers for URL components.
 @NotNullByDefault
 final class PercentEncoding {
-    /// Hexadecimal digits used by percent encoding.
-    private static final char @Unmodifiable [] HEX = "0123456789ABCDEF".toCharArray();
+    /// Upper-case hexadecimal digits used by percent encoding.
+    private static final String UPPER_HEX_DIGITS = "0123456789ABCDEF";
+
+    /// Lazily initialized cache for the 256 possible percent-encoded byte strings.
+    ///
+    /// Cache slots are allowed to be initialized more than once by racing threads because each computed value is
+    /// immutable and determined only by the slot index.
+    private static final @Nullable String[] PERCENT_ENCODED_BYTE_STRINGS = new String[256];
 
     /// Creates no instances.
     private PercentEncoding() {
@@ -96,7 +103,7 @@ final class PercentEncoding {
             int codePoint = input.codePointAt(index);
             if (codePoint <= 0x7f) {
                 if (percentEncodePredicate.test(codePoint)) {
-                    appendPercentEncodedByte(output, codePoint);
+                    output.append(percentEncodedByteString(codePoint));
                 } else {
                     output.append((char) codePoint);
                 }
@@ -105,7 +112,7 @@ final class PercentEncoding {
                 for (byte b : bytes) {
                     int value = b & 0xff;
                     if (percentEncodePredicate.test(value)) {
-                        appendPercentEncodedByte(output, value);
+                        output.append(percentEncodedByteString(value));
                     } else {
                         output.append((char) value);
                     }
@@ -179,13 +186,13 @@ final class PercentEncoding {
     /// Appends the UTF-8 bytes of one code point as percent escapes.
     static void appendUtf8PercentEncodedCodePoint(StringBuilder output, int codePoint) {
         if (codePoint <= 0x7f) {
-            appendPercentEncodedByte(output, codePoint);
+            output.append(percentEncodedByteString(codePoint));
             return;
         }
 
         byte[] bytes = Encoding.utf8Encode(new String(Character.toChars(codePoint)));
         for (byte b : bytes) {
-            appendPercentEncodedByte(output, b & 0xff);
+            output.append(percentEncodedByteString(b & 0xff));
         }
     }
 
@@ -200,16 +207,18 @@ final class PercentEncoding {
         return value - 'a' + 10;
     }
 
-    /// Appends one percent-encoded byte.
-    static void appendPercentEncodedByte(StringBuilder output, int value) {
-        output.append('%');
-        output.append(HEX[(value >>> 4) & 0xf]);
-        output.append(HEX[value & 0xf]);
-    }
-
     /// Returns one percent-encoded byte as a string.
     private static String percentEncodedByteString(int value) {
-        return new String(new char[]{'%', HEX[(value >>> 4) & 0xf], HEX[value & 0xf]});
+        String string = PERCENT_ENCODED_BYTE_STRINGS[value];
+        if (string == null) {
+            string = new String(new byte[]{
+                    '%',
+                    (byte) UPPER_HEX_DIGITS.charAt((value >>> 4) & 0xf),
+                    (byte) UPPER_HEX_DIGITS.charAt(value & 0xf)
+            }, StandardCharsets.ISO_8859_1);
+            PERCENT_ENCODED_BYTE_STRINGS[value] = string;
+        }
+        return string;
     }
 
     /// Predicate over unsigned byte values.
