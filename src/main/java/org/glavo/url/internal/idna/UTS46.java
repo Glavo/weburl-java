@@ -15,6 +15,7 @@
  */
 package org.glavo.url.internal.idna;
 
+import org.glavo.url.internal.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -98,7 +99,7 @@ public final class UTS46 {
                 ascii.append('.');
             }
             String label = labels.labels[i];
-            if (containsNonAscii(label)) {
+            if (StringUtils.containsNonAscii(label)) {
                 @Nullable String encoded = Punycode.encode(label);
                 if (encoded == null) {
                     error = true;
@@ -170,7 +171,7 @@ public final class UTS46 {
             if (!startsWithAcePrefix(label)) {
                 continue;
             }
-            if (!isAsciiOnly(label)) {
+            if (!StringUtils.isAsciiOnly(label)) {
                 error = true;
                 continue;
             }
@@ -185,7 +186,7 @@ public final class UTS46 {
 
             labels[i] = decoded;
             decodedLabels[i] = true;
-            if (decoded.isEmpty() || isAsciiOnly(decoded)) {
+            if (decoded.isEmpty() || StringUtils.isAsciiOnly(decoded)) {
                 error = true;
             }
         }
@@ -500,26 +501,6 @@ public final class UTS46 {
                 && label.charAt(1) == 'n'
                 && label.charAt(2) == '-'
                 && label.charAt(3) == '-';
-    }
-
-    /// Returns whether a string consists entirely of ASCII code points.
-    private static boolean isAsciiOnly(String input) {
-        for (int i = 0; i < input.length(); i++) {
-            if (input.charAt(i) > 0x7f) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /// Returns whether a string contains at least one non-ASCII code point.
-    private static boolean containsNonAscii(String input) {
-        for (int i = 0; i < input.length(); i++) {
-            if (input.charAt(i) > 0x7f) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /// Returns whether an ASCII code point is allowed by STD3 host syntax.

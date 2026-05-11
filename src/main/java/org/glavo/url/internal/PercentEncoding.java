@@ -43,8 +43,8 @@ final class PercentEncoding {
         for (int i = 0; i < input.length; i++) {
             int value = input[i] & 0xff;
             if (value == '%' && i + 2 < input.length
-                    && Infra.isAsciiHex(input[i + 1] & 0xff)
-                    && Infra.isAsciiHex(input[i + 2] & 0xff)) {
+                    && StringUtils.isAsciiHex(input[i + 1] & 0xff)
+                    && StringUtils.isAsciiHex(input[i + 2] & 0xff)) {
                 output.write(hexValue(input[i + 1] & 0xff) * 16 + hexValue(input[i + 2] & 0xff));
                 i += 2;
             } else {
@@ -174,8 +174,8 @@ final class PercentEncoding {
     static boolean isValidPercentTriplet(String input, int pointer, int end) {
         return pointer + 2 < end
                 && input.charAt(pointer) == '%'
-                && Infra.isAsciiHex(input.charAt(pointer + 1))
-                && Infra.isAsciiHex(input.charAt(pointer + 2));
+                && StringUtils.isAsciiHex(input.charAt(pointer + 1))
+                && StringUtils.isAsciiHex(input.charAt(pointer + 2));
     }
 
     /// Decodes the byte value represented by a valid percent triplet.

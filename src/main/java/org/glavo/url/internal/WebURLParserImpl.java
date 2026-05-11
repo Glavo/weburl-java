@@ -164,7 +164,7 @@ public final class WebURLParserImpl implements WebURLParser {
 
     /// Converts a browser-style URL input to an absolute URL input, or returns `null` for standard URL input.
     private static @Nullable String toAddressUrlInput(String input) {
-        String text = removeTabsAndNewlines(trimControlChars(input));
+        String text = StringUtils.removeAsciiTabsAndNewlines(StringUtils.trimControlChars(input));
         if (text.isEmpty()) {
             return null;
         }
@@ -209,7 +209,7 @@ public final class WebURLParserImpl implements WebURLParser {
     /// Returns whether a string starts with an absolute Windows drive path.
     private static boolean startsWithWindowsDriveAbsolutePath(String text) {
         return text.length() >= 3
-                && isAsciiAlpha(text.charAt(0))
+                && StringUtils.isAsciiAlpha(text.charAt(0))
                 && text.charAt(1) == ':'
                 && isLocalPathSeparator(text.charAt(2));
     }
@@ -288,13 +288,13 @@ public final class WebURLParserImpl implements WebURLParser {
         if (containsDomainDot(host) || isIpAddressHost(host) || isReservedAddressHost(host)) {
             return true;
         }
-        return isAsciiDecimal(authority, schemeEnd + 1, authority.length());
+        return StringUtils.isAsciiDecimal(authority, schemeEnd + 1, authority.length());
     }
 
     /// Returns the default scheme for an address host.
     private static String defaultAddressScheme(String host, @Nullable String port) {
         return isIpAddressHost(host) || isSingleLabelHost(host) || isReservedAddressHost(host)
-                || port != null && isAsciiDecimal(port, 0, port.length())
+                || port != null && StringUtils.isAsciiDecimal(port, 0, port.length())
                 ? HTTP_SCHEME
                 : HTTPS_SCHEME;
     }
@@ -403,9 +403,9 @@ public final class WebURLParserImpl implements WebURLParser {
         }
         if (start + 2 < end && value.charAt(start) == '0'
                 && (value.charAt(start + 1) == 'x' || value.charAt(start + 1) == 'X')) {
-            return isAsciiHex(value, start + 2, end);
+            return StringUtils.isAsciiHex(value, start + 2, end);
         }
-        return isAsciiDecimal(value, start, end);
+        return StringUtils.isAsciiDecimal(value, start, end);
     }
 
     /// Returns whether a host has a single label.
@@ -415,10 +415,10 @@ public final class WebURLParserImpl implements WebURLParser {
 
     /// Returns whether a host uses a reserved local or test name.
     private static boolean isReservedAddressHost(String host) {
-        return equalsIgnoreCase(host, "localhost")
-                || equalsIgnoreCase(host, "test")
-                || equalsIgnoreCase(host, "example")
-                || equalsIgnoreCase(host, "invalid")
+        return host.equalsIgnoreCase("localhost")
+                || host.equalsIgnoreCase("test")
+                || host.equalsIgnoreCase("example")
+                || host.equalsIgnoreCase("invalid")
                 || endsWithReservedSuffix(host, ".localhost")
                 || endsWithReservedSuffix(host, ".test")
                 || endsWithReservedSuffix(host, ".example")
@@ -475,100 +475,16 @@ public final class WebURLParserImpl implements WebURLParser {
     /// Returns the end index of a valid scheme in a string prefix, or `-1` when absent.
     private static int validSchemeEnd(String value) {
         int colon = value.indexOf(':');
-        if (colon <= 0 || !isAsciiAlpha(value.charAt(0))) {
+        if (colon <= 0 || !StringUtils.isAsciiAlpha(value.charAt(0))) {
             return -1;
         }
         for (int i = 1; i < colon; i++) {
             char c = value.charAt(i);
-            if (!isAsciiAlphanumeric(c) && c != '+' && c != '-' && c != '.') {
+            if (!StringUtils.isAsciiAlphanumeric(c) && c != '+' && c != '-' && c != '.') {
                 return -1;
             }
         }
         return colon;
-    }
-
-    /// Trims leading and trailing C0 controls and spaces.
-    private static String trimControlChars(String string) {
-        int start = 0;
-        int end = string.length();
-        while (start < end && string.charAt(start) <= 0x20) {
-            start++;
-        }
-        while (end > start && string.charAt(end - 1) <= 0x20) {
-            end--;
-        }
-        return string.substring(start, end);
-    }
-
-    /// Removes ASCII tabs and newlines.
-    private static String removeTabsAndNewlines(String value) {
-        int firstSkipped = -1;
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (c == '\t' || c == '\n' || c == '\r') {
-                firstSkipped = i;
-                break;
-            }
-        }
-        if (firstSkipped < 0) {
-            return value;
-        }
-
-        StringBuilder output = new StringBuilder(value.length() - 1);
-        output.append(value, 0, firstSkipped);
-        for (int i = firstSkipped + 1; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (c != '\t' && c != '\n' && c != '\r') {
-                output.append(c);
-            }
-        }
-        return output.toString();
-    }
-
-    /// Returns whether a character is an ASCII letter.
-    private static boolean isAsciiAlpha(char c) {
-        return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z';
-    }
-
-    /// Returns whether a character is an ASCII letter or digit.
-    private static boolean isAsciiAlphanumeric(char c) {
-        return isAsciiAlpha(c) || c >= '0' && c <= '9';
-    }
-
-    /// Returns whether two strings are equal ignoring ASCII case.
-    private static boolean equalsIgnoreCase(String left, String right) {
-        return left.equalsIgnoreCase(right);
-    }
-
-    /// Returns whether a substring contains only ASCII decimal digits.
-    private static boolean isAsciiDecimal(String value, int start, int end) {
-        if (start >= end) {
-            return false;
-        }
-        for (int i = start; i < end; i++) {
-            char c = value.charAt(i);
-            if (c < '0' || c > '9') {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /// Returns whether a substring contains only ASCII hexadecimal digits.
-    private static boolean isAsciiHex(String value, int start, int end) {
-        if (start >= end) {
-            return false;
-        }
-        for (int i = start; i < end; i++) {
-            char c = value.charAt(i);
-            if (!isAsciiAlphanumeric(c)
-                    || c > '9' && c < 'A'
-                    || c > 'F' && c < 'a'
-                    || c > 'f') {
-                return false;
-            }
-        }
-        return true;
     }
 
     /// Returns the implementation object for a `WebURL`.

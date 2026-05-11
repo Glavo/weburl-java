@@ -374,7 +374,7 @@ final class UrlFastParser {
 
     /// Returns the scheme delimiter index, or `-1`.
     private static int schemeEnd(String input) {
-        if (!Infra.isAsciiAlpha(input.charAt(0))) {
+        if (!StringUtils.isAsciiAlpha(input.charAt(0))) {
             return -1;
         }
         for (int i = 1; i < input.length(); i++) {
@@ -382,7 +382,7 @@ final class UrlFastParser {
             if (c == ':') {
                 return i;
             }
-            if (!Infra.isAsciiAlphanumeric(c) && c != '+' && c != '-' && c != '.') {
+            if (!StringUtils.isAsciiAlphanumeric(c) && c != '+' && c != '-' && c != '.') {
                 return -1;
             }
             if (c >= 'A' && c <= 'Z') {
@@ -460,7 +460,7 @@ final class UrlFastParser {
         int value = 0;
         for (int i = start; i < end; i++) {
             char c = input.charAt(i);
-            if (!Infra.isAsciiDigit(c)) {
+            if (!StringUtils.isAsciiDigit(c)) {
                 return -2;
             }
             value = value * 10 + (c - '0');
@@ -495,7 +495,7 @@ final class UrlFastParser {
             return true;
         }
         for (int i = labelStart; i < end; i++) {
-            if (!Infra.isAsciiDigit(input.charAt(i))) {
+            if (!StringUtils.isAsciiDigit(input.charAt(i))) {
                 return false;
             }
         }
@@ -543,8 +543,8 @@ final class UrlFastParser {
         long value = 0;
         for (int i = valueStart; i < end; i++) {
             int c = input.charAt(i);
-            boolean ok = radix == 10 ? Infra.isAsciiDigit(c)
-                    : radix == 16 ? Infra.isAsciiHex(c)
+            boolean ok = radix == 10 ? StringUtils.isAsciiDigit(c)
+                    : radix == 16 ? StringUtils.isAsciiHex(c)
                     : c >= '0' && c <= '7';
             if (!ok) {
                 return null;
@@ -636,8 +636,8 @@ final class UrlFastParser {
     /// Returns whether the percent sign starts an invalid percent triplet within the slice.
     private static boolean isInvalidPercentTriplet(String input, int index, int end) {
         return index + 2 >= end
-                || !Infra.isAsciiHex(input.charAt(index + 1))
-                || !Infra.isAsciiHex(input.charAt(index + 2));
+                || !StringUtils.isAsciiHex(input.charAt(index + 1))
+                || !StringUtils.isAsciiHex(input.charAt(index + 2));
     }
 
     /// Returns whether the segment is a single-dot path segment.
@@ -670,7 +670,7 @@ final class UrlFastParser {
 
     /// Returns whether a path segment is a Windows drive letter using pipe syntax.
     private static boolean isWindowsDriveLetterWithPipe(String value) {
-        return value.length() == 2 && Infra.isAsciiAlpha(value.charAt(0)) && value.charAt(1) == '|';
+        return value.length() == 2 && StringUtils.isAsciiAlpha(value.charAt(0)) && value.charAt(1) == '|';
     }
 
     /// Returns whether a slice equals a string.

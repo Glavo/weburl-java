@@ -124,7 +124,7 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
             }
 
             UTS46.Result unicode = UTS46.toUnicode(value, false, true, true, false, false, false);
-            if (unicode.error() || unicode.value().equals(value) || isAsciiOnly(unicode.value())) {
+            if (unicode.error() || unicode.value().equals(value) || StringUtils.isAsciiOnly(unicode.value())) {
                 return null;
             }
 
@@ -460,13 +460,4 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
                 && value.charAt(offset + 3) == '-';
     }
 
-    /// Returns whether the value contains only ASCII code points.
-    private static boolean isAsciiOnly(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            if (value.charAt(i) > 0x7f) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

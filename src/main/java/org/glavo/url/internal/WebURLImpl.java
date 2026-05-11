@@ -974,7 +974,7 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns whether a character is unreserved under RFC 2396.
     private static boolean isRfc2396Unreserved(int c) {
-        return Infra.isAsciiAlpha(c) || Infra.isAsciiDigit(c) || c == '-' || c == '_'
+        return StringUtils.isAsciiAlpha(c) || StringUtils.isAsciiDigit(c) || c == '-' || c == '_'
                 || c == '.' || c == '!' || c == '~' || c == '*' || c == '\'' || c == '(' || c == ')';
     }
 

@@ -202,8 +202,8 @@ public final class UrlParser {
 
     /// Converts a domain to ASCII.
     private static String domainToAscii(String domain) {
-        if (isAsciiOnly(domain) && !containsPunycodeLabel(domain)) {
-            String result = containsAsciiUppercase(domain) ? domain.toLowerCase(Locale.ROOT) : domain;
+        if (StringUtils.isAsciiOnly(domain) && !containsPunycodeLabel(domain)) {
+            String result = StringUtils.containsAsciiUppercase(domain) ? domain.toLowerCase(Locale.ROOT) : domain;
             if (result.isEmpty()) {
                 throw parseError(domain, WebURLParseException.ErrorType.DOMAIN_TO_ASCII);
             }
@@ -231,27 +231,6 @@ public final class UrlParser {
     private static boolean containsPercent(String input) {
         for (int i = 0; i < input.length(); i++) {
             if (input.charAt(i) == '%') {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// Returns whether a domain contains only ASCII code points.
-    private static boolean isAsciiOnly(String domain) {
-        for (int i = 0; i < domain.length(); i++) {
-            if (domain.charAt(i) > 0x7f) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /// Returns whether a string contains an ASCII upper-case letter.
-    private static boolean containsAsciiUppercase(String input) {
-        for (int i = 0; i < input.length(); i++) {
-            char c = input.charAt(i);
-            if (c >= 'A' && c <= 'Z') {
                 return true;
             }
         }
@@ -286,7 +265,7 @@ public final class UrlParser {
             return true;
         }
         for (int i = start; i < end; i++) {
-            if (!Infra.isAsciiDigit(input.charAt(i))) {
+            if (!StringUtils.isAsciiDigit(input.charAt(i))) {
                 return false;
             }
         }
@@ -318,8 +297,8 @@ public final class UrlParser {
         long value = 0;
         for (int i = valueStart; i < end; i++) {
             int c = input.charAt(i);
-            boolean ok = radix == 10 ? Infra.isAsciiDigit(c)
-                    : radix == 16 ? Infra.isAsciiHex(c)
+            boolean ok = radix == 10 ? StringUtils.isAsciiDigit(c)
+                    : radix == 16 ? StringUtils.isAsciiHex(c)
                       : c >= '0' && c <= '7';
             if (!ok) {
                 return null;
@@ -441,7 +420,7 @@ public final class UrlParser {
 
             int value = 0;
             int length = 0;
-            while (length < 4 && Infra.isAsciiHex(codePoint(input, pointer))) {
+            while (length < 4 && StringUtils.isAsciiHex(codePoint(input, pointer))) {
                 value = value * 0x10 + Character.digit(codePoint(input, pointer), 16);
                 pointer++;
                 length++;
@@ -465,10 +444,10 @@ public final class UrlParser {
                             throw parseError(input, WebURLParseException.ErrorType.IPV4_IN_IPV6_INVALID_CODE_POINT, pointer);
                         }
                     }
-                    if (!Infra.isAsciiDigit(codePoint(input, pointer))) {
+                    if (!StringUtils.isAsciiDigit(codePoint(input, pointer))) {
                         throw parseError(input, WebURLParseException.ErrorType.IPV4_IN_IPV6_INVALID_CODE_POINT, pointer);
                     }
-                    while (Infra.isAsciiDigit(codePoint(input, pointer))) {
+                    while (StringUtils.isAsciiDigit(codePoint(input, pointer))) {
                         int number = Character.digit(codePoint(input, pointer), 10);
                         if (ipv4Piece == null) {
                             ipv4Piece = number;
@@ -535,19 +514,19 @@ public final class UrlParser {
 
     /// Returns whether two code points form a Windows drive letter.
     private static boolean isWindowsDriveLetterCodePoints(int cp1, int cp2) {
-        return Infra.isAsciiAlpha(cp1) && (cp2 == ':' || cp2 == '|');
+        return StringUtils.isAsciiAlpha(cp1) && (cp2 == ':' || cp2 == '|');
     }
 
     /// Returns whether the string is a Windows drive letter.
     private static boolean isWindowsDriveLetterString(String string) {
         return string.length() == 2
-                && Infra.isAsciiAlpha(string.charAt(0))
+                && StringUtils.isAsciiAlpha(string.charAt(0))
                 && (string.charAt(1) == ':' || string.charAt(1) == '|');
     }
 
     /// Returns whether the string is a normalized Windows drive letter.
     private static boolean isNormalizedWindowsDriveLetterString(String string) {
-        return string.length() == 2 && Infra.isAsciiAlpha(string.charAt(0)) && string.charAt(1) == ':';
+        return string.length() == 2 && StringUtils.isAsciiAlpha(string.charAt(0)) && string.charAt(1) == ':';
     }
 
     /// Returns whether a string contains a forbidden host code point.
@@ -577,19 +556,6 @@ public final class UrlParser {
         return false;
     }
 
-    /// Trims leading and trailing C0 controls and spaces.
-    private static String trimControlChars(String string) {
-        int start = 0;
-        int end = string.length();
-        while (start < end && string.charAt(start) <= 0x20) {
-            start++;
-        }
-        while (end > start && string.charAt(end - 1) <= 0x20) {
-            end--;
-        }
-        return string.substring(start, end);
-    }
-
     /// Returns the first trimmed C0 control or space index, or `-1` when none would be trimmed.
     private static int firstTrimmedControlCharIndex(String string) {
         int end = string.length();
@@ -597,31 +563,6 @@ public final class UrlParser {
             return 0;
         }
         return end > 0 && string.charAt(end - 1) <= 0x20 ? end - 1 : -1;
-    }
-
-    /// Removes ASCII tabs and newlines.
-    private static String trimTabAndNewline(String url) {
-        int firstSkipped = -1;
-        for (int i = 0; i < url.length(); i++) {
-            char c = url.charAt(i);
-            if (c == '\t' || c == '\n' || c == '\r') {
-                firstSkipped = i;
-                break;
-            }
-        }
-        if (firstSkipped < 0) {
-            return url;
-        }
-
-        StringBuilder output = new StringBuilder(url.length() - 1);
-        output.append(url, 0, firstSkipped);
-        for (int i = firstSkipped + 1; i < url.length(); i++) {
-            char c = url.charAt(i);
-            if (c != '\t' && c != '\n' && c != '\r') {
-                output.append(c);
-            }
-        }
-        return output.toString();
     }
 
     /// Returns the first ASCII tab or newline index, or `-1` when none is present.
@@ -851,7 +792,7 @@ public final class UrlParser {
             int length = length();
             for (int i = 0; i < length; i++) {
                 int c = charAt(i);
-                if (!Infra.isAsciiDigit(c)) {
+                if (!StringUtils.isAsciiDigit(c)) {
                     throw new NumberFormatException();
                 }
                 value = value * 10 + (c - '0');
@@ -963,7 +904,7 @@ public final class UrlParser {
             String text = inputText;
             boolean trimmedChanged = false;
             if (url == null) {
-                String trimmed = trimControlChars(text);
+                String trimmed = StringUtils.trimControlChars(text);
                 if (!trimmed.equals(text)) {
                     if (rejectsValidationError(WebURLParseException.ErrorType.INVALID_URL_UNIT)) {
                         throw new WebURLParseException(
@@ -977,7 +918,7 @@ public final class UrlParser {
                 text = trimmed;
             }
 
-            String withoutTabsAndNewlines = trimTabAndNewline(text);
+            String withoutTabsAndNewlines = StringUtils.removeAsciiTabsAndNewlines(text);
             if (rejectsValidationError(WebURLParseException.ErrorType.INVALID_URL_UNIT)
                     && !withoutTabsAndNewlines.equals(text)) {
                 throw new WebURLParseException(
@@ -1185,7 +1126,7 @@ public final class UrlParser {
 
         /// Parses the scheme start state.
         private Result parseSchemeStart(int c) {
-            if (Infra.isAsciiAlpha(c)) {
+            if (StringUtils.isAsciiAlpha(c)) {
                 appendLowercaseAscii(c);
                 state = State.SCHEME;
             } else if (stateOverride == null) {
@@ -1199,7 +1140,7 @@ public final class UrlParser {
 
         /// Parses the scheme state.
         private Result parseScheme(int c) {
-            if (Infra.isAsciiAlphanumeric(c) || c == '+' || c == '-' || c == '.') {
+            if (StringUtils.isAsciiAlphanumeric(c) || c == '+' || c == '-' || c == '.') {
                 appendLowercaseAscii(c);
             } else if (c == ':') {
                 if (stateOverride != null) {
@@ -1461,7 +1402,7 @@ public final class UrlParser {
 
         /// Parses the port state.
         private Result parsePort(int c) {
-            if (Infra.isAsciiDigit(c)) {
+            if (StringUtils.isAsciiDigit(c)) {
                 appendCurrentCodePoint();
             } else if (c == EOF || c == '/' || c == '?' || c == '#' || (isSpecial() && c == '\\')
                     || stateOverride != null) {
