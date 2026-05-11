@@ -99,7 +99,7 @@ public final class UTS46 {
                 ascii.append('.');
             }
             String label = labels.labels[i];
-            if (StringUtils.containsNonAscii(label)) {
+            if (!StringUtils.isAsciiOnly(label)) {
                 @Nullable String encoded = Punycode.encode(label);
                 if (encoded == null) {
                     error = true;

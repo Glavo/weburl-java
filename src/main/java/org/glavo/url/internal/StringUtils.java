@@ -56,27 +56,6 @@ public final class StringUtils {
         return true;
     }
 
-    /// Returns whether the string contains at least one non-ASCII code point.
-    public static boolean containsNonAscii(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            if (value.charAt(i) > 0x7f) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// Returns whether the string contains at least one ASCII uppercase letter.
-    public static boolean containsAsciiUppercase(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (c >= 'A' && c <= 'Z') {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /// Returns whether the string slice contains only ASCII decimal digits and is not empty.
     public static boolean isAsciiDecimal(String value, int start, int end) {
         if (start >= end) {

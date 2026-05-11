@@ -203,7 +203,7 @@ public final class UrlParser {
     /// Converts a domain to ASCII.
     private static String domainToAscii(String domain) {
         if (StringUtils.isAsciiOnly(domain) && !containsPunycodeLabel(domain)) {
-            String result = StringUtils.containsAsciiUppercase(domain) ? domain.toLowerCase(Locale.ROOT) : domain;
+            String result = domain.toLowerCase(Locale.ROOT);
             if (result.isEmpty()) {
                 throw parseError(domain, WebURLParseException.ErrorType.DOMAIN_TO_ASCII);
             }
