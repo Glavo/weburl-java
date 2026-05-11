@@ -16,6 +16,7 @@
 package org.glavo.url;
 
 import org.glavo.url.internal.WebURLImpl;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -344,6 +345,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param uri the Java URI to convert
     /// @return the converted URL
     /// @throws WebURLParseException when the URI string is not accepted as an absolute URL
+    @Contract(pure = true)
     static WebURL of(URI uri) {
         return parse(uri.toString());
     }
@@ -356,6 +358,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param url the Java URL to convert
     /// @return the converted URL
     /// @throws WebURLParseException when the URL's external form is not accepted as an absolute URL
+    @Contract(pure = true)
     static WebURL of(URL url) {
         return parse(url.toExternalForm());
     }
@@ -369,6 +372,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param path the path to convert
     /// @return the converted file URL
     /// @throws WebURLParseException when the path URI is not accepted as an absolute URL
+    @Contract(pure = true)
     static WebURL of(Path path) {
         return of(path.toUri());
     }
@@ -382,6 +386,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @return a Java `URI` representing the parsed URL
     /// @throws WebURLParseException  when the input is not a valid absolute URL
     /// @throws IllegalStateException when the parsed URL has no RFC 2396 representation accepted by Java `URI`
+    @Contract(pure = true)
     static URI toURI(String input) {
         return parse(input).toURI();
     }
@@ -397,6 +402,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @throws WebURLParseException  when the input is not a valid absolute URL
     /// @throws IllegalStateException when the parsed URL has no RFC 2396 representation accepted by Java `URI`
     /// @throws MalformedURLException when Java has no URL handler for the scheme or rejects the URL
+    @Contract(pure = true)
     static URL toURL(String input) throws MalformedURLException {
         return parse(input).toURL();
     }
@@ -409,6 +415,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param input the URL input string
     /// @return the parsed URL
     /// @throws WebURLParseException when the input is not a valid absolute URL
+    @Contract(pure = true)
     static WebURL parse(String input) {
         return WebURLParser.getDefault().parse(input);
     }
@@ -421,6 +428,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param base  the base URL string
     /// @return the parsed URL
     /// @throws WebURLParseException when either input fails
+    @Contract(pure = true)
     static WebURL parse(String input, String base) {
         return WebURLParser.getDefault().parse(input, base);
     }
@@ -433,6 +441,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param base  the base URL
     /// @return the parsed URL
     /// @throws WebURLParseException when the input cannot be resolved against the base URL
+    @Contract(pure = true)
     static WebURL parse(String input, WebURL base) {
         return WebURLParser.getDefault().parse(input, base);
     }
@@ -445,6 +454,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param input the URL input string
     /// @return the parsed URL
     /// @throws WebURLParseException when the input cannot be resolved against this URL
+    @Contract(pure = true)
     default WebURL resolve(String input) {
         return WebURLParser.getDefault().parse(input, this);
     }
@@ -456,6 +466,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if the input is not a valid absolute URL
+    @Contract(pure = true)
     static @Nullable WebURL tryParse(String input) {
         return WebURLParser.getDefault().tryParse(input);
     }
@@ -468,6 +479,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param input the URL input string
     /// @param base  the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
+    @Contract(pure = true)
     static @Nullable WebURL tryParse(String input, String base) {
         return WebURLParser.getDefault().tryParse(input, base);
     }
@@ -480,6 +492,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param input the URL input string
     /// @param base  the base URL
     /// @return the parsed URL, or `null` if the input cannot be parsed against the base
+    @Contract(pure = true)
     static @Nullable WebURL tryParse(String input, WebURL base) {
         return WebURLParser.getDefault().tryParse(input, base);
     }
@@ -523,6 +536,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// no history or search suggestion lookup, no search fallback, and no HTTPS-to-HTTP fallback after network
     /// failure. Inputs that are neither URL strings nor recognized browser-style URL inputs fail instead of
     /// being interpreted as search terms.
+    @Contract(pure = true)
     static WebURL parseBrowserInput(String input) {
         return WebURLParser.getDefault().parseBrowserInput(input);
     }
@@ -538,6 +552,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @return the parsed URL, or `null` if the input is not accepted as a browser-style URL input
     /// @implSpec This method has the same URL processing behavior as {@link #parseBrowserInput(String)}, except
     /// failures are represented by `null` instead of an exception.
+    @Contract(pure = true)
     static @Nullable WebURL tryParseBrowserInput(String input) {
         return WebURLParser.getDefault().tryParseBrowserInput(input);
     }
@@ -554,6 +569,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// {@link #toRFC2396String()} for that conversion.
     ///
     /// @return the serialized URL
+    @Contract(pure = true)
     String href();
 
     /// Returns a human-readable display string for this URL.
@@ -576,6 +592,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// {@link #href()} when stable URL serialization is required.
     ///
     /// @return a human-readable display string
+    @Contract(pure = true)
     String toDisplayString();
 
     /// Returns the serialized origin.
@@ -589,6 +606,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// opaque origin.
     ///
     /// @return the non-null serialized origin; the literal string `null` represents an opaque origin
+    @Contract(pure = true)
     String origin();
 
     /// Returns the scheme component without its delimiter.
@@ -603,6 +621,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// component.
     ///
     /// @return the scheme component without the trailing colon
+    @Contract(pure = true)
     String getScheme();
 
     /// Returns the decoded username component.
@@ -616,6 +635,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// unchanged.
     ///
     /// @return the decoded username component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getUsername();
 
     /// Returns the raw username component.
@@ -629,6 +649,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// input because URL processing may normalize, percent-encode, or otherwise rewrite credentials.
     ///
     /// @return the raw username component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getRawUsername();
 
     /// Returns the raw username component or the empty string when absent.
@@ -637,6 +658,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// the returned value.
     ///
     /// @return the raw username component, or the empty string when absent
+    @Contract(pure = true)
     String getRawUsernameOrEmpty();
 
     /// Returns the decoded password component.
@@ -649,6 +671,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// incomplete are left unchanged.
     ///
     /// @return the decoded password component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getPassword();
 
     /// Returns the raw password component.
@@ -661,6 +684,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// input because URL processing may normalize, percent-encode, or otherwise rewrite credentials.
     ///
     /// @return the raw password component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getRawPassword();
 
     /// Returns the raw password component or the empty string when absent.
@@ -669,6 +693,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// the returned value.
     ///
     /// @return the raw password component, or the empty string when absent
+    @Contract(pure = true)
     String getRawPasswordOrEmpty();
 
     /// Returns the decoded user-info component.
@@ -684,6 +709,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// The result is `null` when the URL has no serialized credentials.
     ///
     /// @return the decoded user-info component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getUserInfo();
 
     /// Returns the raw user-info component.
@@ -699,6 +725,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// The result is `null` when the URL has no serialized credentials.
     ///
     /// @return the raw user-info component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getRawUserInfo();
 
     /// Returns the decoded authority component.
@@ -717,6 +744,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// such as a `file` URL with an empty host, returns the empty string.
     ///
     /// @return the decoded authority component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getAuthority();
 
     /// Returns the raw authority component.
@@ -734,6 +762,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// such as a `file` URL with an empty host, returns the empty string.
     ///
     /// @return the raw authority component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getRawAuthority();
 
     /// Returns the host component.
@@ -747,6 +776,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// an explicitly empty host returns the empty string.
     ///
     /// @return the host component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getHost();
 
     /// Returns the port as an integer.
@@ -759,6 +789,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// `WebURL.parse("https://example.com:443/").getRawPort()` returns `null`, but this method returns `443`.
     ///
     /// @return the stored port, the known default port, or `-1` when neither is available
+    @Contract(pure = true)
     int getPort();
 
     /// Returns the raw port component.
@@ -773,6 +804,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///
     /// @return the normalized raw port component, or `null` when absent
     /// @since 0.2.0
+    @Contract(pure = true)
     @Nullable String getRawPort();
 
     /// Returns the decoded path component.
@@ -785,6 +817,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// so this method never returns `null`.
     ///
     /// @return the decoded path component
+    @Contract(pure = true)
     String getPath();
 
     /// Returns the raw path component.
@@ -793,6 +826,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// path serialization without applying percent-decoding.
     ///
     /// @return the raw path component
+    @Contract(pure = true)
     String getRawPath();
 
     /// Returns the decoded query component.
@@ -805,6 +839,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// empty string.
     ///
     /// @return the decoded query component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getQuery();
 
     /// Returns the raw query component.
@@ -814,6 +849,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// absent. An empty query component is returned as an empty string.
     ///
     /// @return the raw query component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getRawQuery();
 
     /// Returns the raw query component or the empty string when absent.
@@ -822,6 +858,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// question mark and does not percent-decode the returned value.
     ///
     /// @return the raw query component, or the empty string when absent
+    @Contract(pure = true)
     String getRawQueryOrEmpty();
 
     /// Returns the decoded fragment component.
@@ -834,6 +871,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// the empty string.
     ///
     /// @return the decoded fragment component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getFragment();
 
     /// Returns the raw fragment component.
@@ -843,6 +881,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// absent. An empty fragment component is returned as the empty string.
     ///
     /// @return the raw fragment component, or `null` when absent
+    @Contract(pure = true)
     @Nullable String getRawFragment();
 
     /// Returns the raw fragment component or the empty string when absent.
@@ -851,6 +890,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// leading number sign and does not percent-decode the returned value.
     ///
     /// @return the raw fragment component, or the empty string when absent
+    @Contract(pure = true)
     String getRawFragmentOrEmpty();
 
     /// Returns the serialized URL converted to RFC 2396 URI syntax.
@@ -864,6 +904,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// absolute RFC 2396 URI because Java `URI` requires a non-empty scheme-specific part.
     ///
     /// @return the RFC 2396 URI string
+    @Contract(pure = true)
     String toRFC2396String();
 
     /// Returns the serialized URL as a Java `URI`.
@@ -874,6 +915,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///
     /// @return a Java `URI` representing this URL
     /// @throws IllegalStateException when this URL has no RFC 2396 representation accepted by Java `URI`
+    @Contract(pure = true)
     URI toURI();
 
     /// Returns the serialized URL as a Java `URL`.
@@ -884,6 +926,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///
     /// @return a Java `URL` representing this URL
     /// @throws MalformedURLException when Java has no URL handler for the scheme or rejects the URL
+    @Contract(pure = true)
     URL toURL() throws MalformedURLException;
 
     /// Compares this URL with another URL by serialized URL string.
@@ -895,6 +938,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @param other the URL to compare with this URL
     /// @return a negative integer, zero, or a positive integer as this URL's serialized form is less than,
     /// equal to, or greater than the other URL's serialized form
+    @Contract(pure = true)
     @Override
     int compareTo(WebURL other);
 
@@ -905,6 +949,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///
     /// @param obj the object to compare with this URL, or `null`
     /// @return `true` if the object is a `WebURL` with the same serialized URL, otherwise `false`
+    @Contract(pure = true)
     @Override
     boolean equals(@Nullable Object obj);
 
@@ -914,6 +959,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// URLs have equal hash codes.
     ///
     /// @return the serialized URL hash code
+    @Contract(pure = true)
     @Override
     int hashCode();
 
@@ -922,6 +968,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// This is identical to `href()`.
     ///
     /// @return the serialized URL
+    @Contract(pure = true)
     @Override
     String toString();
 }

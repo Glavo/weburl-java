@@ -16,6 +16,7 @@
 package org.glavo.url;
 
 import org.glavo.url.internal.WebURLParserImpl;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -82,6 +83,7 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// Returns the default parser.
     ///
     /// This parser ignores non-fatal validation errors and continues parsing according to the URL Standard.
+    @Contract(pure = true)
     static WebURLParser getDefault() {
         return WebURLParserImpl.DEFAULT;
     }
@@ -89,6 +91,7 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// Returns the strict parser.
     ///
     /// This parser treats non-fatal validation errors as parse failures and throws `WebURLParseException`.
+    @Contract(pure = true)
     static WebURLParser getStrict() {
         return WebURLParserImpl.STRICT;
     }
@@ -100,6 +103,7 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// parser regardless of whether they appear in this set.
     ///
     /// @return an immutable set of recoverable validation errors rejected by this parser
+    @Contract(pure = true)
     @Unmodifiable
     Set<WebURLParseException.ErrorType> getRejectedValidationErrors();
 
@@ -111,6 +115,7 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// @param input the URL input string
     /// @return the parsed URL
     /// @throws WebURLParseException when the input is not accepted by this parser
+    @Contract(pure = true)
     WebURL parse(String input);
 
     /// Parses an input string against a base URL string and returns the parsed URL.
@@ -121,6 +126,7 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// @param base  the base URL string
     /// @return the parsed URL
     /// @throws WebURLParseException when either input is not accepted by this parser
+    @Contract(pure = true)
     WebURL parse(String input, String base);
 
     /// Parses an input string against a base URL and returns the parsed URL.
@@ -131,6 +137,7 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// @param base  the base URL
     /// @return the parsed URL
     /// @throws WebURLParseException when the input cannot be resolved against the base URL
+    @Contract(pure = true)
     WebURL parse(String input, WebURL base);
 
     /// Parses an absolute input string and returns `null` on failure.
@@ -140,6 +147,7 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     ///
     /// @param input the URL input string
     /// @return the parsed URL, or `null` if the input is not accepted by this parser
+    @Contract(pure = true)
     @Nullable WebURL tryParse(String input);
 
     /// Parses an input string against a base URL string and returns `null` on failure.
@@ -150,6 +158,7 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// @param input the URL input string
     /// @param base  the base URL string
     /// @return the parsed URL, or `null` if either string cannot be parsed
+    @Contract(pure = true)
     @Nullable WebURL tryParse(String input, String base);
 
     /// Parses an input string against a base URL and returns `null` on failure.
@@ -160,6 +169,7 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// @param input the URL input string
     /// @param base  the base URL
     /// @return the parsed URL, or `null` if the input cannot be parsed against the base
+    @Contract(pure = true)
     @Nullable WebURL tryParse(String input, WebURL base);
 
     /// Parses a user-entered browser-style URL input and returns the parsed URL.
@@ -170,6 +180,7 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// @param input the browser-style URL input string
     /// @return the parsed URL
     /// @throws WebURLParseException when the input is not accepted by this parser
+    @Contract(pure = true)
     WebURL parseBrowserInput(String input);
 
     /// Parses a user-entered browser-style URL input and returns `null` on failure.
@@ -179,5 +190,6 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     ///
     /// @param input the browser-style URL input string
     /// @return the parsed URL, or `null` if the input is not accepted by this parser
+    @Contract(pure = true)
     @Nullable WebURL tryParseBrowserInput(String input);
 }

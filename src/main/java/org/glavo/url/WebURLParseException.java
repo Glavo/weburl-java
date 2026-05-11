@@ -15,6 +15,7 @@
  */
 package org.glavo.url;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -368,16 +369,19 @@ public final class WebURLParseException extends IllegalArgumentException {
         }
 
         /// Returns the URL Standard validation error name.
+        @Contract(pure = true)
         public String getErrorName() {
             return errorName;
         }
 
         /// Returns the default human-readable parse failure reason.
+        @Contract(pure = true)
         public String getReason() {
             return reason;
         }
 
         /// Returns whether this validation error is recoverable by a non-strict parser.
+        @Contract(pure = true)
         public boolean isRecoverable() {
             return recoverable;
         }
@@ -436,21 +440,25 @@ public final class WebURLParseException extends IllegalArgumentException {
     }
 
     /// Returns the parsed input string.
+    @Contract(pure = true)
     public String getInput() {
         return input;
     }
 
     /// Returns the stable parse failure type.
+    @Contract(pure = true)
     public ErrorType getErrorType() {
         return errorType;
     }
 
     /// Returns the URL Standard validation error name.
+    @Contract(pure = true)
     public String getErrorName() {
         return errorType.getErrorName();
     }
 
     /// Returns a human-readable reason for the parse failure.
+    @Contract(pure = true)
     public String getReason() {
         return reason;
     }
@@ -458,6 +466,7 @@ public final class WebURLParseException extends IllegalArgumentException {
     /// Returns the character index where the parse failure was detected, or `-1` when unknown.
     ///
     /// The index is measured in UTF-16 code units, matching Java `String` indexes.
+    @Contract(pure = true)
     public int getIndex() {
         return index;
     }
