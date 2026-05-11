@@ -86,11 +86,11 @@ import java.nio.file.Path;
 ///
 /// ```java
 /// // Default: recovers from non-fatal issues
-/// WebURL url = WebURL.parse("https://example.com:443/");
+/// WebURL defaultUrl = WebURL.parse("https://example.com:443/");
 ///
 /// // Strict: rejects all validation errors
 /// WebURLParser strict = WebURLParser.getStrict();
-/// WebURL url = strict.parse("https://example.com/path");
+/// WebURL strictUrl = strict.parse("https://example.com/path");
 /// ```
 ///
 /// The default and strict parsers are both immutable and thread-safe.
@@ -220,13 +220,13 @@ import java.nio.file.Path;
 /// | Behavior               | `WebURL`                                            | `java.net.URI`                                       |
 /// |------------------------|-----------------------------------------------------|------------------------------------------------------|
 /// | Scheme case            | Always lowercased                                   | Preserved as-is                                      |
-/// | Domain host            | IDNA ToASCII (Punycode) applied to non-ASCII labels  | No IDNA processing; `new URI(String)` treats non-ASCII host as opaque |
-/// | Non-ASCII in host      | Converted to Punycode (e.g., `münchen` → `xn--mnchen-3ya`) | Rejected by `new URI(String)` unless percent-encoded |
+/// | Domain host            | IDNA ToASCII (Punycode) applied to non-ASCII labels  | No IDNA processing; host parsing is limited to URI server-based authority syntax |
+/// | Non-ASCII in host      | Converted to Punycode (e.g., `münchen` → `xn--mnchen-3ya`) | Accepted in the authority string, but `URI.getHost()` can return `null` |
 /// | IPv4 normalization     | Always dotted decimal (hex/octal/integer → dotted)  | Does not normalize hex/octal/decimal forms          |
 /// | IPv6 compression       | RFC 5952 compression applied                        | Does not apply RFC 5952 compression                 |
 /// | Default port           | Removed from serialization                          | Preserved                                            |
-/// | Backslash in path      | Converted to `/` in special URLs                    | Treated literally                                    |
-/// | Tab and newline        | Stripped from input                                 | Treated literally; passed through                    |
+/// | Backslash in path      | Converted to `/` in special URLs                    | Rejected by `new URI(String)` as an illegal path character |
+/// | Tab and newline        | Stripped from input                                 | Rejected by `new URI(String)` as illegal characters  |
 /// | Percent-encoding       | Applied per URL Standard encode sets; may re-encode | Minimal encoding by `new URI(String)`; raw constructors preserve input |
 ///
 /// ## Component Semantics
