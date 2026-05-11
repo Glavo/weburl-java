@@ -22,15 +22,60 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
-/// A reusable parser for creating `WebURL` values from URL strings.
+/// A reusable parser for creating [WebURL] values from URL strings.
 ///
-/// `WebURLParser` represents the parsing policy used by the URL parser. The default parser follows normal URL
-/// Standard behavior: non-fatal validation errors are accepted, and the parser continues with the normalized URL.
-/// The strict parser rejects all validation errors for which `WebURLParseException.ErrorType.isRecoverable()` returns
-/// `true`. Non-recoverable validation errors are always rejected by every parser.
+/// `WebURLParser` encapsulates a parsing policy that controls which URL Standard validation errors cause
+/// parsing to fail. It exists so callers can choose between lenient and strict validation without changing
+/// the core URL processing logic.
 ///
-/// Implementations are immutable and thread-safe. Static convenience methods on `WebURL` use [#getDefault()].
+/// # Parsing Policies
 ///
+/// Two built-in parsers are available:
+///
+/// - **[#getDefault()]** — Accepts recoverable validation errors and returns the normalized URL.
+///   This is the parser used by all static convenience methods on [WebURL] such as
+///   [WebURL#parse(String)]. It mirrors browser behavior: browsers do not reject a URL because
+///   it contains a recoverable warning.
+/// - **[#getStrict()]** — Treats every recoverable validation error as a parse failure, throwing
+///   [WebURLParseException]. Non-recoverable errors (such as a missing host or an invalid domain
+///   code point) are always rejected regardless of the parser.
+///
+/// # Validation Error Model
+///
+/// The URL Standard defines validation errors that are either:
+///
+/// - **Non-recoverable** ([WebURLParseException.ErrorType#isRecoverable()] returns `false`) — the
+///   standard requires the URL parser to fail. These are rejected by every parser.
+/// - **Recoverable** ([WebURLParseException.ErrorType#isRecoverable()] returns `true`) — the
+///   standard continues processing and records the error as informational. The default parser
+///   accepts these; the strict parser rejects them.
+///
+/// Recoverable errors include warnings like `invalid-URL-unit`, `invalid-reverse-solidus`,
+/// `IPv4-non-decimal-part`, and `invalid-credentials`. They represent input that is unusual or
+/// deprecated but still leads to a well-defined normalized URL.
+///
+/// # Thread Safety and Reuse
+///
+/// The [WebURLParser] instances returned by the factory methods are immutable, thread-safe, and reusable.
+///
+/// # Usage
+///
+/// ```java
+/// WebURLParser parser = WebURLParser.getDefault();
+/// WebURL url = parser.parse("https://example.com/path");
+///
+/// // Switch to strict validation for security-sensitive contexts
+/// WebURLParser strict = WebURLParser.getStrict();
+/// try {
+///     WebURL safe = strict.parse(untrustedInput);
+/// } catch (WebURLParseException ex) {
+///     // handle the specific validation error
+/// }
+/// ```
+///
+/// @see WebURL
+/// @see WebURLParseException
+/// @see WebURLParseException.ErrorType
 /// @since 0.2.0
 @NotNullByDefault
 public sealed interface WebURLParser permits WebURLParserImpl {

@@ -21,13 +21,64 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serial;
 import java.util.Objects;
 
-/// An unchecked exception thrown when a URL string cannot be parsed.
+/// An unchecked exception thrown when a URL string cannot be parsed by a [WebURLParser].
 ///
-/// A `WebURLParseException` records the input string that was parsed, a stable URL Standard
-/// validation error type, a human-readable reason, and the character index where the error was
-/// detected when that location is known. The exception message is derived from the reason, index,
-/// and input in the same general shape as `java.net.URISyntaxException`; callers that need a stable
-/// programmatic classification should use [#getErrorType()] instead of parsing the message.
+/// `WebURLParseException` carries structured information about the parse failure that allows
+/// callers to programmatically distinguish between different categories of validation errors.
+/// It extends [IllegalArgumentException] and can be used wherever that type is expected.
+///
+/// # Exception Contents
+///
+/// Each exception records:
+///
+/// - **[#getInput()]** — The URL string that was being parsed.
+/// - **[#getErrorType()]** — A stable, programmatic classification of the failure via the
+///   [ErrorType] enum. Each constant corresponds to a named validation error in the
+///   [URL Standard](https://url.spec.whatwg.org/#validation-errors).
+/// - **[#getReason()]** — A default or caller-supplied human-readable description of the failure.
+/// - **[#getIndex()]** — The UTF-16 code unit index in the input where the error was detected,
+///   or `-1` when the error is not localized to a specific character position.
+///
+/// The inherited exception message (from [Throwable#getMessage()]) combines the reason, index, and
+/// input in a format similar to [java.net.URISyntaxException]: `reason at index n: input` when an
+/// index is available, or `reason: input` otherwise.
+///
+/// # Handling Parse Failures
+///
+/// Callers should use [#getErrorType()] for programmatic decision-making instead of parsing the
+/// exception message or inspecting the error name string:
+///
+/// ```java
+/// try {
+///     WebURL url = WebURL.parse(input);
+/// } catch (WebURLParseException ex) {
+///     switch (ex.getErrorType()) {
+///         case HOST_MISSING -> System.err.println("URL has no host: " + input);
+///         case PORT_OUT_OF_RANGE -> System.err.println("Port is out of range: " + input);
+///         case DOMAIN_INVALID_CODE_POINT -> System.err.println("Invalid character in domain: " + input);
+///         default -> System.err.println("URL parse failed: " + ex.getMessage());
+///     }
+/// }
+/// ```
+///
+/// The error type also distinguishes recoverable errors ([ErrorType#isRecoverable()]) from
+/// fatal errors. Recoverable errors are accepted by the default parser but rejected by the strict
+/// parser obtained via [WebURLParser#getStrict()].
+///
+/// # Relationship to URISyntaxException
+///
+/// This type serves a similar purpose to `java.net.URISyntaxException` but carries standard WHATWG
+/// validation error types instead of an opaque reason string. It is an unchecked exception,
+/// eliminating the mandatory try-catch or throws boilerplate that `URISyntaxException` forces on
+/// callers working with URLs that are valid in practice.
+///
+/// # Immutability
+///
+/// `WebURLParseException` is immutable once constructed. All getters return stable values and the
+/// exception can be safely shared and re-thrown.
+///
+/// @see WebURLParser
+/// @see WebURLParseException.ErrorType
 @NotNullByDefault
 public final class WebURLParseException extends IllegalArgumentException {
     /// Serialization identifier for this exception type.
