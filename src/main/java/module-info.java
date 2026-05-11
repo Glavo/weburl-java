@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 /// Browser-grade WHATWG URL parsing, normalization, and serialization for Java.
 ///
 /// # Overview
