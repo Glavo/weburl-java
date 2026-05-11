@@ -350,12 +350,12 @@ public final class UrlParser {
     }
 
     /// Parses an IPv4 address.
-    private static long parseIpv4(String input) {
+    private static int parseIpv4(String input) {
         return parseIpv4(input, Set.of());
     }
 
     /// Parses an IPv4 address.
-    private static long parseIpv4(
+    private static int parseIpv4(
             String input,
             @Unmodifiable Set<WebURLParseException.ErrorType> rejectedValidationErrors
     ) {
@@ -412,7 +412,7 @@ public final class UrlParser {
         for (int i = 0; i < numbersCount - 1; i++) {
             ipv4 += numbers[i] << (8 * (3 - i));
         }
-        return ipv4;
+        return (int) ipv4;
     }
 
     /// Returns whether an IPv4 number uses hexadecimal or octal notation.

@@ -19,99 +19,233 @@ import org.glavo.url.internal.idna.UTS46;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /// Internal representation of a WHATWG URL host.
 @NotNullByDefault
-public final class UrlHost {
-    /// The kind of host value.
-    private final Kind kind;
-    /// Domain or opaque host text.
-    private final @Nullable String text;
-    /// IPv4 address as an unsigned 32-bit value stored in a long.
-    private final long ipv4Address;
-    /// IPv6 address pieces.
-    private final int @Nullable [] ipv6Address;
-
-    /// Creates a host value.
-    private UrlHost(Kind kind, @Nullable String text, long ipv4Address, int @Nullable [] ipv6Address) {
-        this.kind = kind;
-        this.text = text;
-        this.ipv4Address = ipv4Address;
-        this.ipv6Address = ipv6Address;
-    }
-
+public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.Ipv4, UrlHost.Ipv6 {
     /// Creates a domain host.
-    public static UrlHost domain(String value) {
-        return new UrlHost(Kind.DOMAIN, value, 0, null);
+    static UrlHost domain(String value) {
+        return new Domain(value);
     }
 
     /// Creates an opaque host.
-    public static UrlHost opaque(String value) {
-        return new UrlHost(Kind.OPAQUE, value, 0, null);
+    static UrlHost opaque(String value) {
+        return new Opaque(value);
     }
 
     /// Creates an IPv4 host.
-    public static UrlHost ipv4(long value) {
-        return new UrlHost(Kind.IPV4, null, value, null);
+    static UrlHost ipv4(int value) {
+        return new Ipv4(value);
     }
 
-    /// Creates an IPv6 host.
-    public static UrlHost ipv6(int[] value) {
-        return new UrlHost(Kind.IPV6, null, 0, value.clone());
+    /// Creates an IPv6 host from eight 16-bit address pieces.
+    static UrlHost ipv6(int[] value) {
+        if (value.length != 8) {
+            throw new IllegalArgumentException("IPv6 address must contain eight pieces");
+        }
+
+        long highBits = 0;
+        long lowBits = 0;
+        for (int i = 0; i < 4; i++) {
+            int piece = checkedIpv6Piece(value[i]);
+            highBits = highBits << 16 | piece;
+        }
+        for (int i = 4; i < 8; i++) {
+            int piece = checkedIpv6Piece(value[i]);
+            lowBits = lowBits << 16 | piece;
+        }
+        return ipv6(highBits, lowBits);
+    }
+
+    /// Creates an IPv6 host from the high and low 64-bit halves of the address.
+    static UrlHost ipv6(long highBits, long lowBits) {
+        return new Ipv6(highBits, lowBits);
     }
 
     /// Returns whether this host is an empty domain host.
-    public boolean isEmptyDomain() {
-        return kind == Kind.DOMAIN && text != null && text.isEmpty();
-    }
+    boolean isEmptyDomain();
 
     /// Returns whether this host serializes to an empty string.
-    public boolean isEmpty() {
-        return text != null && text.isEmpty();
-    }
+    boolean isEmpty();
 
     /// Serializes the host.
-    public String serialize() {
-        return switch (kind) {
-            case DOMAIN, OPAQUE -> text == null ? "" : text;
-            case IPV4 -> serializeIpv4(ipv4Address);
-            case IPV6 -> "[" + serializeIpv6(ipv6Address == null ? new int[8] : ipv6Address) + "]";
-        };
-    }
+    String serialize();
 
     /// Returns a Unicode display form for a domain host, or `null` when the serialized host should be used.
-    @Nullable String displayString() {
-        if (kind != Kind.DOMAIN || text == null || text.isEmpty() || !containsPunycodeLabel(text)) {
-            return null;
-        }
-
-        UTS46.Result unicode = UTS46.toUnicode(text, false, true, true, false, false, false);
-        if (unicode.error() || unicode.value().equals(text) || isAsciiOnly(unicode.value())) {
-            return null;
-        }
-
-        UTS46.Result ascii = UTS46.toAsciiForUrl(unicode.value(), false);
-        return !ascii.error() && ascii.value().equals(text) ? unicode.value() : null;
-    }
+    @Nullable String displayString();
 
     /// Matches the serialized host at the given index and returns the end index, or `-1`.
-    int matchSerialized(String input, int start) {
-        switch (kind) {
-            case DOMAIN:
-            case OPAQUE:
-                String value = text == null ? "" : text;
-                int end = start + value.length();
-                return end <= input.length() && input.regionMatches(start, value, 0, value.length()) ? end : -1;
-            case IPV4:
-                return matchSerializedIpv4(input, start, ipv4Address);
-            case IPV6:
-                return matchSerializedIpv6(input, start, ipv6Address == null ? new int[8] : ipv6Address);
-            default:
-                throw new AssertionError(kind);
+    int matchSerialized(String input, int start);
+
+    /// A domain host.
+    record Domain(String value) implements UrlHost {
+        /// Creates a domain host.
+        public Domain {
+            Objects.requireNonNull(value, "value");
         }
+
+        /// Returns whether this host is an empty domain host.
+        @Override
+        public boolean isEmptyDomain() {
+            return value.isEmpty();
+        }
+
+        /// Returns whether this host serializes to an empty string.
+        @Override
+        public boolean isEmpty() {
+            return value.isEmpty();
+        }
+
+        /// Serializes the host.
+        @Override
+        public String serialize() {
+            return value;
+        }
+
+        /// Returns a Unicode display form for a domain host, or `null` when the serialized host should be used.
+        @Override
+        public @Nullable String displayString() {
+            if (value.isEmpty() || !containsPunycodeLabel(value)) {
+                return null;
+            }
+
+            UTS46.Result unicode = UTS46.toUnicode(value, false, true, true, false, false, false);
+            if (unicode.error() || unicode.value().equals(value) || isAsciiOnly(unicode.value())) {
+                return null;
+            }
+
+            UTS46.Result ascii = UTS46.toAsciiForUrl(unicode.value(), false);
+            return !ascii.error() && ascii.value().equals(value) ? unicode.value() : null;
+        }
+
+        /// Matches the serialized host at the given index and returns the end index, or `-1`.
+        @Override
+        public int matchSerialized(String input, int start) {
+            return matchText(input, start, value);
+        }
+    }
+
+    /// An opaque host.
+    record Opaque(String value) implements UrlHost {
+        /// Creates an opaque host.
+        public Opaque {
+            Objects.requireNonNull(value, "value");
+        }
+
+        /// Returns whether this host is an empty domain host.
+        @Override
+        public boolean isEmptyDomain() {
+            return false;
+        }
+
+        /// Returns whether this host serializes to an empty string.
+        @Override
+        public boolean isEmpty() {
+            return value.isEmpty();
+        }
+
+        /// Serializes the host.
+        @Override
+        public String serialize() {
+            return value;
+        }
+
+        /// Returns no display override for opaque hosts.
+        @Override
+        public @Nullable String displayString() {
+            return null;
+        }
+
+        /// Matches the serialized host at the given index and returns the end index, or `-1`.
+        @Override
+        public int matchSerialized(String input, int start) {
+            return matchText(input, start, value);
+        }
+    }
+
+    /// An IPv4 host.
+    record Ipv4(int address) implements UrlHost {
+        /// Creates an IPv4 host.
+        public Ipv4 {
+        }
+
+        /// Returns whether this host is an empty domain host.
+        @Override
+        public boolean isEmptyDomain() {
+            return false;
+        }
+
+        /// Returns whether this host serializes to an empty string.
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+
+        /// Serializes the host.
+        @Override
+        public String serialize() {
+            return serializeIpv4(address);
+        }
+
+        /// Returns no display override for IPv4 hosts.
+        @Override
+        public @Nullable String displayString() {
+            return null;
+        }
+
+        /// Matches the serialized host at the given index and returns the end index, or `-1`.
+        @Override
+        public int matchSerialized(String input, int start) {
+            return matchSerializedIpv4(input, start, address);
+        }
+    }
+
+    /// An IPv6 host.
+    record Ipv6(long highBits, long lowBits) implements UrlHost {
+        /// Creates an IPv6 host.
+        public Ipv6 {
+        }
+
+        /// Returns whether this host is an empty domain host.
+        @Override
+        public boolean isEmptyDomain() {
+            return false;
+        }
+
+        /// Returns whether this host serializes to an empty string.
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+
+        /// Serializes the host.
+        @Override
+        public String serialize() {
+            return "[" + serializeIpv6(highBits, lowBits) + "]";
+        }
+
+        /// Returns no display override for IPv6 hosts.
+        @Override
+        public @Nullable String displayString() {
+            return null;
+        }
+
+        /// Matches the serialized host at the given index and returns the end index, or `-1`.
+        @Override
+        public int matchSerialized(String input, int start) {
+            return matchSerializedIpv6(input, start, highBits, lowBits);
+        }
+    }
+
+    /// Matches a literal host string and returns the end index, or `-1`.
+    private static int matchText(String input, int start, String value) {
+        int end = start + value.length();
+        return end <= input.length() && input.regionMatches(start, value, 0, value.length()) ? end : -1;
     }
 
     /// Serializes an IPv4 address.
-    private static String serializeIpv4(long address) {
+    private static String serializeIpv4(int address) {
         return ((address >>> 24) & 0xff) + "."
                 + ((address >>> 16) & 0xff) + "."
                 + ((address >>> 8) & 0xff) + "."
@@ -119,7 +253,7 @@ public final class UrlHost {
     }
 
     /// Matches a serialized IPv4 address and returns the end index, or `-1`.
-    private static int matchSerializedIpv4(String input, int start, long address) {
+    private static int matchSerializedIpv4(String input, int start, int address) {
         int index = start;
         for (int shift = 24; shift >= 0; shift -= 8) {
             if (shift != 24) {
@@ -128,7 +262,7 @@ public final class UrlHost {
                 }
                 index++;
             }
-            index = matchDecimalByte(input, index, (int) ((address >>> shift) & 0xff));
+            index = matchDecimalByte(input, index, (address >>> shift) & 0xff);
             if (index < 0) {
                 return -1;
             }
@@ -137,13 +271,14 @@ public final class UrlHost {
     }
 
     /// Serializes an IPv6 address.
-    private static String serializeIpv6(int[] address) {
+    private static String serializeIpv6(long highBits, long lowBits) {
         StringBuilder output = new StringBuilder();
-        int compress = findCompressedPieceIndex(address);
+        int compress = findCompressedPieceIndex(highBits, lowBits);
         boolean ignoreZero = false;
 
         for (int pieceIndex = 0; pieceIndex <= 7; pieceIndex++) {
-            if (ignoreZero && address[pieceIndex] == 0) {
+            int piece = ipv6Piece(highBits, lowBits, pieceIndex);
+            if (ignoreZero && piece == 0) {
                 continue;
             } else if (ignoreZero) {
                 ignoreZero = false;
@@ -155,7 +290,7 @@ public final class UrlHost {
                 continue;
             }
 
-            output.append(Integer.toHexString(address[pieceIndex]));
+            output.append(Integer.toHexString(piece));
             if (pieceIndex != 7) {
                 output.append(':');
             }
@@ -165,17 +300,18 @@ public final class UrlHost {
     }
 
     /// Matches a serialized IPv6 address and returns the end index, or `-1`.
-    private static int matchSerializedIpv6(String input, int start, int[] address) {
+    private static int matchSerializedIpv6(String input, int start, long highBits, long lowBits) {
         if (!hasChar(input, start, '[')) {
             return -1;
         }
 
         int index = start + 1;
-        int compress = findCompressedPieceIndex(address);
+        int compress = findCompressedPieceIndex(highBits, lowBits);
         boolean ignoreZero = false;
 
         for (int pieceIndex = 0; pieceIndex <= 7; pieceIndex++) {
-            if (ignoreZero && address[pieceIndex] == 0) {
+            int piece = ipv6Piece(highBits, lowBits, pieceIndex);
+            if (ignoreZero && piece == 0) {
                 continue;
             } else if (ignoreZero) {
                 ignoreZero = false;
@@ -197,7 +333,7 @@ public final class UrlHost {
                 continue;
             }
 
-            index = matchHexPiece(input, index, address[pieceIndex]);
+            index = matchHexPiece(input, index, piece);
             if (index < 0) {
                 return -1;
             }
@@ -215,15 +351,31 @@ public final class UrlHost {
         return index + 1;
     }
 
+    /// Returns one 16-bit IPv6 address piece.
+    private static int ipv6Piece(long highBits, long lowBits, int index) {
+        if (index < 4) {
+            return (int) ((highBits >>> (48 - index * 16)) & 0xffffL);
+        }
+        return (int) ((lowBits >>> (48 - (index - 4) * 16)) & 0xffffL);
+    }
+
+    /// Checks an IPv6 piece and returns it unchanged.
+    private static int checkedIpv6Piece(int value) {
+        if ((value & ~0xffff) != 0) {
+            throw new IllegalArgumentException("IPv6 address piece is out of range");
+        }
+        return value;
+    }
+
     /// Finds the IPv6 zero run to compress during serialization.
-    private static int findCompressedPieceIndex(int[] address) {
+    private static int findCompressedPieceIndex(long highBits, long lowBits) {
         int longestIndex = -1;
         int longestSize = 1;
         int foundIndex = -1;
         int foundSize = 0;
 
-        for (int pieceIndex = 0; pieceIndex < address.length; pieceIndex++) {
-            if (address[pieceIndex] != 0) {
+        for (int pieceIndex = 0; pieceIndex < 8; pieceIndex++) {
+            if (ipv6Piece(highBits, lowBits, pieceIndex) != 0) {
                 if (foundSize > longestSize) {
                     longestIndex = foundIndex;
                     longestSize = foundSize;
@@ -319,18 +471,5 @@ public final class UrlHost {
             }
         }
         return true;
-    }
-
-    /// Internal host kinds.
-    @NotNullByDefault
-    private enum Kind {
-        /// A domain host.
-        DOMAIN,
-        /// An IPv4 host.
-        IPV4,
-        /// An IPv6 host.
-        IPV6,
-        /// An opaque host.
-        OPAQUE
     }
 }
