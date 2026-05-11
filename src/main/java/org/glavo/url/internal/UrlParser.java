@@ -130,7 +130,7 @@ public final class UrlParser {
         }
 
         String domain = containsPercent(input)
-                ? Encoding.utf8DecodeWithoutBom(PercentEncoding.percentDecodeString(input))
+                ? Utf8.decodeWithoutBom(PercentEncoding.percentDecodeString(input))
                 : input;
         String asciiDomain = domainToAscii(domain);
 

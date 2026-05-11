@@ -56,14 +56,14 @@ final class PercentEncoding {
 
     /// Decodes percent triplets from the UTF-8 bytes of a string.
     static byte[] percentDecodeString(String input) {
-        return percentDecodeBytes(Encoding.utf8Encode(input));
+        return percentDecodeBytes(Utf8.encode(input));
     }
 
     /// Decodes valid percent triplets in a URL component as UTF-8.
     static String percentDecodeUtf8(String input) {
         for (int i = 0; i < input.length(); i++) {
             if (isValidPercentTriplet(input, i, input.length())) {
-                return Encoding.utf8Decode(percentDecodeString(input));
+                return Utf8.decode(percentDecodeString(input));
             }
         }
         return input;
@@ -108,7 +108,7 @@ final class PercentEncoding {
                     output.append((char) codePoint);
                 }
             } else {
-                byte[] bytes = Encoding.utf8Encode(new String(Character.toChars(codePoint)));
+                byte[] bytes = Utf8.encode(new String(Character.toChars(codePoint)));
                 for (byte b : bytes) {
                     int value = b & 0xff;
                     if (percentEncodePredicate.test(value)) {
@@ -190,7 +190,7 @@ final class PercentEncoding {
             return;
         }
 
-        byte[] bytes = Encoding.utf8Encode(new String(Character.toChars(codePoint)));
+        byte[] bytes = Utf8.encode(new String(Character.toChars(codePoint)));
         for (byte b : bytes) {
             output.append(percentEncodedByteString(b & 0xff));
         }

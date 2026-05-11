@@ -21,23 +21,23 @@ import java.nio.charset.StandardCharsets;
 
 /// UTF-8 encoding helpers used by URL parsing.
 @NotNullByDefault
-final class Encoding {
+final class Utf8 {
     /// Creates no instances.
-    private Encoding() {
+    private Utf8() {
     }
 
     /// Encodes the string as UTF-8 bytes.
-    static byte[] utf8Encode(String input) {
+    static byte[] encode(String input) {
         return input.getBytes(StandardCharsets.UTF_8);
     }
 
     /// Decodes UTF-8 bytes.
-    static String utf8Decode(byte[] bytes) {
+    static String decode(byte[] bytes) {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
     /// Decodes UTF-8 bytes, ignoring an initial byte order mark when present.
-    static String utf8DecodeWithoutBom(byte[] bytes) {
+    static String decodeWithoutBom(byte[] bytes) {
         int offset = bytes.length >= 3
                 && (bytes[0] & 0xff) == 0xef
                 && (bytes[1] & 0xff) == 0xbb
