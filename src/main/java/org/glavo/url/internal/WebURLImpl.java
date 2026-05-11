@@ -166,6 +166,11 @@ public final class WebURLImpl implements WebURL {
         this.queryEnd = queryEnd;
         this.fragmentStart = fragmentStart;
         this.pathPrefix = pathPrefix;
+        if (record.host instanceof UrlHost.Domain domain) {
+            this.host = domain.value();
+        } else if (record.host instanceof UrlHost.Opaque opaque) {
+            this.host = opaque.value();
+        }
     }
 
     /// Returns whether this URL has an opaque path.
