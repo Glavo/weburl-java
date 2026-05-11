@@ -143,8 +143,7 @@ public final class UTS46 {
                 case IdnaData.STATUS_IGNORED -> {
                 }
                 case IdnaData.STATUS_MAPPED -> {
-                    String mapping = DATA.mapping(codePoint);
-                    mapped.append(transitionalProcessing && codePoint == 0x1E9E ? "ss" : mapping);
+                    mapped.append(transitionalProcessing && codePoint == 0x1E9E ? "ss" : DATA.mapping(codePoint));
                 }
                 case IdnaData.STATUS_DEVIATION -> {
                     if (transitionalProcessing) {
