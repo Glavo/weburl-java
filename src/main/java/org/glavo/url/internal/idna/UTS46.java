@@ -168,7 +168,7 @@ public final class UTS46 {
 
         for (int i = 0; i < labels.length; i++) {
             String label = labels[i];
-            if (!startsWithAcePrefix(label)) {
+            if (!label.startsWith(ACE_PREFIX)) {
                 continue;
             }
             if (!StringUtils.isAsciiOnly(label)) {
@@ -245,7 +245,7 @@ public final class UTS46 {
             error = true;
         }
 
-        if (!checkHyphens && startsWithAcePrefix(label)) {
+        if (!checkHyphens && label.startsWith(ACE_PREFIX)) {
             error = true;
         }
 
@@ -492,15 +492,6 @@ public final class UTS46 {
             i += Character.charCount(codePoint);
         }
         return codePoints;
-    }
-
-    /// Returns whether a label starts with the ACE prefix.
-    private static boolean startsWithAcePrefix(String label) {
-        return label.length() >= ACE_PREFIX.length()
-                && label.charAt(0) == 'x'
-                && label.charAt(1) == 'n'
-                && label.charAt(2) == '-'
-                && label.charAt(3) == '-';
     }
 
     /// Returns whether an ASCII code point is allowed by STD3 host syntax.
