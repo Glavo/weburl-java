@@ -43,8 +43,10 @@ import java.nio.file.Path;
 ///   hosts are processed with URL Standard domain-to-ASCII rules, IPv4 hosts are normalized to dotted decimal
 ///   form, and IPv6 hosts are serialized in brackets. Some hierarchical URLs, such as `file:///path`, have an
 ///   empty host; opaque URLs such as `data:text/plain,hi` have no host.
-/// - A `port`, represented as an integer. The value `-1` means no port is stored. Default ports are removed
-///   as part of URL normalization, so `https://example.com:443/` has no stored port.
+/// - An optional `port` component. Default ports are removed as part of URL normalization, so
+///   `https://example.com:443/` has no serialized port component. {@link #getRawPort()} exposes the
+///   normalized port component, while {@link #getPort()} returns either that stored port or the known default
+///   port for the URL's scheme.
 /// - A `path`, always present as a string. Hierarchical URLs have a path made from path segments; many special
 ///   URLs serialize that path with a leading slash. Non-special URLs can have an opaque path whose syntax is
 ///   not a slash-separated path hierarchy.
@@ -60,10 +62,13 @@ import java.nio.file.Path;
 /// For a URL without a host, the URL Standard serialization depends on whether the path is opaque or
 /// hierarchical. The exact serialization is available from {@link #href()}.
 ///
-/// Component getters follow Java {@link URI}-style naming. Methods whose names contain `Raw` return the
-/// normalized serialized component with percent-encoding preserved. Decoded component getters decode valid
-/// percent triplets as UTF-8 and leave invalid or incomplete percent sequences unchanged. Decoding never applies
-/// `application/x-www-form-urlencoded` rules; plus (`+`) remains plus.
+/// Component getters follow Java {@link URI}-style naming, but their values are based on URL Standard
+/// normalization. Methods whose names contain `Raw` return the normalized serialized component with
+/// percent-encoding preserved. Decoded component getters decode valid percent triplets as UTF-8 and leave
+/// invalid or incomplete percent sequences unchanged. Decoding never applies `application/x-www-form-urlencoded`
+/// rules; plus (`+`) remains plus. The port is the main exception to the raw/decoded naming pattern:
+/// {@link #getRawPort()} returns the serialized port component, while {@link #getPort()} returns the stored port
+/// or the known default port for the scheme.
 ///
 /// `WebURL` differs from {@link URI} in several important ways. `URI` is a generic RFC 2396-oriented syntax
 /// object and can represent relative references; `WebURL` is an absolute URL value with URL Standard
@@ -489,14 +494,30 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @return the host component, or `null` when absent
     @Nullable String getHost();
 
-    /// Returns the port component as an integer.
+    /// Returns the port as an integer.
     ///
-    /// This method follows the Java `URI` convention of returning `-1` when no port is stored in this URL.
-    /// URL Standard normalization removes default ports, so an HTTPS URL with an explicit port of 443 also
+    /// This method returns the normalized port component when one is stored in this URL. If no port component
+    /// is stored but the scheme has a known default port, this method returns that default port. Otherwise it
     /// returns `-1`.
     ///
-    /// @return the normalized port, or `-1` when absent
+    /// URL Standard normalization removes default ports from the serialized URL. Therefore
+    /// `WebURL.parse("https://example.com:443/").getRawPort()` returns `null`, but this method returns `443`.
+    ///
+    /// @return the stored port, the known default port, or `-1` when neither is available
     int getPort();
+
+    /// Returns the raw port component.
+    ///
+    /// This method exposes the normalized serialized port component without the leading colon. It returns
+    /// `null` when the URL has no stored port component. Default ports are removed during URL normalization, so
+    /// this method does not preserve an explicitly written default port from the original input.
+    ///
+    /// Unlike other `Raw` component getters, the port component has no percent-encoded form and is always a
+    /// decimal ASCII string when present. The name is used to distinguish the serialized component from
+    /// {@link #getPort()}, which may return a scheme default port even when no port component is serialized.
+    ///
+    /// @return the normalized raw port component, or `null` when absent
+    @Nullable String getRawPort();
 
     /// Returns the decoded path component.
     ///

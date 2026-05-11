@@ -151,8 +151,8 @@ public final class WebURLWptTest {
             return "";
         }
 
-        int port = url.getPort();
-        return port < 0 ? host : host + ":" + port;
+        @Nullable String port = url.getRawPort();
+        return port == null ? host : host + ":" + port;
     }
 
     /// Returns the WHATWG hostname field from public URI-style URL components.
@@ -163,8 +163,8 @@ public final class WebURLWptTest {
 
     /// Returns the WHATWG port field from public URI-style URL components.
     private static String port(WebURL url) {
-        int port = url.getPort();
-        return port < 0 ? "" : Integer.toString(port);
+        @Nullable String port = url.getRawPort();
+        return port == null ? "" : port;
     }
 
     /// Returns the WHATWG search field from public URI-style URL components.

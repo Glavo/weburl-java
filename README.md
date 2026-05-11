@@ -170,10 +170,14 @@ url.getUsername();      // "user"
 url.getPassword();      // "pass"
 url.getHost();          // "example.com"
 url.getPort();          // 8080
+url.getRawPort();       // "8080"
 url.getRawPath();       // "/a%2Fb"
 url.getRawQuery();      // "x=a%26b"
 url.getRawFragment();   // "frag%23ment"
 ```
+
+For schemes with known defaults, `getPort()` returns the default port when no non-default port is serialized.
+Use `getRawPort()` to inspect the normalized serialized port component.
 
 ### URL Normalization
 

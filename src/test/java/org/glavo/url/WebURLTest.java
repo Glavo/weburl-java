@@ -169,6 +169,7 @@ public final class WebURLTest {
         assertEquals("user:pass@example.com:8080", url.getRawAuthority());
         assertEquals("example.com", url.getHost());
         assertEquals(8080, url.getPort());
+        assertEquals("8080", url.getRawPort());
         assertEquals("/a%2Fb", url.getRawPath());
         assertEquals("x=a%26b", url.getRawQuery());
         assertEquals("x=a%26b", url.getRawQueryOrEmpty());
@@ -187,14 +188,17 @@ public final class WebURLTest {
         assertEquals("example.com", absentComponents.getAuthority());
         assertEquals("example.com", absentComponents.getRawAuthority());
         assertEquals("example.com", absentComponents.getHost());
-        assertEquals(-1, absentComponents.getPort());
+        assertEquals(443, absentComponents.getPort());
+        assertNull(absentComponents.getRawPort());
         assertEquals("/path", absentComponents.getRawPath());
         assertNull(absentComponents.getRawQuery());
         assertEquals("", absentComponents.getRawQueryOrEmpty());
         assertNull(absentComponents.getRawFragment());
         assertEquals("", absentComponents.getRawFragmentOrEmpty());
 
-        assertEquals(-1, WebURL.parse("https://example.com:443/path").getPort());
+        WebURL defaultPort = WebURL.parse("https://example.com:443/path");
+        assertEquals(443, defaultPort.getPort());
+        assertNull(defaultPort.getRawPort());
         assertEquals("", WebURL.parse("https://example.com/path?").getRawQuery());
         assertEquals("", WebURL.parse("https://example.com/path#").getRawFragment());
 
@@ -316,6 +320,7 @@ public final class WebURLTest {
             assertEquals(url.origin(), deserialized.origin());
             assertEquals(url.toDisplayString(), deserialized.toDisplayString());
             assertEquals(url.getRawAuthority(), deserialized.getRawAuthority());
+            assertEquals(url.getRawPort(), deserialized.getRawPort());
             assertEquals(url.getRawPath(), deserialized.getRawPath());
             assertEquals(url.getRawQuery(), deserialized.getRawQuery());
             assertEquals(url.getRawFragment(), deserialized.getRawFragment());
@@ -372,7 +377,23 @@ public final class WebURLTest {
     /// Tests port parsing and default-port elision.
     @Test
     public void handlesPorts() {
-        assertEquals("http://example.com/", WebURL.parse("http://example.com:80/").href());
+        WebURL defaultHttpPort = WebURL.parse("http://example.com:80/");
+        assertEquals("http://example.com/", defaultHttpPort.href());
+        assertEquals(80, defaultHttpPort.getPort());
+        assertNull(defaultHttpPort.getRawPort());
+
+        WebURL explicitHttpPort = WebURL.parse("http://example.com:8080/");
+        assertEquals(8080, explicitHttpPort.getPort());
+        assertEquals("8080", explicitHttpPort.getRawPort());
+
+        WebURL defaultFtpPort = WebURL.parse("ftp://example.com/");
+        assertEquals(21, defaultFtpPort.getPort());
+        assertNull(defaultFtpPort.getRawPort());
+
+        WebURL nonSpecialWithoutDefaultPort = WebURL.parse("foo://example.com/");
+        assertEquals(-1, nonSpecialWithoutDefaultPort.getPort());
+        assertNull(nonSpecialWithoutDefaultPort.getRawPort());
+
         assertThrows(WebURLParseException.PortOutOfRange.class,
                 () -> WebURL.parse("http://example.com:65536/"));
     }

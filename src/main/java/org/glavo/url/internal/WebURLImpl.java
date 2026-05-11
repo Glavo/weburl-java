@@ -106,6 +106,8 @@ public final class WebURLImpl implements WebURL {
     private @Nullable String rawAuthority;
     /// Cached host string, or `null` until requested or when absent.
     private @Nullable String host;
+    /// Cached raw port string, or `null` until requested or when absent.
+    private @Nullable String rawPort;
     /// Cached decoded path string, or `null` until requested.
     private @Nullable String path;
     /// Cached raw path string, or `null` until requested.
@@ -489,10 +491,25 @@ public final class WebURLImpl implements WebURL {
         return value;
     }
 
-    /// Returns the port value, or `-1` when absent.
+    /// Returns the effective port value, or `-1` when absent and no default is known.
     @Override
     public int getPort() {
-        return port;
+        return port >= 0 ? port : UrlParser.defaultPort(scheme);
+    }
+
+    /// Returns the raw port, or `null` when absent.
+    @Override
+    public @Nullable String getRawPort() {
+        if (portStart < 0) {
+            return null;
+        }
+
+        @Nullable String value = rawPort;
+        if (value == null) {
+            value = href().substring(portStart, portEnd);
+            rawPort = value;
+        }
+        return value;
     }
 
     /// Returns the decoded path.

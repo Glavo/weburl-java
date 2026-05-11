@@ -88,8 +88,8 @@ public final class WebURLToAsciiWptTest {
             return "";
         }
 
-        int port = url.getPort();
-        return port < 0 ? host : host + ":" + port;
+        @Nullable String port = url.getRawPort();
+        return port == null ? host : host + ":" + port;
     }
 
     /// Reads a WPT JSON file as an array.
