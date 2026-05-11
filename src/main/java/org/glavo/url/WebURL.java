@@ -149,7 +149,7 @@ import java.nio.file.Path;
 /// - **IPv4 hosts** are always normalized to dotted decimal form. Non-decimal forms such as
 ///   hex (`0x7f000001`), octal, and integer (decimal) are all normalized to dotted decimal
 ///   (e.g., `127.0.0.1`).
-/// - **IPv6 hosts** are compressed per RFC 5952 and enclosed in square brackets.
+/// - **IPv6 hosts** are serialized with the URL Standard IPv6 serializer and enclosed in square brackets.
 /// - **Opaque hosts** are used by non-special URLs and are rendered without brackets.
 ///
 /// Some hierarchical URLs (such as `file:///path`) have an empty host. Opaque URLs (such as
@@ -188,7 +188,7 @@ import java.nio.file.Path;
 ///   Punycode-encoded. The input `https://münchen.de/` becomes `https://xn--mnchen-3ya.de/`.
 /// - **IPv4 hosts** are normalized to dotted decimal: hex, octal, and integer forms are
 ///   all reduced to `a.b.c.d` notation.
-/// - **IPv6 hosts** are compressed per RFC 5952.
+/// - **IPv6 hosts** are serialized with the URL Standard IPv6 serializer.
 /// - **Default ports** are removed from the serialization. The scheme's default port is
 ///   still available via {@link #getPort()}.
 /// - **Dot segments** (`..` and `.`) in the path are resolved.
@@ -224,11 +224,11 @@ import java.nio.file.Path;
 /// | Scheme case            | Always lowercased                                   | Preserved as-is                                      |
 /// | Domain host            | IDNA ToASCII is applied; non-ASCII labels are converted to Punycode (e.g., `münchen` → `xn--mnchen-3ya`) | No IDNA processing; non-ASCII authority text can be accepted, but `URI.getHost()` can return `null` |
 /// | IPv4 normalization     | Always dotted decimal (hex/octal/integer → dotted)  | Does not normalize hex/octal/decimal forms          |
-/// | IPv6 compression       | RFC 5952 compression applied                        | Does not apply RFC 5952 compression                 |
+/// | IPv6 serialization     | URL Standard IPv6 serializer applied                | Preserves accepted input spelling                    |
 /// | Default port           | Removed from serialization                          | Preserved                                            |
 /// | Backslash in path      | Converted to `/` in special URLs                    | Rejected by `new URI(String)` as an illegal path character |
 /// | Tab and newline        | Stripped from input                                 | Rejected by `new URI(String)` as illegal characters  |
-/// | Percent-encoding       | Applied per URL Standard encode sets; may re-encode | Minimal encoding by `new URI(String)`; raw constructors preserve input |
+/// | Percent-encoding       | Applied per URL Standard encode sets; may re-encode | The string constructor rejects illegal characters and preserves accepted spelling in `toString()` |
 ///
 /// ## Component Semantics
 ///
@@ -514,7 +514,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @implSpec The current implementation accepts standard absolute URL strings and a deterministic subset of
     /// browser address bar style URL inputs, such as bare domain names, `//`-prefixed authorities, single-label
     /// hosts, IP addresses, bracketed IPv6 addresses, and absolute local paths. Public-looking domain names
-    /// recognized as URL like but lacking an explicit scheme are completed with `https` before normal URL
+    /// recognized as URL-like but lacking an explicit scheme are completed with `https` before normal URL
     /// processing. When such a domain has an explicit decimal port, it is completed with `http`. IP addresses,
     /// single-label hosts, and reserved local or test hosts such as `localhost`, `test`, and names below
     /// `.localhost` are completed with `http`. Windows drive paths, Windows UNC paths, and POSIX-style absolute
@@ -612,7 +612,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// `application/x-www-form-urlencoded` rules and therefore does not treat plus (`+`) as a space.
     ///
     /// The result is `null` when the URL has no serialized credentials. When the URL has credentials with an
-    /// empty username, the result is the empty string. The percentage of escapes that are invalid or incomplete is left
+    /// empty username, the result is the empty string. Percent escapes that are invalid or incomplete are left
     /// unchanged.
     ///
     /// @return the decoded username component, or `null` when absent
@@ -645,8 +645,8 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// {@link #getRawPassword()} with valid percent triplets decoded as UTF-8. It does not apply
     /// `application/x-www-form-urlencoded` rules and therefore does not treat plus (`+`) as a space.
     ///
-    /// The result is `null` when the URL has no password component. The percentage of escapes that are invalid or
-    /// incomplete is left unchanged.
+    /// The result is `null` when the URL has no password component. Percent escapes that are invalid or
+    /// incomplete are left unchanged.
     ///
     /// @return the decoded password component, or `null` when absent
     @Nullable String getPassword();
@@ -678,8 +678,8 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// at-sign (`@`) that separates user-info from the host.
     ///
     /// User-info is present when the URL serialization contains credentials. When present, it consists of the
-    /// username and, if a password component is serialized, a colon (`:`) followed by the password. The percentage of
-    /// escapes that are invalid or incomplete is left unchanged.
+    /// username and, if a password component is serialized, a colon (`:`) followed by the password. Percent
+    /// escapes that are invalid or incomplete are left unchanged.
     ///
     /// The result is `null` when the URL has no serialized credentials.
     ///
@@ -710,8 +710,8 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// The authority is present when this URL has a host component. When present, it consists of the
     /// serialized credentials followed by at-sign (`@`) when credentials are present, the serialized host, and
     /// the serialized port prefixed by colon (`:`) when a non-default port is present. Domain hosts remain in
-    /// their URL Standard ASCII form; this method does not convert Punycode labels back to Unicode. The percentage of
-    /// escapes that are invalid or incomplete is left unchanged.
+    /// their URL Standard ASCII form; this method does not convert Punycode labels back to Unicode. Percent
+    /// escapes that are invalid or incomplete are left unchanged.
     ///
     /// The result is `null` when this URL has no host component. A URL with an explicitly empty authority,
     /// such as a `file` URL with an empty host, returns the empty string.
