@@ -238,7 +238,7 @@ public final class WebURLPatternImpl implements WebURLPattern {
         if (result == null) {
             return null;
         }
-        return new WebURLPattern.Result(
+        return new WebURLPatternResultImpl(
                 toComponentResult(result.protocol()),
                 toComponentResult(result.username()),
                 toComponentResult(result.password()),
@@ -252,7 +252,7 @@ public final class WebURLPatternImpl implements WebURLPattern {
 
     /// Converts an internal component result.
     private static WebURLPattern.ComponentResult toComponentResult(WebURLPatternEngine.ComponentMatch result) {
-        return new WebURLPattern.ComponentResult(result.input(), result.groups());
+        return new WebURLPatternComponentResultImpl(result.input(), result.groups());
     }
 
     /// Casts a public builder to its internal implementation.

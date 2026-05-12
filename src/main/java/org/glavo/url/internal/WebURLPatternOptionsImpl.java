@@ -1,0 +1,63 @@
+/*
+ * Copyright 2026 Glavo
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.glavo.url.internal;
+
+import org.glavo.url.WebURLPattern;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+/// Internal immutable implementation of `WebURLPattern.Options`.
+@NotNullByDefault
+public final class WebURLPatternOptionsImpl implements WebURLPattern.Options {
+    /// Whether component matching should be case-insensitive.
+    private final boolean ignoreCase;
+
+    /// Creates URLPattern compilation options.
+    ///
+    /// @param ignoreCase whether component matching should be case-insensitive
+    public WebURLPatternOptionsImpl(boolean ignoreCase) {
+        this.ignoreCase = ignoreCase;
+    }
+
+    /// Returns whether component matching should be case-insensitive.
+    @Override
+    @Contract(pure = true)
+    public boolean ignoreCase() {
+        return ignoreCase;
+    }
+
+    /// Compares this options object with another object.
+    @Override
+    @Contract(pure = true)
+    public boolean equals(@Nullable Object obj) {
+        return obj instanceof WebURLPattern.Options other && ignoreCase == other.ignoreCase();
+    }
+
+    /// Returns the hash code of this options object.
+    @Override
+    @Contract(pure = true)
+    public int hashCode() {
+        return Boolean.hashCode(ignoreCase);
+    }
+
+    /// Returns a string representation of this options object.
+    @Override
+    @Contract(pure = true)
+    public String toString() {
+        return "Options[ignoreCase=" + ignoreCase + "]";
+    }
+}

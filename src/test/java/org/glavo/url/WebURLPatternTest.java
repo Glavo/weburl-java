@@ -188,10 +188,10 @@ public final class WebURLPatternTest {
     public void supportsIgnoreCase() {
         WebURLPattern sensitive = WebURLPattern.compile(
                 WebURLPattern.newBuilder().setPath("/Books"),
-                new WebURLPattern.Options(false));
+                WebURLPattern.Options.of(false));
         WebURLPattern insensitive = WebURLPattern.compile(
                 WebURLPattern.newBuilder().setPath("/Books"),
-                new WebURLPattern.Options(true));
+                WebURLPattern.Options.of(true));
 
         assertFalse(sensitive.test(WebURLPattern.newBuilder().setPath("/books")));
         assertTrue(insensitive.test(WebURLPattern.newBuilder().setPath("/books")));

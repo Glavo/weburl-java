@@ -18,8 +18,8 @@
   capture groups, `ignoreCase`, and `hasRegExpGroups()`. Custom regular-expression groups are not
   supported yet because URLPattern uses ECMAScript `v` / `vi` regex behavior, which is not equivalent
   to Java regular expressions.
-  `WebURLPattern` is exposed as an interface with an internal immutable implementation, matching
-  the `WebURL` API shape.
+  `WebURLPattern` and its nested `Options`, `ComponentResult`, and `Result` types are exposed as
+  interfaces with internal immutable implementations, matching the `WebURL` API shape.
 
 ## 0.2.0 (2026-05-12)
 

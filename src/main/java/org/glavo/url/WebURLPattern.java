@@ -16,14 +16,15 @@
 package org.glavo.url;
 
 import org.glavo.url.internal.WebURLPatternBuilderImpl;
+import org.glavo.url.internal.WebURLPatternComponentResultImpl;
 import org.glavo.url.internal.WebURLPatternImpl;
+import org.glavo.url.internal.WebURLPatternOptionsImpl;
+import org.glavo.url.internal.WebURLPatternResultImpl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -373,45 +374,94 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     }
 
     /// URLPattern compilation options.
-    ///
-    /// @param ignoreCase whether component matching should be case-insensitive
-    record Options(boolean ignoreCase) {
+    @NotNullByDefault
+    sealed interface Options permits WebURLPatternOptionsImpl {
         /// Default URLPattern options.
-        public static final Options DEFAULT = new Options(false);
+        Options DEFAULT = new WebURLPatternOptionsImpl(false);
+
+        /// Creates URLPattern compilation options.
+        ///
+        /// @param ignoreCase whether component matching should be case-insensitive
+        /// @return new URLPattern compilation options
+        @Contract("_ -> new")
+        static Options of(boolean ignoreCase) {
+            return new WebURLPatternOptionsImpl(ignoreCase);
+        }
+
+        /// Returns whether component matching should be case-insensitive.
+        ///
+        /// @return `true` for case-insensitive matching
+        @Contract(pure = true)
+        boolean ignoreCase();
     }
 
     /// Result for one matched URLPattern component.
-    ///
-    /// @param input the matched component input
-    /// @param groups named and numeric capture groups, with `null` for unmatched optional groups
-    record ComponentResult(String input, @Unmodifiable Map<String, @Nullable String> groups) {
-        /// Creates a component result.
-        public ComponentResult {
-            Objects.requireNonNull(input, "input");
-            Objects.requireNonNull(groups, "groups");
-            groups = Collections.unmodifiableMap(new LinkedHashMap<>(groups));
-        }
+    @NotNullByDefault
+    sealed interface ComponentResult permits WebURLPatternComponentResultImpl {
+        /// Returns the matched component input.
+        ///
+        /// @return the matched component input
+        @Contract(pure = true)
+        String input();
+
+        /// Returns named and numeric capture groups.
+        ///
+        /// Unmatched optional groups are represented by `null` values.
+        ///
+        /// @return immutable capture groups
+        @Contract(pure = true)
+        @Unmodifiable Map<String, @Nullable String> groups();
     }
 
     /// Result for a successful URLPattern match.
-    ///
-    /// @param protocol protocol component result
-    /// @param username username component result
-    /// @param password password component result
-    /// @param hostname hostname component result
-    /// @param port port component result
-    /// @param pathname pathname component result
-    /// @param search search component result
-    /// @param hash hash component result
-    record Result(
-            ComponentResult protocol,
-            ComponentResult username,
-            ComponentResult password,
-            ComponentResult hostname,
-            ComponentResult port,
-            ComponentResult pathname,
-            ComponentResult search,
-            ComponentResult hash
-    ) {
+    @NotNullByDefault
+    sealed interface Result permits WebURLPatternResultImpl {
+        /// Returns the protocol component result.
+        ///
+        /// @return the protocol component result
+        @Contract(pure = true)
+        ComponentResult protocol();
+
+        /// Returns the username component result.
+        ///
+        /// @return the username component result
+        @Contract(pure = true)
+        ComponentResult username();
+
+        /// Returns the password component result.
+        ///
+        /// @return the password component result
+        @Contract(pure = true)
+        ComponentResult password();
+
+        /// Returns the hostname component result.
+        ///
+        /// @return the hostname component result
+        @Contract(pure = true)
+        ComponentResult hostname();
+
+        /// Returns the port component result.
+        ///
+        /// @return the port component result
+        @Contract(pure = true)
+        ComponentResult port();
+
+        /// Returns the pathname component result.
+        ///
+        /// @return the pathname component result
+        @Contract(pure = true)
+        ComponentResult pathname();
+
+        /// Returns the search component result.
+        ///
+        /// @return the search component result
+        @Contract(pure = true)
+        ComponentResult search();
+
+        /// Returns the hash component result.
+        ///
+        /// @return the hash component result
+        @Contract(pure = true)
+        ComponentResult hash();
     }
 }
