@@ -30,7 +30,6 @@ public final class WebURLBuilderTest {
     @Test
     public void buildsUrlFromComponents() {
         WebURL url = WebURL.newBuilder()
-                .setScheme("HTTPS")
                 .setUsername("user name")
                 .setPassword("pa:ss")
                 .setHost("example.com")
@@ -38,6 +37,7 @@ public final class WebURLBuilderTest {
                 .setPath("/a b")
                 .setQuery("q=a&b")
                 .setFragment("frag ment")
+                .setScheme("HTTPS")
                 .build();
 
         assertEquals("https://user%20name:pa%3Ass@example.com:8080/a%20b?q=a&b#frag%20ment", url.href());
@@ -165,19 +165,58 @@ public final class WebURLBuilderTest {
     @Test
     public void revalidatesComponentsAfterSchemeChange() {
         WebURL.Builder builder = WebURL.newBuilder()
-                .setScheme("foo")
                 .setHost("example.com")
                 .setRawPath("/a")
-                .setQuery("q='");
+                .setQuery("q='")
+                .setScheme("foo");
 
         assertEquals("foo://example.com/a?q='", builder.build().href());
         assertEquals("https://example.com/a?q=%27", builder.setScheme("https").build().href());
     }
 
+    /// Tests that setters can be called before a scheme is available.
+    @Test
+    public void acceptsComponentsBeforeScheme() {
+        WebURL url = WebURL.newBuilder()
+                .setHost("example.com")
+                .setPath("/a b")
+                .setQuery("q='")
+                .setFragment("top")
+                .setPort(443)
+                .setScheme("https")
+                .build();
+
+        assertEquals("https://example.com/a%20b?q=%27#top", url.href());
+        assertNull(url.getRawPort());
+
+        WebURL opaque = WebURL.newBuilder()
+                .setPath("user@example.com")
+                .setQuery("subject=Hi There")
+                .setScheme("mailto")
+                .build();
+        assertEquals("mailto:user@example.com?subject=Hi%20There", opaque.href());
+    }
+
+    /// Tests that pending components are validated when a scheme is supplied.
+    @Test
+    public void validatesPendingComponentsWhenSchemeIsSet() {
+        WebURL.Builder invalidHost = WebURL.newBuilder().setHost("exa mple.com");
+        assertThrows(IllegalArgumentException.class, () -> invalidHost.setScheme("https"));
+
+        WebURL.Builder invalidRawPath = WebURL.newBuilder().setRawPath("/a b");
+        assertThrows(IllegalArgumentException.class, () -> invalidRawPath.setScheme("https"));
+
+        WebURL.Builder invalidRawQuery = WebURL.newBuilder().setRawQuery("x=#");
+        assertThrows(IllegalArgumentException.class, () -> invalidRawQuery.setScheme("https"));
+
+        assertThrows(IllegalArgumentException.class, () -> WebURL.newBuilder().setRawPath("/%zz"));
+        assertThrows(IllegalArgumentException.class, () -> WebURL.newBuilder().setRawPort("7z"));
+    }
+
     /// Tests builder error reporting.
     @Test
     public void reportsBuilderErrors() {
-        assertThrows(IllegalStateException.class, () -> WebURL.newBuilder().setHost("example.com"));
+        assertThrows(IllegalStateException.class, () -> WebURL.newBuilder().setHost("example.com").build());
         assertThrows(IllegalStateException.class, () -> WebURL.newBuilder().setScheme("https").build());
         assertThrows(IllegalStateException.class, () -> WebURL.newBuilder().setScheme("foo").setPort(1).build());
 

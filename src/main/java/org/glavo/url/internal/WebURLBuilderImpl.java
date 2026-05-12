@@ -154,7 +154,6 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     /// Sets the numeric port.
     @Override
     public WebURL.Builder setPort(int port) {
-        requireScheme();
         if (port < -1 || port > 65535) {
             throw new IllegalArgumentException("Port must be in the range -1..65535");
         }
@@ -164,7 +163,6 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     /// Sets the raw port.
     @Override
     public WebURL.Builder setRawPort(@Nullable String port) {
-        requireScheme();
         return setPortInput(port);
     }
 
@@ -241,7 +239,9 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Sets the username input.
     private WebURL.Builder setUsernameInput(@Nullable String value, boolean raw) {
-        requireScheme();
+        if (scheme == null && raw && value != null) {
+            validateGenericRawComponent(value, "username");
+        }
         @Nullable String oldValue = usernameInput;
         boolean oldRaw = usernameRaw;
         boolean oldTrusted = usernameTrusted;
@@ -258,7 +258,9 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Sets the password input.
     private WebURL.Builder setPasswordInput(@Nullable String value, boolean raw) {
-        requireScheme();
+        if (scheme == null && raw && value != null) {
+            validateGenericRawComponent(value, "password");
+        }
         @Nullable String oldValue = passwordInput;
         boolean oldRaw = passwordRaw;
         boolean oldTrusted = passwordTrusted;
@@ -275,7 +277,9 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Sets the host input.
     private WebURL.Builder setHostInput(@Nullable String value, boolean raw) {
-        requireScheme();
+        if (scheme == null && raw && value != null) {
+            validateGenericRawComponent(value, "host");
+        }
         @Nullable String oldValue = hostInput;
         boolean oldRaw = hostRaw;
         boolean oldTrusted = hostTrusted;
@@ -292,6 +296,12 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Sets the port input.
     private WebURL.Builder setPortInput(@Nullable String value) {
+        if (value != null) {
+            if (value.isEmpty()) {
+                throw invalidComponent("port", null);
+            }
+            parsePort(value);
+        }
         @Nullable String oldValue = portInput;
         UrlRecord oldRecord = record.copy();
         portInput = value;
@@ -300,7 +310,9 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Sets the path input.
     private WebURL.Builder setPathInput(String value, boolean raw) {
-        requireScheme();
+        if (scheme == null && raw) {
+            validateGenericRawComponent(value, "path");
+        }
         String oldValue = pathInput;
         boolean oldRaw = pathRaw;
         boolean oldTrusted = pathTrusted;
@@ -320,7 +332,9 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Sets the query input.
     private WebURL.Builder setQueryInput(@Nullable String value, boolean raw) {
-        requireScheme();
+        if (scheme == null && raw && value != null) {
+            validateGenericRawComponent(value, "query");
+        }
         @Nullable String oldValue = queryInput;
         boolean oldRaw = queryRaw;
         boolean oldTrusted = queryTrusted;
@@ -337,7 +351,9 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Sets the fragment input.
     private WebURL.Builder setFragmentInput(@Nullable String value, boolean raw) {
-        requireScheme();
+        if (scheme == null && raw && value != null) {
+            validateGenericRawComponent(value, "fragment");
+        }
         @Nullable String oldValue = fragmentInput;
         boolean oldRaw = fragmentRaw;
         boolean oldTrusted = fragmentTrusted;
@@ -354,6 +370,9 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Rebuilds the normalized URL record or restores the old builder state.
     private WebURL.Builder rebuildOrRestore(UrlRecord oldRecord, Runnable restore) {
+        if (scheme == null) {
+            return this;
+        }
         try {
             record = createRecord();
             return this;
@@ -361,6 +380,20 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
             restore.run();
             record = oldRecord;
             throw exception;
+        }
+    }
+
+    /// Validates only syntax that is independent of URL scheme and component kind.
+    private static void validateGenericRawComponent(String value, String component) {
+        for (int index = 0; index < value.length(); ) {
+            if (value.charAt(index) == '%') {
+                if (!PercentEncoding.isValidPercentTriplet(value, index, value.length())) {
+                    throw invalidComponent(component, null);
+                }
+                index += 3;
+            } else {
+                index += Character.charCount(value.codePointAt(index));
+            }
         }
     }
 
@@ -578,11 +611,7 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Returns whether a new path value should prefer opaque path parsing.
     private boolean shouldPreferOpaquePath(String value) {
-        @Nullable String schemeValue = scheme;
-        return schemeValue != null
-                && hostInput == null
-                && !UrlParser.isSpecialScheme(schemeValue)
-                && !value.startsWith("/");
+        return hostInput == null && !value.startsWith("/");
     }
 
     /// Returns the current scheme or throws when it is missing.

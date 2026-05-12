@@ -380,8 +380,9 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
 
     /// Creates an empty mutable URL builder.
     ///
-    /// The returned builder has no scheme. Call [Builder#setScheme(String)] before setting other URL components
-    /// or calling [Builder#build()].
+    /// The returned builder has no scheme. Other components may be set before the scheme; such inputs receive
+    /// only scheme-independent validation until [Builder#setScheme(String)] or [Builder#build()] supplies a
+    /// scheme-sensitive validation point.
     ///
     /// @return a new URL builder
     @Contract(value = "-> new", pure = true)
@@ -999,9 +1000,10 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// Mutable builder for constructing immutable [WebURL] values from URL components.
     ///
     /// A builder is mutable and is not thread-safe. Each setter updates one logical URL component and returns this
-    /// builder so calls can be chained. Setter methods validate and normalize the supplied component according to
-    /// the current scheme. If a builder was created with [WebURL#newBuilder()], [#setScheme(String)] must be called
-    /// before any other component setter.
+    /// builder so calls can be chained. When a scheme has already been set, setter methods validate and normalize
+    /// the supplied component according to that scheme. When no scheme has been set, setters accept component
+    /// inputs with only scheme-independent validation and the stored inputs are revalidated when a scheme is later
+    /// supplied.
     ///
     /// Methods whose names contain `Raw` accept serialized component text, preserving valid percent escapes.
     /// Methods without `Raw` accept decoded component text and percent-encode it for the target component.
@@ -1031,7 +1033,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param username the decoded username, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `username` cannot be represented as a URL username
         @Contract("_ -> this")
         WebURL.Builder setUsername(@Nullable String username);
@@ -1040,7 +1041,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param username the raw username, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `username` is not valid serialized username text
         @Contract("_ -> this")
         WebURL.Builder setRawUsername(@Nullable String username);
@@ -1049,7 +1049,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param password the decoded password, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `password` cannot be represented as a URL password
         @Contract("_ -> this")
         WebURL.Builder setPassword(@Nullable String password);
@@ -1058,7 +1057,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param password the raw password, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `password` is not valid serialized password text
         @Contract("_ -> this")
         WebURL.Builder setRawPassword(@Nullable String password);
@@ -1070,7 +1068,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param host the decoded host, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `host` cannot be represented as a URL host
         @Contract("_ -> this")
         WebURL.Builder setHost(@Nullable String host);
@@ -1079,7 +1076,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param host the raw host, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `host` is not valid serialized host text
         @Contract("_ -> this")
         WebURL.Builder setRawHost(@Nullable String host);
@@ -1091,7 +1087,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param port the port number, or `-1` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `port` is outside `-1..65535`
         @Contract("_ -> this")
         WebURL.Builder setPort(int port);
@@ -1100,7 +1095,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param port the raw port text, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `port` is not a valid URL port
         @Contract("_ -> this")
         WebURL.Builder setRawPort(@Nullable String port);
@@ -1112,7 +1106,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param path the decoded path
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `path` cannot be represented as a URL path
         @Contract("_ -> this")
         WebURL.Builder setPath(String path);
@@ -1121,7 +1114,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param path the raw path
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `path` is not valid serialized path text
         @Contract("_ -> this")
         WebURL.Builder setRawPath(String path);
@@ -1132,7 +1124,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param query the decoded query, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `query` cannot be represented as a URL query
         @Contract("_ -> this")
         WebURL.Builder setQuery(@Nullable String query);
@@ -1143,7 +1134,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param query the raw query, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `query` is not valid serialized query text
         @Contract("_ -> this")
         WebURL.Builder setRawQuery(@Nullable String query);
@@ -1154,7 +1144,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param fragment the decoded fragment, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `fragment` cannot be represented as a URL fragment
         @Contract("_ -> this")
         WebURL.Builder setFragment(@Nullable String fragment);
@@ -1165,7 +1154,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param fragment the raw fragment, or `null` to remove it
         /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
         /// @throws IllegalArgumentException when `fragment` is not valid serialized fragment text
         @Contract("_ -> this")
         WebURL.Builder setRawFragment(@Nullable String fragment);
