@@ -288,8 +288,8 @@ import java.nio.file.Path;
 ///
 /// Not all WHATWG URLs have a valid RFC 2396 representation. Non-special URLs with an empty
 /// opaque path and no query, for example, have no absolute RFC 2396 URI (Java `URI` requires a
-/// non-empty scheme-specific part). Calling `toURI()` or `toRFC2396String()` on such URLs throws
-/// {@link IllegalStateException}.
+/// non-empty scheme-specific part). Calling `toURI()` on such URLs throws
+/// {@link UnsupportedOperationException}.
 ///
 /// # Comparison with `java.net.URL`
 ///
@@ -409,8 +409,9 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///
     /// @param input the URL input string
     /// @return a Java `URI` representing the parsed URL
-    /// @throws WebURLParseException  when the input is not a valid absolute URL
-    /// @throws IllegalStateException when the parsed URL has no RFC 2396 representation accepted by Java `URI`
+    /// @throws WebURLParseException          when the input is not a valid absolute URL
+    /// @throws UnsupportedOperationException when the parsed URL has no RFC 2396 representation accepted by
+    ///                                       Java `URI`
     @Contract(pure = true)
     static URI toURI(String input) {
         return parse(input).toURI();
@@ -424,9 +425,10 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///
     /// @param input the URL input string
     /// @return a Java `URL` representing the parsed URL
-    /// @throws WebURLParseException  when the input is not a valid absolute URL
-    /// @throws IllegalStateException when the parsed URL has no RFC 2396 representation accepted by Java `URI`
-    /// @throws MalformedURLException when Java has no URL handler for the scheme or rejects the URL
+    /// @throws WebURLParseException          when the input is not a valid absolute URL
+    /// @throws UnsupportedOperationException when the parsed URL has no RFC 2396 representation accepted by
+    ///                                       Java `URI`
+    /// @throws MalformedURLException         when Java has no URL handler for the scheme or rejects the URL
     @Contract(pure = true)
     static URL toURL(String input) throws MalformedURLException {
         return parse(input).toURL();
@@ -939,7 +941,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// constructs a `URI` from that string.
     ///
     /// @return a Java `URI` representing this URL
-    /// @throws IllegalStateException when this URL has no RFC 2396 representation accepted by Java `URI`
+    /// @throws UnsupportedOperationException when this URL has no RFC 2396 representation accepted by Java `URI`
     @Contract(pure = true)
     URI toURI();
 

@@ -623,7 +623,7 @@ public final class WebURLImpl implements WebURL {
             uri = value;
             return value;
         } catch (URISyntaxException exception) {
-            throw new IllegalStateException("This URL cannot be represented as an RFC 2396 URI", exception);
+            throw new UnsupportedOperationException("This URL cannot be represented as an RFC 2396 URI", exception);
         }
     }
 

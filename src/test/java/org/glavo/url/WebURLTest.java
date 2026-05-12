@@ -521,8 +521,8 @@ public final class WebURLTest {
 
         assertEquals("non-special:", emptyOpaque.toRFC2396String());
         assertEquals("non-special:#fragment", emptyOpaqueWithFragment.toRFC2396String());
-        assertThrows(IllegalStateException.class, emptyOpaque::toURI);
-        assertThrows(IllegalStateException.class, emptyOpaqueWithFragment::toURI);
+        assertThrows(UnsupportedOperationException.class, emptyOpaque::toURI);
+        assertThrows(UnsupportedOperationException.class, emptyOpaqueWithFragment::toURI);
     }
 
     /// Serializes and deserializes a `WebURL`.
