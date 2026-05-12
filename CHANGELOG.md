@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.2.0 (In development)
+## 0.3.0 (In development)
+
+## 0.2.0 (2026-05-12)
 
 ### Breaking Changes
 
