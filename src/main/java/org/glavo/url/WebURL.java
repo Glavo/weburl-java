@@ -104,21 +104,29 @@ import java.nio.file.Path;
 ///
 /// A WHATWG URL has these logical components, each with dedicated getters:
 ///
-/// | Component  | Always present? | Raw getter        | Decoded getter  | Null when absent?       |
-/// |------------|:---------------:|-------------------|-----------------|-------------------------|
-/// | scheme     | Yes             | `getScheme()`     | —               | Never                   |
-/// | username   | No              | `getRawUsername()`| `getUsername()` | Yes                     |
-/// | password   | No              | `getRawPassword()`| `getPassword()` | Yes                     |
-/// | host       | No              | `getHost()`       | —               | Yes                     |
-/// | port       | No              | `getRawPort()`    | `getPort()`     | `getRawPort()` only     |
-/// | path       | Yes             | `getRawPath()`    | `getPath()`     | Never                   |
-/// | query      | No              | `getRawQuery()`   | `getQuery()`    | Yes                     |
-/// | fragment   | No              | `getRawFragment()`| `getFragment()` | Yes                     |
+/// | Component  | Always present? | Java-style raw getter | Java-style decoded getter | Web-style getter       | Null when absent?   |
+/// |------------|:---------------:|-----------------------|---------------------------|------------------------|---------------------|
+/// | scheme     | Yes             | `getScheme()`         | —                         | `getWebProtocol()`    | Never               |
+/// | username   | No              | `getRawUsername()`    | `getUsername()`           | `getWebUsername()`    | Java-style only     |
+/// | password   | No              | `getRawPassword()`    | `getPassword()`           | `getWebPassword()`    | Java-style only     |
+/// | host       | No              | `getHost()`           | —                         | `getWebHostname()`    | Java-style only     |
+/// | host+port  | No              | `getHost()` + `getRawPort()` | —                   | `getWebHost()`        | Java-style only     |
+/// | port       | No              | `getRawPort()`        | `getPort()`               | `getWebPort()`        | `getRawPort()` only |
+/// | path       | Yes             | `getRawPath()`        | `getPath()`               | `getWebPathname()`    | Never               |
+/// | query      | No              | `getRawQuery()`       | `getQuery()`              | `getWebSearch()`      | Java-style only     |
+/// | fragment   | No              | `getRawFragment()`    | `getFragment()`           | `getWebHash()`        | Java-style only     |
 ///
 /// Getters named `Raw` return the component exactly as serialized, with percent-encoding
 /// preserved. Decoded getters (without `Raw`) decode valid percent triplets as UTF-8; invalid
 /// or incomplete triplets are left unchanged. The {@code application/x-www-form-urlencoded}
 /// rules are **never** applied — plus (`+`) remains plus.
+///
+/// Web-style getters named `getWeb...` expose the WHATWG `URL` attribute view. They return
+/// non-null serialized strings with percent-encoding preserved. They also follow web delimiter
+/// conventions: `getWebProtocol()` includes the trailing colon, `getWebSearch()` includes the
+/// leading question mark only for a non-empty query, and `getWebHash()` includes the leading
+/// number sign only for a non-empty fragment. By contrast, Java-style `getRawQuery()` and
+/// `getRawFragment()` never include their leading delimiters and return `null` when absent.
 ///
 /// The main serialization shape for a URL with a host is:
 ///
@@ -986,6 +994,125 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @return the raw fragment component, or the empty string when absent
     @Contract(pure = true)
     String getRawFragmentOrEmpty();
+
+    /// Returns the WHATWG `URL.protocol` attribute.
+    ///
+    /// This is the web-style serialized scheme view: it returns {@link #getScheme()} followed by a trailing
+    /// colon. It never percent-decodes and never returns `null`.
+    ///
+    /// @return the scheme followed by a colon
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default String getWebProtocol() {
+        return getScheme() + ":";
+    }
+
+    /// Returns the WHATWG `URL.username` attribute.
+    ///
+    /// This is the web-style serialized username view. It preserves percent-encoding and returns the empty
+    /// string when the URL has no serialized credentials.
+    ///
+    /// @return the raw username component, or the empty string when absent
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default String getWebUsername() {
+        return getRawUsernameOrEmpty();
+    }
+
+    /// Returns the WHATWG `URL.password` attribute.
+    ///
+    /// This is the web-style serialized password view. It preserves percent-encoding and returns the empty
+    /// string when the URL has no password component.
+    ///
+    /// @return the raw password component, or the empty string when absent
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default String getWebPassword() {
+        return getRawPasswordOrEmpty();
+    }
+
+    /// Returns the WHATWG `URL.host` attribute.
+    ///
+    /// This is the web-style serialized host-and-port view. It returns the serialized hostname followed by the
+    /// stored non-default port prefixed by colon when such a port exists. It returns the empty string when this
+    /// URL has no host component.
+    ///
+    /// @return the serialized hostname and stored port, or the empty string when absent
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default String getWebHost() {
+        @Nullable String host = getHost();
+        if (host == null) {
+            return "";
+        }
+
+        @Nullable String port = getRawPort();
+        return port == null ? host : host + ":" + port;
+    }
+
+    /// Returns the WHATWG `URL.hostname` attribute.
+    ///
+    /// This is the web-style serialized hostname view. It preserves the URL Standard host serialization and
+    /// returns the empty string when this URL has no host component.
+    ///
+    /// @return the serialized hostname, or the empty string when absent
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default String getWebHostname() {
+        @Nullable String host = getHost();
+        return host == null ? "" : host;
+    }
+
+    /// Returns the WHATWG `URL.port` attribute.
+    ///
+    /// This is the web-style serialized port view. It returns only a stored non-default port; absent ports and
+    /// ports removed by URL Standard default-port normalization are returned as the empty string.
+    ///
+    /// @return the raw stored port, or the empty string when absent
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default String getWebPort() {
+        @Nullable String port = getRawPort();
+        return port == null ? "" : port;
+    }
+
+    /// Returns the WHATWG `URL.pathname` attribute.
+    ///
+    /// This is the web-style serialized path view. It is equivalent to {@link #getRawPath()}, including opaque
+    /// paths for non-special URLs, and never percent-decodes.
+    ///
+    /// @return the raw path component
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default String getWebPathname() {
+        return getRawPath();
+    }
+
+    /// Returns the WHATWG `URL.search` attribute.
+    ///
+    /// This is the web-style serialized query view. It returns the empty string when the query is absent or
+    /// present but empty. Otherwise it returns the raw query prefixed by a leading question mark.
+    ///
+    /// @return the raw query prefixed by `?`, or the empty string when absent or empty
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default String getWebSearch() {
+        @Nullable String query = getRawQuery();
+        return query == null || query.isEmpty() ? "" : "?" + query;
+    }
+
+    /// Returns the WHATWG `URL.hash` attribute.
+    ///
+    /// This is the web-style serialized fragment view. It returns the empty string when the fragment is absent
+    /// or present but empty. Otherwise it returns the raw fragment prefixed by a leading number sign.
+    ///
+    /// @return the raw fragment prefixed by `#`, or the empty string when absent or empty
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default String getWebHash() {
+        @Nullable String fragment = getRawFragment();
+        return fragment == null || fragment.isEmpty() ? "" : "#" + fragment;
+    }
 
     /// Returns the serialized URL converted to RFC 2396 URI syntax.
     ///

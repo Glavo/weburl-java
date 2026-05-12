@@ -235,6 +235,51 @@ public final class WebURLTest {
         assertNull(noAuthority.getRawAuthority());
     }
 
+    /// Tests WHATWG-style serialized component getters.
+    @Test
+    public void readsWebStyleComponents() {
+        WebURL url = WebURL.parse("https://user:pass@example.com:8080/a%2Fb?x=a%26b#frag%23ment");
+
+        assertEquals("https:", url.getWebProtocol());
+        assertEquals("user", url.getWebUsername());
+        assertEquals("pass", url.getWebPassword());
+        assertEquals("example.com:8080", url.getWebHost());
+        assertEquals("example.com", url.getWebHostname());
+        assertEquals("8080", url.getWebPort());
+        assertEquals("/a%2Fb", url.getWebPathname());
+        assertEquals("?x=a%26b", url.getWebSearch());
+        assertEquals("#frag%23ment", url.getWebHash());
+
+        WebURL absentComponents = WebURL.parse("https://example.com/path");
+        assertEquals("", absentComponents.getWebUsername());
+        assertEquals("", absentComponents.getWebPassword());
+        assertEquals("example.com", absentComponents.getWebHost());
+        assertEquals("example.com", absentComponents.getWebHostname());
+        assertEquals("", absentComponents.getWebPort());
+        assertEquals("", absentComponents.getWebSearch());
+        assertEquals("", absentComponents.getWebHash());
+
+        WebURL defaultPort = WebURL.parse("https://example.com:443/");
+        assertEquals("", defaultPort.getWebPort());
+        assertEquals("example.com", defaultPort.getWebHost());
+
+        WebURL ipv6 = WebURL.parse("http://[::1]:8080/");
+        assertEquals("[::1]:8080", ipv6.getWebHost());
+        assertEquals("[::1]", ipv6.getWebHostname());
+        assertEquals("8080", ipv6.getWebPort());
+
+        WebURL opaque = WebURL.parse("mailto:a@b.com?x#h");
+        assertEquals("a@b.com", opaque.getWebPathname());
+        assertEquals("?x", opaque.getWebSearch());
+        assertEquals("#h", opaque.getWebHash());
+        assertEquals("", opaque.getWebHost());
+        assertEquals("", opaque.getWebHostname());
+        assertEquals("", opaque.getWebPort());
+
+        assertEquals("", WebURL.parse("https://example.com/path?").getWebSearch());
+        assertEquals("", WebURL.parse("https://example.com/path#").getWebHash());
+    }
+
     /// Tests Java-style decoded component getters.
     @Test
     public void readsJavaStyleDecodedComponents() {

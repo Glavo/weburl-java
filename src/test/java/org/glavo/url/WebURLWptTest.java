@@ -122,61 +122,26 @@ public final class WebURLWptTest {
             case "origin":
                 return url.origin();
             case "protocol":
-                return url.getScheme() + ":";
+                return url.getWebProtocol();
             case "username":
-                return url.getRawUsernameOrEmpty();
+                return url.getWebUsername();
             case "password":
-                return url.getRawPasswordOrEmpty();
+                return url.getWebPassword();
             case "host":
-                return host(url);
+                return url.getWebHost();
             case "hostname":
-                return hostname(url);
+                return url.getWebHostname();
             case "port":
-                return port(url);
+                return url.getWebPort();
             case "pathname":
-                return url.getRawPath();
+                return url.getWebPathname();
             case "search":
-                return search(url);
+                return url.getWebSearch();
             case "hash":
-                return hash(url);
+                return url.getWebHash();
             default:
                 throw new AssertionError("Unsupported URL field: " + fieldName);
         }
-    }
-
-    /// Returns the WHATWG host field from public URI-style URL components.
-    private static String host(WebURL url) {
-        @Nullable String host = url.getHost();
-        if (host == null) {
-            return "";
-        }
-
-        @Nullable String port = url.getRawPort();
-        return port == null ? host : host + ":" + port;
-    }
-
-    /// Returns the WHATWG hostname field from public URI-style URL components.
-    private static String hostname(WebURL url) {
-        @Nullable String host = url.getHost();
-        return host == null ? "" : host;
-    }
-
-    /// Returns the WHATWG port field from public URI-style URL components.
-    private static String port(WebURL url) {
-        @Nullable String port = url.getRawPort();
-        return port == null ? "" : port;
-    }
-
-    /// Returns the WHATWG search field from public URI-style URL components.
-    private static String search(WebURL url) {
-        @Nullable String query = url.getRawQuery();
-        return query == null || query.isEmpty() ? "" : "?" + query;
-    }
-
-    /// Returns the WHATWG hash field from public URI-style URL components.
-    private static String hash(WebURL url) {
-        @Nullable String fragment = url.getRawFragment();
-        return fragment == null || fragment.isEmpty() ? "" : "#" + fragment;
     }
 
     /// Tries to parse a URL with an optional base.

@@ -2,6 +2,12 @@
 
 ## 0.3.0 (In development)
 
+### New APIs
+
+- Added WHATWG-style `WebURL` component getters: `getWebProtocol()`, `getWebUsername()`,
+  `getWebPassword()`, `getWebHost()`, `getWebHostname()`, `getWebPort()`, `getWebPathname()`,
+  `getWebSearch()`, and `getWebHash()`.
+
 ## 0.2.0 (2026-05-12)
 
 ### Breaking Changes

@@ -228,50 +228,15 @@ public final class AdaUrlPortedTest {
         if (expected.origin() != null) {
             assertEquals(expected.origin(), url.origin(), "origin");
         }
-        assertEquals(expected.protocol(), url.getScheme() + ":", "protocol");
-        assertEquals(expected.username(), url.getRawUsernameOrEmpty(), "username");
-        assertEquals(expected.password(), url.getRawPasswordOrEmpty(), "password");
-        assertEquals(expected.host(), host(url), "host");
-        assertEquals(expected.hostname(), hostname(url), "hostname");
-        assertEquals(expected.port(), port(url), "port");
-        assertEquals(expected.pathname(), url.getRawPath(), "pathname");
-        assertEquals(expected.search(), search(url), "search");
-        assertEquals(expected.hash(), hash(url), "hash");
-    }
-
-    /// Returns the WHATWG host field from public URI-style URL components.
-    private static String host(WebURL url) {
-        @Nullable String host = url.getHost();
-        if (host == null) {
-            return "";
-        }
-
-        @Nullable String port = url.getRawPort();
-        return port == null ? host : host + ":" + port;
-    }
-
-    /// Returns the WHATWG hostname field from public URI-style URL components.
-    private static String hostname(WebURL url) {
-        @Nullable String host = url.getHost();
-        return host == null ? "" : host;
-    }
-
-    /// Returns the WHATWG port field from public URI-style URL components.
-    private static String port(WebURL url) {
-        @Nullable String port = url.getRawPort();
-        return port == null ? "" : port;
-    }
-
-    /// Returns the WHATWG search field from public URI-style URL components.
-    private static String search(WebURL url) {
-        @Nullable String query = url.getRawQuery();
-        return query == null || query.isEmpty() ? "" : "?" + query;
-    }
-
-    /// Returns the WHATWG hash field from public URI-style URL components.
-    private static String hash(WebURL url) {
-        @Nullable String fragment = url.getRawFragment();
-        return fragment == null || fragment.isEmpty() ? "" : "#" + fragment;
+        assertEquals(expected.protocol(), url.getWebProtocol(), "protocol");
+        assertEquals(expected.username(), url.getWebUsername(), "username");
+        assertEquals(expected.password(), url.getWebPassword(), "password");
+        assertEquals(expected.host(), url.getWebHost(), "host");
+        assertEquals(expected.hostname(), url.getWebHostname(), "hostname");
+        assertEquals(expected.port(), url.getWebPort(), "port");
+        assertEquals(expected.pathname(), url.getWebPathname(), "pathname");
+        assertEquals(expected.search(), url.getWebSearch(), "search");
+        assertEquals(expected.hash(), url.getWebHash(), "hash");
     }
 
     /// Creates a URL case with a protocol inferred from the expected href.

@@ -75,21 +75,10 @@ public final class WebURLToAsciiWptTest {
         }
 
         assertNotNull(url);
-        assertEquals(expected, url.getHost(), "hostname");
-        assertEquals(expected, host(url), "host");
-        assertEquals("/x", url.getRawPath(), "pathname");
+        assertEquals(expected, url.getWebHostname(), "hostname");
+        assertEquals(expected, url.getWebHost(), "host");
+        assertEquals("/x", url.getWebPathname(), "pathname");
         assertEquals("https://" + expected + "/x", url.href(), "href");
-    }
-
-    /// Returns the WHATWG host field from public URI-style URL components.
-    private static String host(WebURL url) {
-        @Nullable String host = url.getHost();
-        if (host == null) {
-            return "";
-        }
-
-        @Nullable String port = url.getRawPort();
-        return port == null ? host : host + ":" + port;
     }
 
     /// Reads a WPT JSON file as an array.
