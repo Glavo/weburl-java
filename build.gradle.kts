@@ -71,6 +71,7 @@ java {
 tasks.withType(JavaCompile::class) {
     options.encoding = "UTF-8"
     options.release.set(17)
+    options.javaModuleVersion = project.version.toString()
 }
 
 tasks.named<JavaCompile>(benchmarkSourceSet.compileJavaTaskName) {
