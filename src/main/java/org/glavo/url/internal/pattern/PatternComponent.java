@@ -62,11 +62,10 @@ final class PatternComponent {
     /// Compiles a component pattern.
     static PatternComponent compile(String input, Function<String, String> encodingCallback, PatternOptions options) {
         List<PatternPart> parts = PatternParser.parsePatternString(input, options, encodingCallback);
-        boolean hasRegExpGroups = false;
         for (PatternPart part : parts) {
             if (part.isRegExp()) {
-                hasRegExpGroups = true;
-                break;
+                throw new WebURLPatternSyntaxException(
+                        "Custom URLPattern regular expressions are not supported");
             }
         }
 
@@ -95,18 +94,23 @@ final class PatternComponent {
             if (type == Type.FULL_WILDCARD && !parts.isEmpty()) {
                 names.add(parts.get(0).name());
             }
-            return new PatternComponent(patternString, null, names, hasRegExpGroups, type, exactMatchValue);
+            return new PatternComponent(patternString, null, names, false, type, exactMatchValue);
         }
 
         PatternParser.GeneratedRegExp generated = PatternParser.generateRegularExpressionAndNameList(parts, options);
         int flags = options.ignoreCase() ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
         try {
             return new PatternComponent(patternString, Pattern.compile(generated.regexp(), flags),
-                    generated.names(), hasRegExpGroups, type, exactMatchValue);
+                    generated.names(), false, type, exactMatchValue);
         } catch (PatternSyntaxException exception) {
             throw new WebURLPatternSyntaxException("Invalid Java regular expression generated for URLPattern",
                     exception);
         }
+    }
+
+    /// Creates a literal exact-match component from an already canonicalized value.
+    static PatternComponent exact(String value) {
+        return new PatternComponent(value, null, List.of(), false, Type.EXACT_MATCH, value);
     }
 
     /// Returns the serialized pattern string.

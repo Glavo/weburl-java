@@ -40,10 +40,9 @@ import java.util.Objects;
 /// URLPattern standard attribute values; unlike [WebURL#getWebProtocol()], `getWebProtocol()` on
 /// this interface does not include a trailing colon.
 ///
-/// Java regular expressions are used as the matching backend. The implementation uses
-/// [java.util.regex.Pattern#CASE_INSENSITIVE] and [java.util.regex.Pattern#UNICODE_CASE] for
-/// `ignoreCase`; this is not a complete implementation of ECMAScript `v` or `vi` regular
-/// expression flags.
+/// Custom regular-expression groups are not supported yet because URLPattern uses ECMAScript
+/// `v` / `vi` regular-expression semantics, which are not equivalent to Java regular expressions.
+/// Pattern strings containing custom regular-expression groups are rejected during compilation.
 ///
 /// @since 0.3.0
 @NotNullByDefault
@@ -295,6 +294,9 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     boolean isIgnoreCase();
 
     /// Returns whether any component contains custom regular-expression groups.
+    ///
+    /// This currently returns `false` for every successfully compiled pattern because custom
+    /// regular-expression groups are rejected during compilation.
     @Contract(pure = true)
     boolean hasRegExpGroups();
 

@@ -172,14 +172,13 @@ WebURL next = docs.resolve("guide/");
 
 ### Matching URL Patterns
 
-`WebURLPattern` provides the core WHATWG URLPattern API with Java-style naming and Java
-regular expressions as the regex backend:
+`WebURLPattern` provides the core WHATWG URLPattern API with Java-style naming:
 
 ```java
 WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
         .setScheme("https")
         .setHost("example.com")
-        .setPath("/users/:id([0-9]+)"));
+        .setPath("/users/:id"));
 
 pattern.test("https://example.com/users/42"); // true
 
@@ -192,9 +191,9 @@ component pattern strings without URL delimiters, while URLPattern attribute get
 `getWebProtocol()` and `getWebPathname()` return WHATWG URLPattern attribute values. Unlike
 `WebURL.getWebProtocol()`, `WebURLPattern.getWebProtocol()` does not include a trailing colon.
 
-`WebURLPattern.Options` supports `ignoreCase`. The implementation uses `java.util.regex.Pattern`,
-so ECMAScript `v` / `vi` regular-expression features are not fully equivalent to browser
-URLPattern implementations.
+`WebURLPattern.Options` supports `ignoreCase`. Custom regular-expression groups are not supported yet because
+URLPattern uses ECMAScript `v` / `vi` regular-expression semantics, which are not equivalent to Java regular
+expressions. Pattern strings containing custom regular-expression groups are rejected during compilation.
 
 ### URL Components
 

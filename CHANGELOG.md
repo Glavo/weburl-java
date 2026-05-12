@@ -15,8 +15,9 @@
   `getWebSearch()`, and `getWebHash()`.
 - Added `WebURLPattern` and `WebURLPatternSyntaxException` for precompiled WHATWG URLPattern-style
   matching with component builders, shorthand string patterns, base URL handling, `test`, `exec`,
-  capture groups, `ignoreCase`, and `hasRegExpGroups()`. The regex backend uses Java
-  `java.util.regex.Pattern`, so ECMAScript `v` / `vi` regex behavior is not fully equivalent.
+  capture groups, `ignoreCase`, and `hasRegExpGroups()`. Custom regular-expression groups are not
+  supported yet because URLPattern uses ECMAScript `v` / `vi` regex behavior, which is not equivalent
+  to Java regular expressions.
   `WebURLPattern` is exposed as an interface with an internal immutable implementation, matching
   the `WebURL` API shape.
 

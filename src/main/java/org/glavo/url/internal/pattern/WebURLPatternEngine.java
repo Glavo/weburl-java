@@ -188,11 +188,11 @@ public final class WebURLPatternEngine {
                 URLPatternCanonicalizer::canonicalizeUsername, defaultOptions);
         PatternComponent password = PatternComponent.compile(require(processed.password),
                 URLPatternCanonicalizer::canonicalizePassword, defaultOptions);
-        PatternComponent hostname = isIpv6Address(require(processed.hostname))
-                ? PatternComponent.compile(require(processed.hostname),
-                URLPatternCanonicalizer::canonicalizeIpv6Hostname, defaultOptions)
-                : PatternComponent.compile(require(processed.hostname),
-                URLPatternCanonicalizer::canonicalizeHostname, PatternOptions.HOSTNAME.withIgnoreCase(ignoreCase));
+        String hostnameValue = require(processed.hostname);
+        PatternComponent hostname = isIpv6Address(hostnameValue)
+                ? PatternComponent.exact(URLPatternCanonicalizer.canonicalizeIpv6Hostname(hostnameValue))
+                : PatternComponent.compile(hostnameValue, URLPatternCanonicalizer::canonicalizeHostname,
+                PatternOptions.HOSTNAME.withIgnoreCase(ignoreCase));
         PatternComponent port = PatternComponent.compile(require(processed.port),
                 URLPatternCanonicalizer::canonicalizePort, defaultOptions);
         PatternComponent pathname = protocol.matchesSpecialScheme()
@@ -296,8 +296,11 @@ public final class WebURLPatternEngine {
         String port = require(init.port);
         if (UrlParser.isSpecialScheme(protocol)) {
             int defaultPort = UrlParser.defaultPort(protocol);
-            if (Integer.toString(defaultPort).equals(port)) {
-                init.port = "";
+            try {
+                String canonicalPort = URLPatternCanonicalizer.canonicalizePort(port);
+                init.port = Integer.toString(defaultPort).equals(canonicalPort) ? "" : canonicalPort;
+            } catch (WebURLPatternSyntaxException ignored) {
+                // Non-literal port patterns are compiled later by the component parser.
             }
         }
     }

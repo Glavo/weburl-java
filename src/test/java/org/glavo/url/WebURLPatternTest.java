@@ -93,7 +93,7 @@ public final class WebURLPatternTest {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
                 .setScheme("https")
                 .setHost("example.com")
-                .setPath("/books/:id([0-9]+)")
+                .setPath("/books/:id")
                 .setQuery("q=:term"));
 
         WebURLPattern.Result stringResult = requireMatch(
@@ -111,8 +111,6 @@ public final class WebURLPatternTest {
                 .setQuery("q=patterns")));
         assertEquals("99", componentResult.pathname().groups().get("id"));
         assertEquals("patterns", componentResult.search().groups().get("term"));
-
-        assertFalse(pattern.test("https://example.com/books/not-a-number?q=java"));
     }
 
     /// Tests default wildcard components and wildcard group `0`.
@@ -168,15 +166,21 @@ public final class WebURLPatternTest {
         assertEquals("z", result.pathname().groups().get("c"));
     }
 
-    /// Tests `hasRegExpGroups`.
+    /// Tests `hasRegExpGroups` without custom regular-expression support.
     ///
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L339-L393
     @Test
     public void reportsRegExpGroups() {
         assertFalse(WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/a/:foo/:baz?/b/*"))
                 .hasRegExpGroups());
-        assertTrue(WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/a/:foo/:baz([a-z]+)?/b/*"))
-                .hasRegExpGroups());
+    }
+
+    /// Tests that custom regular-expression groups are rejected until standard-compatible semantics are available.
+    @Test
+    public void rejectsCustomRegularExpressionGroups() {
+        assertThrows(WebURLPatternSyntaxException.class,
+                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/a/:foo/:baz([a-z]+)?/b/*")));
+        assertNull(WebURLPattern.tryCompile(WebURLPattern.newBuilder().setPath("/a/:foo/:baz([a-z]+)?/b/*")));
     }
 
     /// Tests case-insensitive matching.
@@ -206,6 +210,35 @@ public final class WebURLPatternTest {
         assertEquals("", pattern.getWebPort());
         assertTrue(pattern.test("https://example.com/"));
         assertTrue(pattern.test("https://example.com:443/"));
+    }
+
+    /// Tests URL port canonicalization in pattern components.
+    @Test
+    public void canonicalizesPortPatterns() {
+        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
+                .setScheme("https")
+                .setHost("example.com")
+                .setPort("080")
+                .setPath("/"));
+
+        assertEquals("80", pattern.getWebPort());
+        assertTrue(pattern.test("https://example.com:80/"));
+        assertThrows(WebURLPatternSyntaxException.class,
+                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPort("80x")));
+    }
+
+    /// Tests URL IPv6 host canonicalization in pattern components.
+    @Test
+    public void canonicalizesIpv6HostPatterns() {
+        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
+                .setScheme("http")
+                .setHost("[0:0:0:0:0:0:0:1]")
+                .setPath("/"));
+
+        assertEquals("[::1]", pattern.getWebHostname());
+        assertTrue(pattern.test("http://[::1]/"));
+        assertThrows(WebURLPatternSyntaxException.class,
+                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setHost("[::fffff]")));
     }
 
     /// Tests explicit empty component patterns.

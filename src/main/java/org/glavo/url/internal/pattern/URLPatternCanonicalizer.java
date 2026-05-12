@@ -83,13 +83,16 @@ final class URLPatternCanonicalizer {
 
     /// Canonicalizes an IPv6 hostname literal without full URL host parsing.
     static String canonicalizeIpv6Hostname(String input) {
-        for (int i = 0; i < input.length(); i++) {
-            char c = input.charAt(i);
-            if (c != '[' && c != ']' && c != ':' && !StringUtils.isAsciiHex(c)) {
-                throw invalidComponent("hostname");
-            }
+        try {
+            return WebURL.newBuilder()
+                    .setScheme("https")
+                    .setRawHost(input)
+                    .setRawPath("/")
+                    .build()
+                    .getWebHostname();
+        } catch (RuntimeException exception) {
+            throw new WebURLPatternSyntaxException("Invalid URLPattern hostname component", exception);
         }
-        return input.toLowerCase(Locale.ROOT);
     }
 
     /// Canonicalizes a port component without a protocol.
@@ -98,18 +101,7 @@ final class URLPatternCanonicalizer {
         if (value.isEmpty()) {
             return "";
         }
-        int digitEnd = digitPrefixEnd(value);
-        if (digitEnd == 0) {
-            throw invalidComponent("port");
-        }
-        String digits = value.substring(0, digitEnd);
-        if (digits.length() > 5 || digits.length() == 5 && digits.compareTo("65535") > 0) {
-            throw invalidComponent("port");
-        }
-        if (digits.length() > 1 && digits.charAt(0) == '0') {
-            throw invalidComponent("port");
-        }
-        return digits;
+        return Integer.toString(parsePort(value));
     }
 
     /// Canonicalizes a port component with the current protocol.
@@ -118,11 +110,7 @@ final class URLPatternCanonicalizer {
         if (value.isEmpty()) {
             return "";
         }
-        int digitEnd = digitPrefixEnd(value);
-        if (digitEnd == 0) {
-            throw invalidComponent("port");
-        }
-        int port = parsePort(value, digitEnd);
+        int port = parsePort(value);
         String scheme = protocol.endsWith(":") ? protocol.substring(0, protocol.length() - 1) : protocol;
         if (scheme.isEmpty()) {
             scheme = "fake";
@@ -229,20 +217,15 @@ final class URLPatternCanonicalizer {
         return true;
     }
 
-    /// Returns the length of the leading decimal digit run.
-    private static int digitPrefixEnd(String input) {
-        int end = 0;
-        while (end < input.length() && StringUtils.isAsciiDigit(input.charAt(end))) {
-            end++;
-        }
-        return end;
-    }
-
-    /// Parses a port prefix as a 16-bit URL port.
-    private static int parsePort(String input, int end) {
+    /// Parses a complete decimal port string as a 16-bit URL port.
+    private static int parsePort(String input) {
         int port = 0;
-        for (int i = 0; i < end; i++) {
-            port = port * 10 + (input.charAt(i) - '0');
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (!StringUtils.isAsciiDigit(c)) {
+                throw invalidComponent("port");
+            }
+            port = port * 10 + (c - '0');
             if (port > 65535) {
                 throw invalidComponent("port");
             }
