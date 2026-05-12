@@ -161,12 +161,6 @@ public final class WebURLImpl implements WebURL {
         return href.substring(IndexRanges.start(hostRange), IndexRanges.end(portRange));
     }
 
-    /// Returns the serialized URL without its fragment.
-    String hrefWithoutFragment() {
-        String href = href();
-        return IndexRanges.isAbsent(fragmentRange) ? href : href.substring(0, IndexRanges.start(fragmentRange) - 1);
-    }
-
     /// Returns whether the scheme equals the supplied lower-case ASCII value.
     boolean schemeEquals(String value) {
         return scheme.equals(value);
