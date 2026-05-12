@@ -18,10 +18,15 @@ package org.glavo.url;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /// Tests ported from `karwa/swift-url` at commit `9306a962396a50d7d88e924afcd7ec67226763db`.
 @NotNullByDefault
@@ -244,6 +249,116 @@ public final class SwiftUrlPortedTest {
     public void parsesSwiftUrlAdditionalConstructorCases(String input, @Nullable String base, String expectedHref) {
         WebURL url = base == null ? WebURL.parse(input) : WebURL.parse(input, base);
         assertEquals(expectedHref, url.href());
+    }
+
+    /// Tests Swift URL cases that are accepted by the default parser but rejected by the strict parser.
+    ///
+    /// Source:
+    /// https://github.com/karwa/swift-url/blob/9306a962396a50d7d88e924afcd7ec67226763db/Sources/WebURLTestSupport/TestFilesData/urltestdata.json#L1-L109
+    /// https://github.com/karwa/swift-url/blob/9306a962396a50d7d88e924afcd7ec67226763db/Sources/WebURLTestSupport/TestFilesData/urltestdata.json#L1227-L1239
+    /// https://github.com/karwa/swift-url/blob/9306a962396a50d7d88e924afcd7ec67226763db/Sources/WebURLTestSupport/TestFilesData/urltestdata.json#L1484-L1510
+    /// https://github.com/karwa/swift-url/blob/9306a962396a50d7d88e924afcd7ec67226763db/Sources/WebURLTestSupport/TestFilesData/urltestdata.json#L2186-L2198
+    /// https://github.com/karwa/swift-url/blob/9306a962396a50d7d88e924afcd7ec67226763db/Sources/WebURLTestSupport/TestFilesData/urltestdata.json#L2417-L2429
+    /// https://github.com/karwa/swift-url/blob/9306a962396a50d7d88e924afcd7ec67226763db/Sources/WebURLTestSupport/TestFilesData/urltestdata.json#L6620-L6687
+    @ParameterizedTest
+    @MethodSource("swiftUrlStrictRecoverableCases")
+    public void rejectsSwiftUrlRecoverableValidationErrorsInStrictMode(
+            String input,
+            @Nullable String base,
+            String expectedHref,
+            WebURLParseException.ErrorType expectedErrorType
+    ) {
+        WebURL defaultUrl = parseDefault(input, base);
+        assertEquals(expectedHref, defaultUrl.href());
+
+        WebURLParser strict = WebURLParser.getStrict();
+        assertNull(parseStrictNullable(strict, input, base));
+
+        WebURLParseException exception = assertThrows(WebURLParseException.class,
+                () -> parseStrict(strict, input, base));
+        assertEquals(expectedErrorType, exception.getErrorType());
+        assertEquals(input, exception.getInput());
+    }
+
+    /// Returns Swift URL cases that exercise strict parser rejection of recoverable validation errors.
+    private static Stream<Arguments> swiftUrlStrictRecoverableCases() {
+        return Stream.of(
+                Arguments.of(
+                        "http://example\t.\norg",
+                        "http://example.org/foo/bar",
+                        "http://example.org/",
+                        WebURLParseException.ErrorType.INVALID_URL_UNIT
+                ),
+                Arguments.of(
+                        "https://test:@test",
+                        null,
+                        "https://test@test/",
+                        WebURLParseException.ErrorType.INVALID_CREDENTIALS
+                ),
+                Arguments.of(
+                        "non-special://test:@test/x",
+                        null,
+                        "non-special://test@test/x",
+                        WebURLParseException.ErrorType.INVALID_CREDENTIALS
+                ),
+                Arguments.of(
+                        "http:foo.com",
+                        "http://example.org/foo/bar",
+                        "http://example.org/foo/foo.com",
+                        WebURLParseException.ErrorType.SPECIAL_SCHEME_MISSING_FOLLOWING_SOLIDUS
+                ),
+                Arguments.of(
+                        "https:example.com/",
+                        null,
+                        "https://example.com/",
+                        WebURLParseException.ErrorType.SPECIAL_SCHEME_MISSING_FOLLOWING_SOLIDUS
+                ),
+                Arguments.of(
+                        "file:c:\\foo\\bar.html",
+                        null,
+                        "file:///c:/foo/bar.html",
+                        WebURLParseException.ErrorType.SPECIAL_SCHEME_MISSING_FOLLOWING_SOLIDUS
+                ),
+                Arguments.of(
+                        "http://example.com\\\\foo\\\\bar",
+                        null,
+                        "http://example.com//foo//bar",
+                        WebURLParseException.ErrorType.INVALID_REVERSE_SOLIDUS
+                ),
+                Arguments.of(
+                        "http:\\\\www.google.com\\foo",
+                        null,
+                        "http://www.google.com/foo",
+                        WebURLParseException.ErrorType.SPECIAL_SCHEME_MISSING_FOLLOWING_SOLIDUS
+                ),
+                Arguments.of(
+                        "file://C:/",
+                        null,
+                        "file:///C:/",
+                        WebURLParseException.ErrorType.FILE_INVALID_WINDOWS_DRIVE_LETTER_HOST
+                ),
+                Arguments.of(
+                        "file://C|/",
+                        null,
+                        "file:///C:/",
+                        WebURLParseException.ErrorType.FILE_INVALID_WINDOWS_DRIVE_LETTER_HOST
+                )
+        );
+    }
+
+    /// Parses an input with the default parser.
+    private static WebURL parseDefault(String input, @Nullable String base) {
+        return base == null ? WebURL.parse(input) : WebURL.parse(input, base);
+    }
+
+    /// Parses an input with a strict parser.
+    private static WebURL parseStrict(WebURLParser strict, String input, @Nullable String base) {
+        return base == null ? strict.parse(input) : strict.parse(input, base);
+    }
+
+    /// Parses an input with a strict parser, returning `null` on failure.
+    private static @Nullable WebURL parseStrictNullable(WebURLParser strict, String input, @Nullable String base) {
+        return base == null ? strict.tryParse(input) : strict.tryParse(input, base);
     }
 
     /// Returns the host, or the empty string when absent.
