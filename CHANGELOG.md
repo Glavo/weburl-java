@@ -14,6 +14,8 @@
   The static `WebURL.toURI(String)` helper reports the same conversion failure as `IllegalArgumentException`,
   not `IllegalStateException`, while `WebURL.toURL()` continues to throw `MalformedURLException` for URI
   conversion and URL handler failures.
+- `WebURL.toURL(String)` now reports URL parsing failures as `MalformedURLException`, preserving the
+  `WebURLParseException` as the cause.
 
 ### New APIs
 

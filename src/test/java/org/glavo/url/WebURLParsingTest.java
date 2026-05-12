@@ -134,6 +134,9 @@ public final class WebURLParsingTest {
                 WebURL.parseBrowserInputToURL("127.0.0.1:8080").toExternalForm());
 
         assertThrows(WebURLParseException.class, () -> WebURL.parseBrowserInputToURI("not a url"));
+        MalformedURLException parseException =
+                assertThrows(MalformedURLException.class, () -> WebURL.parseBrowserInputToURL("not a url"));
+        assertTrue(parseException.getCause() instanceof WebURLParseException);
 
         IllegalArgumentException uriException =
                 assertThrows(IllegalArgumentException.class, () -> WebURL.parseBrowserInputToURI("non-special:"));

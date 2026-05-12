@@ -425,18 +425,24 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
 
     /// Parses an absolute URL string and returns it as a Java `URL`.
     ///
-    /// This is a convenience method equivalent to `WebURL.parse(input).toURL()`. Java {@link URL} supports only
-    /// schemes for which the runtime has a URL stream handler, so some valid WHATWG URLs cannot be represented
-    /// as a Java `URL`.
+    /// The input is processed as a WHATWG URL first, then converted to Java's `URL` type. Java {@link URL}
+    /// supports only schemes for which the runtime has a URL stream handler, so some valid WHATWG URLs cannot
+    /// be represented as a Java `URL`. Parse failures are wrapped in `MalformedURLException` so callers using
+    /// this URL helper can handle parsing, URI conversion, and URL handler failures through one checked
+    /// exception type.
     ///
     /// @param input the URL input string
     /// @return a Java `URL` representing the parsed URL
-    /// @throws WebURLParseException  when the input is not a valid absolute URL
-    /// @throws MalformedURLException when the parsed URL has no RFC 2396 representation accepted by Java `URI`,
-    ///                               or when Java has no URL handler for the scheme or rejects the URL
+    /// @throws MalformedURLException when the input is not a valid absolute URL, when the parsed URL has no
+    ///                               RFC 2396 representation accepted by Java `URI`, or when Java has no URL
+    ///                               handler for the scheme or rejects the URL
     @Contract(pure = true)
     static URL toURL(String input) throws MalformedURLException {
-        return parse(input).toURL();
+        try {
+            return parse(input).toURL();
+        } catch (WebURLParseException exception) {
+            throw malformedURL(exception);
+        }
     }
 
     /// Parses an absolute input string and returns the parsed URL.
@@ -600,17 +606,33 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// This method has the same user-input contract as {@link #parseBrowserInput(String)}. The accepted input is
     /// processed with browser-style heuristics first, then converted to Java's `URL` type. Java {@link URL}
     /// supports only schemes for which the runtime has a URL stream handler, so some valid browser-style URL
-    /// inputs cannot be represented as a Java `URL`.
+    /// inputs cannot be represented as a Java `URL`. Parse failures are wrapped in `MalformedURLException` so
+    /// callers using this URL helper can handle parsing, URI conversion, and URL handler failures through one
+    /// checked exception type.
     ///
     /// @param input the browser-style URL input string
     /// @return a Java `URL` representing the parsed URL
-    /// @throws WebURLParseException  when the input is not accepted as a browser-style URL input
-    /// @throws MalformedURLException when the parsed URL has no RFC 2396 representation accepted by Java `URI`,
-    ///                               or when Java has no URL handler for the scheme or rejects the URL
+    /// @throws MalformedURLException when the input is not accepted as a browser-style URL input, when the
+    ///                               parsed URL has no RFC 2396 representation accepted by Java `URI`, or when
+    ///                               Java has no URL handler for the scheme or rejects the URL
     /// @since 0.2.0
     @Contract(pure = true)
     static URL parseBrowserInputToURL(String input) throws MalformedURLException {
-        return parseBrowserInput(input).toURL();
+        try {
+            return parseBrowserInput(input).toURL();
+        } catch (WebURLParseException exception) {
+            throw malformedURL(exception);
+        }
+    }
+
+    /// Creates a Java `URL` failure that preserves the underlying parsing exception.
+    ///
+    /// @param exception the parsing exception to preserve
+    /// @return a malformed URL exception with `exception` as its cause
+    private static MalformedURLException malformedURL(WebURLParseException exception) {
+        MalformedURLException malformed = new MalformedURLException(exception.getMessage());
+        malformed.initCause(exception);
+        return malformed;
     }
 
     /// Parses a user-entered browser-style URL input and returns `null` on failure.
