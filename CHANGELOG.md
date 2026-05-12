@@ -14,6 +14,8 @@
 ### New APIs
 
 - `WebURL.resolve(String)` — resolves an absolute or relative URL string against this URL.
+- `WebURL.newBuilder()` and `WebURL.newBuilder(WebURL)` — create mutable `WebURL.Builder` instances for
+  constructing URLs from components or copying and modifying an existing URL.
 - `WebURL.getRawPort()` — returns the port component as written, or `null` if absent.
 - `WebURLParser` — a reusable parser interface with two built-in instances:
   - `WebURLParser.getDefault()` — lenient parser that accepts recoverable validation errors (previous behavior).
@@ -22,6 +24,11 @@
   error name, a human-readable reason, and a flag indicating whether the error is recoverable.
 - `WebURLParseException` now records the input string, a reason, and the character index of the error,
   similar to `java.net.URISyntaxException`.
+
+### Bug Fixes
+
+- Fixed fast-path parsing of URLs with empty password markers such as `https://user:@example.com/`, ensuring
+  they normalize consistently with the full WHATWG parser and remain stable when copied through `WebURL.Builder`.
 
 ### Improvements
 
