@@ -2,6 +2,7 @@
 
 [![](https://img.shields.io/maven-central/v/org.glavo/weburl?label=Maven%20Central)](https://search.maven.org/artifact/org.glavo/weburl)
 [![codecov](https://codecov.io/gh/Glavo/weburl-java/graph/badge.svg?token=YH1WL9LMVO)](https://codecov.io/gh/Glavo/weburl-java)
+![Java](https://img.shields.io/badge/Java-17%2B-blue)
 
 **WebURL for Java** is a modern URL library for Java that implements the
 [WHATWG URL Standard](https://url.spec.whatwg.org/) — the same specification followed by every
