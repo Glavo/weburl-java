@@ -116,32 +116,20 @@ public final class WebURLWptTest {
 
     /// Returns one public URL field value.
     private static String urlField(WebURL url, String fieldName) {
-        switch (fieldName) {
-            case "href":
-                return url.href();
-            case "origin":
-                return url.origin();
-            case "protocol":
-                return url.getWebProtocol();
-            case "username":
-                return url.getWebUsername();
-            case "password":
-                return url.getWebPassword();
-            case "host":
-                return url.getWebHost();
-            case "hostname":
-                return url.getWebHostname();
-            case "port":
-                return url.getWebPort();
-            case "pathname":
-                return url.getWebPathname();
-            case "search":
-                return url.getWebSearch();
-            case "hash":
-                return url.getWebHash();
-            default:
-                throw new AssertionError("Unsupported URL field: " + fieldName);
-        }
+        return switch (fieldName) {
+            case "href" -> url.href();
+            case "origin" -> url.origin();
+            case "protocol" -> url.getWebProtocol();
+            case "username" -> url.getWebUsername();
+            case "password" -> url.getWebPassword();
+            case "host" -> url.getWebHost();
+            case "hostname" -> url.getWebHostname();
+            case "port" -> url.getWebPort();
+            case "pathname" -> url.getWebPathname();
+            case "search" -> url.getWebSearch();
+            case "hash" -> url.getWebHash();
+            default -> throw new AssertionError("Unsupported URL field: " + fieldName);
+        };
     }
 
     /// Tries to parse a URL with an optional base.
