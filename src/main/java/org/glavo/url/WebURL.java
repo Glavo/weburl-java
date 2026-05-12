@@ -573,6 +573,46 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         return WebURLParser.getDefault().parseBrowserInput(input);
     }
 
+    /// Parses a user-entered browser-style URL input and returns it as a Java `URI`.
+    ///
+    /// This method has the same user-input contract as {@link #parseBrowserInput(String)}. The accepted input is
+    /// processed with browser-style heuristics first, then converted to Java's RFC 2396-oriented `URI` syntax.
+    /// URI construction failures are wrapped in `IllegalArgumentException` so this static string helper follows
+    /// the same unchecked conversion style as {@link #toURI(String)}.
+    ///
+    /// @param input the browser-style URL input string
+    /// @return a Java `URI` representing the parsed URL
+    /// @throws WebURLParseException     when the input is not accepted as a browser-style URL input
+    /// @throws IllegalArgumentException when the parsed URL has no RFC 2396 representation accepted by Java
+    ///                                  `URI`
+    /// @since 0.2.0
+    @Contract(pure = true)
+    static URI parseBrowserInputToURI(String input) {
+        try {
+            return parseBrowserInput(input).toURI();
+        } catch (URISyntaxException exception) {
+            throw new IllegalArgumentException(exception.getMessage(), exception);
+        }
+    }
+
+    /// Parses a user-entered browser-style URL input and returns it as a Java `URL`.
+    ///
+    /// This method has the same user-input contract as {@link #parseBrowserInput(String)}. The accepted input is
+    /// processed with browser-style heuristics first, then converted to Java's `URL` type. Java {@link URL}
+    /// supports only schemes for which the runtime has a URL stream handler, so some valid browser-style URL
+    /// inputs cannot be represented as a Java `URL`.
+    ///
+    /// @param input the browser-style URL input string
+    /// @return a Java `URL` representing the parsed URL
+    /// @throws WebURLParseException  when the input is not accepted as a browser-style URL input
+    /// @throws MalformedURLException when the parsed URL has no RFC 2396 representation accepted by Java `URI`,
+    ///                               or when Java has no URL handler for the scheme or rejects the URL
+    /// @since 0.2.0
+    @Contract(pure = true)
+    static URL parseBrowserInputToURL(String input) throws MalformedURLException {
+        return parseBrowserInput(input).toURL();
+    }
+
     /// Parses a user-entered browser-style URL input and returns `null` on failure.
     ///
     /// This method is intended only for handling interactive text entered by a user. Like

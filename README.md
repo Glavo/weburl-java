@@ -262,6 +262,10 @@ WebURL.parseBrowserInput("127.0.0.1:8080").href();  // "http://127.0.0.1:8080/"
 // Local file paths — file:// URLs
 WebURL.parseBrowserInput("/tmp/a b#c").href();
 // -> "file:///tmp/a%20b%23c"
+
+// Browser input directly to java.net.URI / java.net.URL
+URI uri = WebURL.parseBrowserInputToURI("example.com/a b");
+URL javaUrl = WebURL.parseBrowserInputToURL("127.0.0.1:8080");
 ```
 
 `parseBrowserInput()` is not part of the WHATWG URL Standard — its heuristics may change across versions

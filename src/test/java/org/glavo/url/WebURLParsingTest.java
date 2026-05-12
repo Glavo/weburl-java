@@ -20,6 +20,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Tests for `WebURL` parsing entry points.
 @NotNullByDefault
@@ -119,6 +123,26 @@ public final class WebURLParsingTest {
         assertEquals(WebURLParseException.ErrorType.IPV4_NON_DECIMAL_PART,
                 assertThrows(WebURLParseException.class,
                         () -> WebURLParser.getStrict().parse("http://0x7f.0.0.1/")).getErrorType());
+    }
+
+    /// Tests browser-style URL input conversion to Java networking types.
+    @Test
+    public void convertsBrowserInputToJavaNetTypes() throws Exception {
+        assertEquals(new URI("https://example.com/a%20b"),
+                WebURL.parseBrowserInputToURI("example.com/a b"));
+        assertEquals("http://127.0.0.1:8080/",
+                WebURL.parseBrowserInputToURL("127.0.0.1:8080").toExternalForm());
+
+        assertThrows(WebURLParseException.class, () -> WebURL.parseBrowserInputToURI("not a url"));
+
+        IllegalArgumentException uriException =
+                assertThrows(IllegalArgumentException.class, () -> WebURL.parseBrowserInputToURI("non-special:"));
+        assertTrue(uriException.getCause() instanceof URISyntaxException);
+
+        MalformedURLException urlException =
+                assertThrows(MalformedURLException.class, () -> WebURL.parseBrowserInputToURL("non-special:"));
+        assertTrue(urlException.getCause() instanceof URISyntaxException);
+        assertThrows(MalformedURLException.class, () -> WebURL.parseBrowserInputToURL("non-special:opaque"));
     }
 
     /// Tests that browser input leaves complete absolute URL strings to standard URL parsing.

@@ -21,6 +21,8 @@
 - `WebURL.newBuilder()` and `WebURL.newBuilder(WebURL)` — create mutable `WebURL.Builder` instances for
   constructing URLs from components or copying and modifying an existing URL.
 - `WebURL.getRawPort()` — returns the port component as written, or `null` if absent.
+- `WebURL.parseBrowserInputToURI(String)` and `WebURL.parseBrowserInputToURL(String)` — parse browser-style
+  user input and convert the result directly to Java networking types.
 - `WebURLParser` — a reusable parser interface with two built-in instances:
   - `WebURLParser.getDefault()` — lenient parser that accepts recoverable validation errors (previous behavior).
   - `WebURLParser.getStrict()` — strict parser that rejects recoverable validation errors.
