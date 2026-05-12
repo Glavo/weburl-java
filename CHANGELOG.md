@@ -11,7 +11,9 @@
   `WebURLParseException.getErrorType()` with the new `ErrorType` enum constants instead.
 - Renamed `WebURLParseException.errorName()` to `getErrorName()`.
 - `WebURL.toURI()` now throws `URISyntaxException` when the URL has no Java `URI` representation.
-  `WebURL.toURL()` continues to throw `MalformedURLException` for URI conversion and URL handler failures.
+  The static `WebURL.toURI(String)` helper reports the same conversion failure as `IllegalArgumentException`,
+  not `IllegalStateException`, while `WebURL.toURL()` continues to throw `MalformedURLException` for URI
+  conversion and URL handler failures.
 
 ### New APIs
 
