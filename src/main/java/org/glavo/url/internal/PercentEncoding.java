@@ -194,12 +194,6 @@ final class PercentEncoding {
                 || value == '|';
     }
 
-    /// Percent-encodes a query string using the special or non-special query encode set.
-    static String percentEncodeQuery(String input, boolean special) {
-        return utf8PercentEncodeString(input,
-                special ? PercentEncoding::isSpecialQueryPercentEncode : PercentEncoding::isQueryPercentEncode);
-    }
-
     /// Returns whether the character starts an invalid percent triplet at the given UTF-16 index.
     static boolean startsInvalidPercentTriplet(String input, int pointer) {
         return input.charAt(pointer) == '%'
