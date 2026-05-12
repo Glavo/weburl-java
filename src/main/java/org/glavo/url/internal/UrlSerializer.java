@@ -153,6 +153,7 @@ final class UrlSerializer {
         }
 
         int fragmentStartValue = -1;
+        int fragmentEndValue = -1;
         if (record.fragment != null) {
             if (missingChar(input, index, '#')) {
                 return null;
@@ -163,14 +164,21 @@ final class UrlSerializer {
                 return null;
             }
             index += record.fragment.length();
+            fragmentEndValue = index;
         }
         if (index != input.length()) {
             return null;
         }
 
-        return new WebURLImpl(record, input, schemeEndValue, usernameStartValue, usernameEndValue,
-                passwordStartValue, passwordEndValue, hostStartValue, hostEndValue, portStartValue, portEndValue,
-                pathStartValue, pathEndValue, queryStartValue, queryEndValue, fragmentStartValue, pathPrefixValue);
+        return new WebURLImpl(record, input, schemeEndValue,
+                IndexRanges.ofUnchecked(usernameStartValue, usernameEndValue),
+                IndexRanges.ofUnchecked(passwordStartValue, passwordEndValue),
+                IndexRanges.ofUnchecked(hostStartValue, hostEndValue),
+                IndexRanges.ofUnchecked(portStartValue, portEndValue),
+                IndexRanges.ofUnchecked(pathStartValue, pathEndValue),
+                IndexRanges.ofUnchecked(queryStartValue, queryEndValue),
+                IndexRanges.ofUnchecked(fragmentStartValue, fragmentEndValue),
+                pathPrefixValue);
     }
 
     /// Serializes a URL record and stores component indexes into the serialized string.
@@ -241,15 +249,23 @@ final class UrlSerializer {
         }
 
         int fragmentStartValue = -1;
+        int fragmentEndValue = -1;
         if (record.fragment != null) {
             output.append('#');
             fragmentStartValue = output.length();
             output.append(record.fragment);
+            fragmentEndValue = output.length();
         }
 
-        return new WebURLImpl(record, output.toString(), schemeEndValue, usernameStartValue, usernameEndValue,
-                passwordStartValue, passwordEndValue, hostStartValue, hostEndValue, portStartValue, portEndValue,
-                pathStartValue, pathEndValue, queryStartValue, queryEndValue, fragmentStartValue, pathPrefixValue);
+        return new WebURLImpl(record, output.toString(), schemeEndValue,
+                IndexRanges.ofUnchecked(usernameStartValue, usernameEndValue),
+                IndexRanges.ofUnchecked(passwordStartValue, passwordEndValue),
+                IndexRanges.ofUnchecked(hostStartValue, hostEndValue),
+                IndexRanges.ofUnchecked(portStartValue, portEndValue),
+                IndexRanges.ofUnchecked(pathStartValue, pathEndValue),
+                IndexRanges.ofUnchecked(queryStartValue, queryEndValue),
+                IndexRanges.ofUnchecked(fragmentStartValue, fragmentEndValue),
+                pathPrefixValue);
     }
 
     /// Returns whether a character is absent or differs from the expected value.

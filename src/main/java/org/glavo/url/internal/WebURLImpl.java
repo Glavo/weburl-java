@@ -58,32 +58,20 @@ public final class WebURLImpl implements WebURL {
     private final String href;
     /// Index of the colon after the scheme.
     private final int schemeEnd;
-    /// Start index of the username, or `-1` when credentials are absent.
-    private final int usernameStart;
-    /// End index of the username, or `-1` when credentials are absent.
-    private final int usernameEnd;
-    /// Start index of the password, or `-1` when absent.
-    private final int passwordStart;
-    /// End index of the password, or `-1` when absent.
-    private final int passwordEnd;
-    /// Start index of the host, or `-1` when absent.
-    private final int hostStart;
-    /// End index of the host, or `-1` when absent.
-    private final int hostEnd;
-    /// Start index of the port, or `-1` when absent.
-    private final int portStart;
-    /// End index of the port, or `-1` when absent.
-    private final int portEnd;
-    /// Start index of the logical path.
-    private final int pathStart;
-    /// End index of the logical path.
-    private final int pathEnd;
-    /// Start index of the query, or `-1` when absent.
-    private final int queryStart;
-    /// End index of the query, or `-1` when absent.
-    private final int queryEnd;
-    /// Start index of the fragment, or `-1` when absent.
-    private final int fragmentStart;
+    /// Range of the username in `href`, or `IndexRanges.ABSENT` when credentials are absent.
+    private final @IndexRange("href") long usernameRange;
+    /// Range of the password in `href`, or `IndexRanges.ABSENT` when absent.
+    private final @IndexRange("href") long passwordRange;
+    /// Range of the host in `href`, or `IndexRanges.ABSENT` when absent.
+    private final @IndexRange("href") long hostRange;
+    /// Range of the port in `href`, or `IndexRanges.ABSENT` when absent.
+    private final @IndexRange("href") long portRange;
+    /// Range of the logical path in `href`.
+    private final @IndexRange("href") long pathRange;
+    /// Range of the query in `href`, or `IndexRanges.ABSENT` when absent.
+    private final @IndexRange("href") long queryRange;
+    /// Range of the fragment in `href`, or `IndexRanges.ABSENT` when absent.
+    private final @IndexRange("href") long fragmentRange;
     /// Whether href contains the extra `/.` prefix before the logical path.
     private final boolean pathPrefix;
     /// Cached origin string, or `null` until requested.
@@ -128,19 +116,13 @@ public final class WebURLImpl implements WebURL {
             UrlRecord record,
             String href,
             int schemeEnd,
-            int usernameStart,
-            int usernameEnd,
-            int passwordStart,
-            int passwordEnd,
-            int hostStart,
-            int hostEnd,
-            int portStart,
-            int portEnd,
-            int pathStart,
-            int pathEnd,
-            int queryStart,
-            int queryEnd,
-            int fragmentStart,
+            @IndexRange("href") long usernameRange,
+            @IndexRange("href") long passwordRange,
+            @IndexRange("href") long hostRange,
+            @IndexRange("href") long portRange,
+            @IndexRange("href") long pathRange,
+            @IndexRange("href") long queryRange,
+            @IndexRange("href") long fragmentRange,
             boolean pathPrefix
     ) {
         this.scheme = record.scheme;
@@ -152,19 +134,13 @@ public final class WebURLImpl implements WebURL {
         this.rawFragmentValue = record.fragment;
         this.href = href;
         this.schemeEnd = schemeEnd;
-        this.usernameStart = usernameStart;
-        this.usernameEnd = usernameEnd;
-        this.passwordStart = passwordStart;
-        this.passwordEnd = passwordEnd;
-        this.hostStart = hostStart;
-        this.hostEnd = hostEnd;
-        this.portStart = portStart;
-        this.portEnd = portEnd;
-        this.pathStart = pathStart;
-        this.pathEnd = pathEnd;
-        this.queryStart = queryStart;
-        this.queryEnd = queryEnd;
-        this.fragmentStart = fragmentStart;
+        this.usernameRange = usernameRange;
+        this.passwordRange = passwordRange;
+        this.hostRange = hostRange;
+        this.portRange = portRange;
+        this.pathRange = pathRange;
+        this.queryRange = queryRange;
+        this.fragmentRange = fragmentRange;
         this.pathPrefix = pathPrefix;
         if (record.host instanceof UrlHost.Domain domain) {
             this.host = domain.value();
@@ -186,18 +162,18 @@ public final class WebURLImpl implements WebURL {
     /// Returns the serialized host plus port when a port is present.
     private String hostAndPort() {
         String href = href();
-        if (hostStart < 0) {
+        if (IndexRanges.isAbsent(hostRange)) {
             return "";
         }
-        return portStart < 0
-                ? href.substring(hostStart, hostEnd)
-                : href.substring(hostStart, portEnd);
+        return IndexRanges.isAbsent(portRange)
+                ? IndexRanges.substring(href, hostRange)
+                : href.substring(IndexRanges.start(hostRange), IndexRanges.end(portRange));
     }
 
     /// Returns the serialized URL without its fragment.
     String hrefWithoutFragment() {
         String href = href();
-        return fragmentStart < 0 ? href : href.substring(0, fragmentStart - 1);
+        return IndexRanges.isAbsent(fragmentRange) ? href : href.substring(0, IndexRanges.start(fragmentRange) - 1);
     }
 
     /// Returns whether the scheme equals the supplied lower-case ASCII value.
@@ -265,12 +241,12 @@ public final class WebURLImpl implements WebURL {
         }
 
         String href = href();
-        @Nullable String displayUsername = displayDecode(href, usernameStart, usernameEnd);
-        @Nullable String displayPassword = displayDecode(href, passwordStart, passwordEnd);
+        @Nullable String displayUsername = displayDecode(href, usernameRange);
+        @Nullable String displayPassword = displayDecode(href, passwordRange);
         @Nullable String displayHost = urlHost == null ? null : urlHost.displayString();
-        @Nullable String displayPath = displayDecode(href, pathStart, pathEnd);
-        @Nullable String displayQuery = displayDecode(href, queryStart, queryEnd);
-        @Nullable String displayFragment = displayDecode(href, fragmentStart, href.length());
+        @Nullable String displayPath = displayDecode(href, pathRange);
+        @Nullable String displayQuery = displayDecode(href, queryRange);
+        @Nullable String displayFragment = displayDecode(href, fragmentRange);
 
         if (displayUsername == null
                 && displayPassword == null
@@ -286,35 +262,35 @@ public final class WebURLImpl implements WebURL {
         output.append(href, 0, schemeEnd + 1);
 
         if (hasOpaquePath()) {
-            appendDisplayComponent(output, href, pathStart, pathEnd, displayPath);
+            appendDisplayComponent(output, href, pathRange, displayPath);
         } else {
             if (hasHost()) {
                 output.append("//");
-                if (usernameStart >= 0) {
-                    appendDisplayComponent(output, href, usernameStart, usernameEnd, displayUsername);
-                    if (passwordStart >= 0) {
+                if (IndexRanges.isPresent(usernameRange)) {
+                    appendDisplayComponent(output, href, usernameRange, displayUsername);
+                    if (IndexRanges.isPresent(passwordRange)) {
                         output.append(':');
-                        appendDisplayComponent(output, href, passwordStart, passwordEnd, displayPassword);
+                        appendDisplayComponent(output, href, passwordRange, displayPassword);
                     }
                     output.append('@');
                 }
-                appendDisplayComponent(output, href, hostStart, hostEnd, displayHost);
-                if (portStart >= 0) {
-                    output.append(':').append(href, portStart, portEnd);
+                appendDisplayComponent(output, href, hostRange, displayHost);
+                if (IndexRanges.isPresent(portRange)) {
+                    output.append(':').append(href, IndexRanges.start(portRange), IndexRanges.end(portRange));
                 }
             } else if (pathPrefix) {
                 output.append("/.");
             }
-            appendDisplayComponent(output, href, pathStart, pathEnd, displayPath);
+            appendDisplayComponent(output, href, pathRange, displayPath);
         }
 
-        if (queryStart >= 0) {
+        if (IndexRanges.isPresent(queryRange)) {
             output.append('?');
-            appendDisplayComponent(output, href, queryStart, queryEnd, displayQuery);
+            appendDisplayComponent(output, href, queryRange, displayQuery);
         }
-        if (fragmentStart >= 0) {
+        if (IndexRanges.isPresent(fragmentRange)) {
             output.append('#');
-            appendDisplayComponent(output, href, fragmentStart, href.length(), displayFragment);
+            appendDisplayComponent(output, href, fragmentRange, displayFragment);
         }
 
         String value = output.toString();
@@ -388,7 +364,7 @@ public final class WebURLImpl implements WebURL {
         @Nullable String value = rawUsername;
         if (value == null) {
             String href = href();
-            value = usernameStart < 0 ? "" : href.substring(usernameStart, usernameEnd);
+            value = IndexRanges.isAbsent(usernameRange) ? "" : IndexRanges.substring(href, usernameRange);
             rawUsername = value;
         }
         return value;
@@ -397,7 +373,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw username, or `null` when absent.
     @Override
     public @Nullable String getRawUsername() {
-        return usernameStart < 0 ? null : getRawUsernameOrEmpty();
+        return IndexRanges.isAbsent(usernameRange) ? null : getRawUsernameOrEmpty();
     }
 
     /// Returns the decoded password, or `null` when absent.
@@ -422,7 +398,7 @@ public final class WebURLImpl implements WebURL {
         @Nullable String value = rawPassword;
         if (value == null) {
             String href = href();
-            value = passwordStart < 0 ? "" : href.substring(passwordStart, passwordEnd);
+            value = IndexRanges.isAbsent(passwordRange) ? "" : IndexRanges.substring(href, passwordRange);
             rawPassword = value;
         }
         return value;
@@ -431,7 +407,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw password, or `null` when absent.
     @Override
     public @Nullable String getRawPassword() {
-        return passwordStart < 0 ? null : getRawPasswordOrEmpty();
+        return IndexRanges.isAbsent(passwordRange) ? null : getRawPasswordOrEmpty();
     }
 
     /// Returns the decoded user-info, or `null` when absent.
@@ -453,13 +429,13 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw user-info, or `null` when absent.
     @Override
     public @Nullable String getRawUserInfo() {
-        if (usernameStart < 0) {
+        if (IndexRanges.isAbsent(usernameRange)) {
             return null;
         }
 
         @Nullable String value = rawUserInfo;
         if (value == null) {
-            value = href().substring(usernameStart, hostStart - 1);
+            value = href().substring(IndexRanges.start(usernameRange), IndexRanges.start(hostRange) - 1);
             rawUserInfo = value;
         }
         return value;
@@ -484,13 +460,14 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw authority, or `null` when absent.
     @Override
     public @Nullable String getRawAuthority() {
-        if (hostStart < 0) {
+        if (IndexRanges.isAbsent(hostRange)) {
             return null;
         }
 
         @Nullable String value = rawAuthority;
         if (value == null) {
-            value = href().substring(schemeEnd + 3, portStart < 0 ? hostEnd : portEnd);
+            value = href().substring(schemeEnd + 3,
+                    IndexRanges.isAbsent(portRange) ? IndexRanges.end(hostRange) : IndexRanges.end(portRange));
             rawAuthority = value;
         }
         return value;
@@ -499,13 +476,13 @@ public final class WebURLImpl implements WebURL {
     /// Returns the host, or `null` when absent.
     @Override
     public @Nullable String getHost() {
-        if (hostStart < 0) {
+        if (IndexRanges.isAbsent(hostRange)) {
             return null;
         }
 
         @Nullable String value = host;
         if (value == null) {
-            value = href().substring(hostStart, hostEnd);
+            value = IndexRanges.substring(href(), hostRange);
             host = value;
         }
         return value;
@@ -520,13 +497,13 @@ public final class WebURLImpl implements WebURL {
     /// Returns the raw port, or `null` when absent.
     @Override
     public @Nullable String getRawPort() {
-        if (portStart < 0) {
+        if (IndexRanges.isAbsent(portRange)) {
             return null;
         }
 
         @Nullable String value = rawPort;
         if (value == null) {
-            value = href().substring(portStart, portEnd);
+            value = IndexRanges.substring(href(), portRange);
             rawPort = value;
         }
         return value;
@@ -548,7 +525,7 @@ public final class WebURLImpl implements WebURL {
     public String getRawPath() {
         @Nullable String value = rawPath;
         if (value == null) {
-            value = href().substring(pathStart, pathEnd);
+            value = IndexRanges.substring(href(), pathRange);
             rawPath = value;
         }
         return value;
@@ -715,23 +692,24 @@ public final class WebURLImpl implements WebURL {
     private static void appendDisplayComponent(
             StringBuilder output,
             String value,
-            int start,
-            int end,
+            @IndexRange("value") long range,
             @Nullable String displayValue
     ) {
         if (displayValue == null) {
-            output.append(value, start, end);
+            output.append(value, IndexRanges.start(range), IndexRanges.end(range));
         } else {
             output.append(displayValue);
         }
     }
 
     /// Decodes percent-encoded non-ASCII UTF-8 sequences for display, or returns `null` if unchanged.
-    private static @Nullable String displayDecode(String value, int start, int end) {
-        if (start < 0) {
+    private static @Nullable String displayDecode(String value, @IndexRange("value") long range) {
+        if (IndexRanges.isAbsent(range)) {
             return null;
         }
 
+        int start = IndexRanges.start(range);
+        int end = IndexRanges.end(range);
         @Nullable StringBuilder output = null;
         for (int index = start; index < end; ) {
             char c = value.charAt(index);
@@ -848,37 +826,35 @@ public final class WebURLImpl implements WebURL {
         output.append(href, 0, schemeEnd + 1);
 
         if (hasOpaquePath()) {
-            appendRfc2396Encoded(output, href, pathStart, pathEnd, WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href, pathRange, WebURLImpl::isRfc2396Uric);
         } else {
             if (hasHost()) {
                 output.append("//");
-                if (usernameStart >= 0) {
-                    appendRfc2396Encoded(output, href, usernameStart, usernameEnd,
-                            WebURLImpl::isRfc2396UserInfo);
-                    if (passwordStart >= 0) {
+                if (IndexRanges.isPresent(usernameRange)) {
+                    appendRfc2396Encoded(output, href, usernameRange, WebURLImpl::isRfc2396UserInfo);
+                    if (IndexRanges.isPresent(passwordRange)) {
                         output.append(':');
-                        appendRfc2396Encoded(output, href, passwordStart, passwordEnd,
-                                WebURLImpl::isRfc2396UserInfo);
+                        appendRfc2396Encoded(output, href, passwordRange, WebURLImpl::isRfc2396UserInfo);
                     }
                     output.append('@');
                 }
-                appendRfc2396Encoded(output, href, hostStart, hostEnd, WebURLImpl::isRfc2396Host);
-                if (portStart >= 0) {
-                    output.append(':').append(href, portStart, portEnd);
+                appendRfc2396Encoded(output, href, hostRange, WebURLImpl::isRfc2396Host);
+                if (IndexRanges.isPresent(portRange)) {
+                    output.append(':').append(href, IndexRanges.start(portRange), IndexRanges.end(portRange));
                 }
             } else if (pathPrefix) {
                 output.append("/.");
             }
-            appendRfc2396Encoded(output, href, pathStart, pathEnd, WebURLImpl::isRfc2396Path);
+            appendRfc2396Encoded(output, href, pathRange, WebURLImpl::isRfc2396Path);
         }
 
-        if (queryStart >= 0) {
+        if (IndexRanges.isPresent(queryRange)) {
             output.append('?');
-            appendRfc2396Encoded(output, href, queryStart, queryEnd, WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href, queryRange, WebURLImpl::isRfc2396Uric);
         }
-        if (fragmentStart >= 0) {
+        if (IndexRanges.isPresent(fragmentRange)) {
             output.append('#');
-            appendRfc2396Encoded(output, href, fragmentStart, href.length(), WebURLImpl::isRfc2396Uric);
+            appendRfc2396Encoded(output, href, fragmentRange, WebURLImpl::isRfc2396Uric);
         }
         String value = output.toString();
         rfc2396String = value;
@@ -888,44 +864,45 @@ public final class WebURLImpl implements WebURL {
     /// Returns whether the serialized URL can be used directly as an RFC 2396 URI string.
     private boolean isRfc2396String(String value) {
         if (hasOpaquePath()) {
-            if (!isRfc2396Encoded(value, pathStart, pathEnd, WebURLImpl::isRfc2396Uric)) {
+            if (!isRfc2396Encoded(value, pathRange, WebURLImpl::isRfc2396Uric)) {
                 return false;
             }
         } else {
             if (hasHost()) {
-                if (usernameStart >= 0) {
-                    if (!isRfc2396Encoded(value, usernameStart, usernameEnd, WebURLImpl::isRfc2396UserInfo)) {
+                if (IndexRanges.isPresent(usernameRange)) {
+                    if (!isRfc2396Encoded(value, usernameRange, WebURLImpl::isRfc2396UserInfo)) {
                         return false;
                     }
-                    if (passwordStart >= 0
-                            && !isRfc2396Encoded(value, passwordStart, passwordEnd,
-                                    WebURLImpl::isRfc2396UserInfo)) {
+                    if (IndexRanges.isPresent(passwordRange)
+                            && !isRfc2396Encoded(value, passwordRange, WebURLImpl::isRfc2396UserInfo)) {
                         return false;
                     }
                 }
-                if (!isRfc2396Encoded(value, hostStart, hostEnd, WebURLImpl::isRfc2396Host)) {
+                if (!isRfc2396Encoded(value, hostRange, WebURLImpl::isRfc2396Host)) {
                     return false;
                 }
             }
-            if (!isRfc2396Encoded(value, pathStart, pathEnd, WebURLImpl::isRfc2396Path)) {
+            if (!isRfc2396Encoded(value, pathRange, WebURLImpl::isRfc2396Path)) {
                 return false;
             }
         }
 
-        if (queryStart >= 0 && !isRfc2396Encoded(value, queryStart, queryEnd, WebURLImpl::isRfc2396Uric)) {
+        if (IndexRanges.isPresent(queryRange)
+                && !isRfc2396Encoded(value, queryRange, WebURLImpl::isRfc2396Uric)) {
             return false;
         }
-        return fragmentStart < 0
-                || isRfc2396Encoded(value, fragmentStart, value.length(), WebURLImpl::isRfc2396Uric);
+        return IndexRanges.isAbsent(fragmentRange)
+                || isRfc2396Encoded(value, fragmentRange, WebURLImpl::isRfc2396Uric);
     }
 
     /// Returns whether a component is already encoded for Java's RFC 2396 URI parser.
     private static boolean isRfc2396Encoded(
             String value,
-            int start,
-            int end,
+            @IndexRange("value") long range,
             Rfc2396CharPredicate allowed
     ) {
+        int start = IndexRanges.start(range);
+        int end = IndexRanges.end(range);
         for (int index = start; index < end; ) {
             int c = value.codePointAt(index);
             if (PercentEncoding.isValidPercentTriplet(value, index, end)) {
@@ -944,10 +921,11 @@ public final class WebURLImpl implements WebURL {
     private static void appendRfc2396Encoded(
             StringBuilder output,
             String value,
-            int start,
-            int end,
+            @IndexRange("value") long range,
             Rfc2396CharPredicate allowed
     ) {
+        int start = IndexRanges.start(range);
+        int end = IndexRanges.end(range);
         for (int index = start; index < end; ) {
             int c = value.codePointAt(index);
             if (PercentEncoding.isValidPercentTriplet(value, index, end)) {

@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNullByDefault;
 /// A packed index range stores the start index in the high 32 bits and the end index in the low 32 bits.
 @NotNullByDefault
 public final class IndexRanges {
-    /// A sentinel value for an absent range.
-    public static final @IndexRange long ABSENT = -1L;
-
     /// A mask for reading or writing the low 32 bits.
     private static final long LOW_INT_MASK = 0xffff_ffffL;
+
+    /// A sentinel value for an absent range.
+    public static final @IndexRange long ABSENT = ofUnchecked(-1, -1);
 
     /// Creates no instances.
     private IndexRanges() {
@@ -41,6 +41,11 @@ public final class IndexRanges {
             throw new IndexOutOfBoundsException("end must be greater than or equal to start: " + end + " < " + start);
         }
 
+        return ofUnchecked(start, end);
+    }
+
+    /// Returns a packed index range for indexes that have already been validated.
+    public static @IndexRange long ofUnchecked(int start, int end) {
         return ((long) start << Integer.SIZE) | (end & LOW_INT_MASK);
     }
 

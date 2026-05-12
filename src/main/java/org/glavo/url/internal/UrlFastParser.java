@@ -130,10 +130,15 @@ final class UrlFastParser {
         record.query = pathAndSuffix.query;
         record.fragment = pathAndSuffix.fragment;
 
-        return new WebURLImpl(record, input, schemeEnd, usernameStart, usernameEnd, passwordStart, passwordEnd,
-                hostAndPort.hostStart, hostAndPort.hostEnd, hostAndPort.portStart, hostAndPort.portEnd,
-                pathAndSuffix.pathStart, pathAndSuffix.pathEnd, pathAndSuffix.queryStart, pathAndSuffix.queryEnd,
-                pathAndSuffix.fragmentStart, false);
+        return new WebURLImpl(record, input, schemeEnd,
+                IndexRanges.ofUnchecked(usernameStart, usernameEnd),
+                IndexRanges.ofUnchecked(passwordStart, passwordEnd),
+                hostAndPort.hostRange,
+                hostAndPort.portRange,
+                pathAndSuffix.pathRange,
+                pathAndSuffix.queryRange,
+                pathAndSuffix.fragmentRange,
+                false);
     }
 
     /// Parses a normalized file URL serialization with an empty host.
@@ -163,10 +168,15 @@ final class UrlFastParser {
         record.query = pathAndSuffix.query;
         record.fragment = pathAndSuffix.fragment;
 
-        return new WebURLImpl(record, input, schemeEnd, -1, -1, -1, -1,
-                authorityStart, authorityStart, -1, -1,
-                pathAndSuffix.pathStart, pathAndSuffix.pathEnd, pathAndSuffix.queryStart, pathAndSuffix.queryEnd,
-                pathAndSuffix.fragmentStart, false);
+        return new WebURLImpl(record, input, schemeEnd,
+                IndexRanges.ABSENT,
+                IndexRanges.ABSENT,
+                IndexRanges.ofUnchecked(authorityStart, authorityStart),
+                IndexRanges.ABSENT,
+                pathAndSuffix.pathRange,
+                pathAndSuffix.queryRange,
+                pathAndSuffix.fragmentRange,
+                false);
     }
 
     /// Parses a normalized non-special opaque URL serialization.
@@ -203,6 +213,7 @@ final class UrlFastParser {
         }
 
         int fragmentStart = -1;
+        int fragmentEnd = -1;
         @Nullable String fragment = null;
         if (fragmentMarker >= 0) {
             fragmentStart = fragmentMarker + 1;
@@ -210,6 +221,7 @@ final class UrlFastParser {
                 return null;
             }
             fragment = input.substring(fragmentStart);
+            fragmentEnd = input.length();
         }
 
         UrlRecord record = new UrlRecord();
@@ -219,8 +231,15 @@ final class UrlFastParser {
         record.query = query;
         record.fragment = fragment;
 
-        return new WebURLImpl(record, input, schemeEnd, -1, -1, -1, -1, -1, -1, -1, -1,
-                pathStart, pathEnd, queryStart, queryEnd, fragmentStart, false);
+        return new WebURLImpl(record, input, schemeEnd,
+                IndexRanges.ABSENT,
+                IndexRanges.ABSENT,
+                IndexRanges.ABSENT,
+                IndexRanges.ABSENT,
+                IndexRanges.ofUnchecked(pathStart, pathEnd),
+                IndexRanges.ofUnchecked(queryStart, queryEnd),
+                IndexRanges.ofUnchecked(fragmentStart, fragmentEnd),
+                false);
     }
 
     /// Parses a special URL host and port.
@@ -267,7 +286,11 @@ final class UrlFastParser {
         if (host == null) {
             return null;
         }
-        return new HostAndPort(host, start, hostEnd, portStart, portEnd, port);
+        return new HostAndPort(
+                host,
+                IndexRanges.ofUnchecked(start, hostEnd),
+                IndexRanges.ofUnchecked(portStart, portEnd),
+                port);
     }
 
     /// Parses the path, query, and fragment suffix of a normalized special URL.
@@ -297,6 +320,7 @@ final class UrlFastParser {
         }
 
         int fragmentStart = -1;
+        int fragmentEnd = -1;
         @Nullable String fragment = null;
         if (fragmentMarker >= 0) {
             fragmentStart = fragmentMarker + 1;
@@ -304,9 +328,16 @@ final class UrlFastParser {
                 return null;
             }
             fragment = input.substring(fragmentStart);
+            fragmentEnd = input.length();
         }
 
-        return new PathAndSuffix(path, pathStart, pathEnd, queryStart, queryEnd, fragmentStart, query, fragment);
+        return new PathAndSuffix(
+                path,
+                IndexRanges.ofUnchecked(pathStart, pathEnd),
+                IndexRanges.ofUnchecked(queryStart, queryEnd),
+                IndexRanges.ofUnchecked(fragmentStart, fragmentEnd),
+                query,
+                fragment);
     }
 
     /// Parses a normalized host.
@@ -704,10 +735,8 @@ final class UrlFastParser {
     /// Parsed host and port indexes.
     private record HostAndPort(
             UrlHost host,
-            int hostStart,
-            int hostEnd,
-            int portStart,
-            int portEnd,
+            @IndexRange("input") long hostRange,
+            @IndexRange("input") long portRange,
             int port
     ) {
     }
@@ -715,11 +744,9 @@ final class UrlFastParser {
     /// Parsed path, query, and fragment data.
     private record PathAndSuffix(
             List<String> path,
-            int pathStart,
-            int pathEnd,
-            int queryStart,
-            int queryEnd,
-            int fragmentStart,
+            @IndexRange("input") long pathRange,
+            @IndexRange("input") long queryRange,
+            @IndexRange("input") long fragmentRange,
             @Nullable String query,
             @Nullable String fragment
     ) {

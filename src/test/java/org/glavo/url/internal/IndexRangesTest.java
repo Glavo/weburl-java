@@ -62,6 +62,18 @@ public final class IndexRangesTest {
         assertTrue(IndexRanges.isEmpty(range));
     }
 
+    /// Tests unchecked packing without validation.
+    @Test
+    public void packsUncheckedRange() {
+        @IndexRange("value") long range = IndexRanges.ofUnchecked(7, 3);
+
+        assertEquals(7, IndexRanges.start(range));
+        assertEquals(3, IndexRanges.end(range));
+        assertEquals(-4, IndexRanges.length(range));
+        assertFalse(IndexRanges.isEmpty(range));
+        assertEquals(IndexRanges.ABSENT, IndexRanges.ofUnchecked(-1, -1));
+    }
+
     /// Tests the absent range sentinel.
     @Test
     public void identifiesAbsentRange() {
