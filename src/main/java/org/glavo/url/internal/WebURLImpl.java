@@ -32,6 +32,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntPredicate;
 
 /// Internal immutable implementation of `WebURL`.
 @NotNullByDefault
@@ -837,7 +838,7 @@ public final class WebURLImpl implements WebURL {
     private static boolean isRfc2396Encoded(
             String value,
             @IndexRange("value") long range,
-            Rfc2396CharPredicate allowed
+            IntPredicate allowed
     ) {
         int start = IndexRanges.start(range);
         int end = IndexRanges.end(range);
@@ -860,7 +861,7 @@ public final class WebURLImpl implements WebURL {
             StringBuilder output,
             String value,
             @IndexRange("value") long range,
-            Rfc2396CharPredicate allowed
+            IntPredicate allowed
     ) {
         int start = IndexRanges.start(range);
         int end = IndexRanges.end(range);
@@ -909,14 +910,6 @@ public final class WebURLImpl implements WebURL {
     private static boolean isRfc2396Unreserved(int c) {
         return StringUtils.isAsciiAlpha(c) || StringUtils.isAsciiDigit(c) || c == '-' || c == '_'
                 || c == '.' || c == '!' || c == '~' || c == '*' || c == '\'' || c == '(' || c == ')';
-    }
-
-    /// Predicate over RFC 2396 ASCII characters.
-    @FunctionalInterface
-    @NotNullByDefault
-    private interface Rfc2396CharPredicate {
-        /// Returns whether the character may appear without escaping.
-        boolean test(int c);
     }
 
 }
