@@ -37,36 +37,53 @@ final class PercentEncoding {
     private PercentEncoding() {
     }
 
-    /// Decodes percent triplets from a byte sequence.
-    static byte[] percentDecodeBytes(byte[] input) {
-        ByteArrayOutputStream output = new ByteArrayOutputStream(input.length);
-        for (int i = 0; i < input.length; i++) {
-            int value = input[i] & 0xff;
-            if (value == '%' && i + 2 < input.length
-                    && StringUtils.isAsciiHex(input[i + 1] & 0xff)
-                    && StringUtils.isAsciiHex(input[i + 2] & 0xff)) {
-                output.write(hexValue(input[i + 1] & 0xff) * 16 + hexValue(input[i + 2] & 0xff));
-                i += 2;
-            } else {
-                output.write(value);
-            }
-        }
-        return output.toByteArray();
-    }
-
     /// Decodes percent triplets from the UTF-8 bytes of a string.
     static byte[] percentDecodeString(String input) {
-        return percentDecodeBytes(Utf8.encode(input));
+        int firstTriplet = firstValidPercentTriplet(input);
+        return firstTriplet < 0 ? Utf8.encode(input) : percentDecodeString(input, firstTriplet);
     }
 
     /// Decodes valid percent triplets in a URL component as UTF-8.
     static String percentDecodeUtf8(String input) {
-        for (int i = 0; i < input.length(); i++) {
-            if (isValidPercentTriplet(input, i, input.length())) {
-                return Utf8.decode(percentDecodeString(input));
+        int firstTriplet = firstValidPercentTriplet(input);
+        return firstTriplet < 0 ? input : Utf8.decode(percentDecodeString(input, firstTriplet));
+    }
+
+    /// Decodes percent triplets from a string with a known first valid triplet.
+    private static byte[] percentDecodeString(String input, int firstTriplet) {
+        ByteArrayOutputStream output = new ByteArrayOutputStream(input.length());
+        appendUtf8(output, input, 0, firstTriplet);
+
+        int index = firstTriplet;
+        int end = input.length();
+        while (index < end) {
+            int percent = input.indexOf('%', index);
+            if (percent < 0) {
+                appendUtf8(output, input, index, end);
+                break;
+            }
+
+            appendUtf8(output, input, index, percent);
+            if (isValidPercentTriplet(input, percent, end)) {
+                output.write(percentEncodedByte(input, percent));
+                index = percent + 3;
+            } else {
+                output.write('%');
+                index = percent + 1;
             }
         }
-        return input;
+
+        return output.toByteArray();
+    }
+
+    /// Appends a string slice encoded as UTF-8.
+    private static void appendUtf8(ByteArrayOutputStream output, String input, int start, int end) {
+        if (start == end) {
+            return;
+        }
+
+        byte[] bytes = Utf8.encode(input.substring(start, end));
+        output.write(bytes, 0, bytes.length);
     }
 
     /// Percent-encodes one Unicode code point with the given byte predicate.
@@ -206,6 +223,19 @@ final class PercentEncoding {
                 && input.charAt(pointer) == '%'
                 && StringUtils.isAsciiHex(input.charAt(pointer + 1))
                 && StringUtils.isAsciiHex(input.charAt(pointer + 2));
+    }
+
+    /// Returns the first valid percent triplet index in a string, or `-1` when none exists.
+    private static int firstValidPercentTriplet(String input) {
+        int end = input.length();
+        int pointer = input.indexOf('%');
+        while (pointer >= 0) {
+            if (isValidPercentTriplet(input, pointer, end)) {
+                return pointer;
+            }
+            pointer = input.indexOf('%', pointer + 1);
+        }
+        return -1;
     }
 
     /// Decodes the byte value represented by a valid percent triplet.

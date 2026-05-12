@@ -278,6 +278,11 @@ public final class WebURLTest {
         assertEquals(uri.getPath(), url.getPath());
         assertEquals(uri.getQuery(), url.getQuery());
         assertEquals(uri.getFragment(), url.getFragment());
+
+        WebURL mixed = WebURL.parse("http://example.com/%E8%B7%AF%zz?x=%E5%80%BC%zz#%E7%89%87%zz");
+        assertEquals("/路%zz", mixed.getPath());
+        assertEquals("x=值%zz", mixed.getQuery());
+        assertEquals("片%zz", mixed.getFragment());
     }
 
     /// Tests equality, hash code, and natural ordering by serialized URL.
