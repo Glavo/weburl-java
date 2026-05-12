@@ -135,13 +135,20 @@ public final class WebURLTest {
     /// Tests that repeated expensive computed getters return cached values.
     @Test
     public void cachesExpensiveComputedValues() throws Exception {
-        WebURL url = WebURL.parse("https://user:pass@example.com:8080/a/b?x=1#f");
+        WebURL url = WebURL.parse("https://user%20name:pa%3Ass@example.com:8080/a%20b?x=a%20b#frag%20ment");
 
         assertSame(url.href(), url.href());
         assertSame(url.origin(), url.origin());
         assertSame(url.getScheme(), url.getScheme());
+        assertSame(url.getUsername(), url.getUsername());
+        assertSame(url.getPassword(), url.getPassword());
+        assertSame(url.getUserInfo(), url.getUserInfo());
+        assertSame(url.getAuthority(), url.getAuthority());
+        assertSame(url.getPath(), url.getPath());
+        assertSame(url.getQuery(), url.getQuery());
         assertSame(url.getRawQuery(), url.getRawQuery());
         assertSame(url.getRawQueryOrEmpty(), url.getRawQueryOrEmpty());
+        assertSame(url.getFragment(), url.getFragment());
         assertSame(url.getRawFragment(), url.getRawFragment());
         assertSame(url.getRawFragmentOrEmpty(), url.getRawFragmentOrEmpty());
         assertSame(url.href(), url.toDisplayString());
