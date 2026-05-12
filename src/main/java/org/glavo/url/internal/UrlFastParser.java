@@ -99,6 +99,9 @@ final class UrlFastParser {
             if (colon >= 0) {
                 passwordStart = colon + 1;
                 passwordEnd = at;
+                if (passwordStart == passwordEnd) {
+                    return null;
+                }
                 if (containsInvalidUserInfo(input, passwordStart, passwordEnd)) {
                     return null;
                 }

@@ -55,11 +55,13 @@ public final class WebURLBuilderTest {
         WebURL.Builder builder = WebURL.newBuilder(original);
         WebURL opaque = WebURL.parse("data:text/plain,hi");
         WebURL recoverable = WebURL.parse("https://example.com/%zz");
+        WebURL emptyPassword = WebURL.parse("https://user:@example.com/");
 
         assertEquals(original, builder.build());
         assertEquals(opaque, WebURL.newBuilder(opaque).build());
         assertEquals("https://example.com/%zz#frag",
                 WebURL.newBuilder(recoverable).setFragment("frag").build().href());
+        assertEquals(emptyPassword, WebURL.newBuilder(emptyPassword).build());
 
         WebURL modified = builder.setPath("/b").setRawQuery(null).build();
         assertEquals("https://user:pass@example.com/b#f", modified.href());

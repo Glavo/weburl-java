@@ -50,6 +50,16 @@ public final class WebURLParsingTest {
         assertEquals("https://example.net/z", WebURL.parse("/z", "https://example.net/base").href());
     }
 
+    /// Tests that empty password markers are removed from normalized URL serializations.
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            https://user:@example.com/ | https://user@example.com/
+            https://:@example.com/ | https://example.com/
+            """)
+    public void removesEmptyPasswordMarkers(String input, String expected) {
+        assertEquals(expected, WebURL.parse(input).href());
+    }
+
     /// Tests resolving URL inputs against an existing URL.
     @Test
     public void resolvesAgainstThisUrl() {
