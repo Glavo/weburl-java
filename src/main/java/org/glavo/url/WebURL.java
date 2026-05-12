@@ -27,6 +27,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Objects;
 
 /// An immutable, absolute URL value parsed and normalized according to the
 /// [WHATWG URL Standard](https://url.spec.whatwg.org/).
@@ -1059,8 +1060,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @since 0.3.0
     @Contract(pure = true)
     default String getWebHostname() {
-        @Nullable String host = getHost();
-        return host == null ? "" : host;
+        return Objects.requireNonNullElse(getHost(), "");
     }
 
     /// Returns the WHATWG `URL.port` attribute.
@@ -1072,8 +1072,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @since 0.3.0
     @Contract(pure = true)
     default String getWebPort() {
-        @Nullable String port = getRawPort();
-        return port == null ? "" : port;
+        return Objects.requireNonNullElse(getRawPort(), "");
     }
 
     /// Returns the WHATWG `URL.pathname` attribute.
