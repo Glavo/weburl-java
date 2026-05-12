@@ -10,6 +10,8 @@
 - Removed nested subclasses of `WebURLParseException` (e.g. `PortInvalid`, `HostMissing`). Use
   `WebURLParseException.getErrorType()` with the new `ErrorType` enum constants instead.
 - Renamed `WebURLParseException.errorName()` to `getErrorName()`.
+- `WebURL.toURI()` now throws `URISyntaxException` when the URL has no Java `URI` representation.
+  `WebURL.toURL()` continues to throw `MalformedURLException` for URI conversion and URL handler failures.
 
 ### New APIs
 
