@@ -91,6 +91,42 @@ final class PercentEncoding {
         return input;
     }
 
+    /// Percent-encodes a decoded component string with the given byte predicate.
+    static String utf8PercentEncodeDecodedString(String input, BytePredicate percentEncodePredicate) {
+        for (int index = 0; index < input.length(); ) {
+            int codePoint = input.codePointAt(index);
+            if (codePoint == '%' || codePoint > 0x7f || percentEncodePredicate.test(codePoint)) {
+                return utf8PercentEncodeDecodedString(input, percentEncodePredicate, index);
+            }
+            index += Character.charCount(codePoint);
+        }
+        return input;
+    }
+
+    /// Percent-encodes a decoded component string starting at the first known changed code point.
+    private static String utf8PercentEncodeDecodedString(
+            String input,
+            BytePredicate percentEncodePredicate,
+            int start
+    ) {
+        StringBuilder output = new StringBuilder(input.length());
+        output.append(input, 0, start);
+        for (int index = start; index < input.length(); ) {
+            int codePoint = input.codePointAt(index);
+            if (codePoint <= 0x7f) {
+                if (codePoint == '%' || percentEncodePredicate.test(codePoint)) {
+                    output.append(percentEncodedByteString(codePoint));
+                } else {
+                    output.append((char) codePoint);
+                }
+            } else {
+                appendUtf8PercentEncodedCodePoint(output, codePoint);
+            }
+            index += Character.charCount(codePoint);
+        }
+        return output.toString();
+    }
+
     /// Percent-encodes a string starting at the first known changed code point.
     private static String utf8PercentEncodeString(
             String input,

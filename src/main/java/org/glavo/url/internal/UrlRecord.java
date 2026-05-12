@@ -50,4 +50,19 @@ final class UrlRecord {
     /// Creates an empty mutable URL record.
     UrlRecord() {
     }
+
+    /// Creates a deep mutable copy of this URL record.
+    UrlRecord copy() {
+        UrlRecord copy = new UrlRecord();
+        copy.scheme = scheme;
+        copy.username = username;
+        copy.password = password;
+        copy.host = host;
+        copy.port = port;
+        copy.path = new ArrayList<>(path);
+        copy.opaquePath = opaquePath;
+        copy.query = query;
+        copy.fragment = fragment;
+        return copy;
+    }
 }

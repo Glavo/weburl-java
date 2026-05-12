@@ -31,6 +31,11 @@ final class UrlSerializer {
         return url == null ? serialize(record) : url;
     }
 
+    /// Creates an immutable URL from a completed URL record.
+    static WebURLImpl toUrl(UrlRecord record) {
+        return serialize(record);
+    }
+
     /// Attempts to adopt an input string that is already the exact URL serialization.
     private static @Nullable WebURLImpl tryAdoptHref(UrlRecord record, String input) {
         int index = 0;

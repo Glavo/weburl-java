@@ -235,6 +235,21 @@ public final class WebURLImpl implements WebURL {
         return rawQueryValue;
     }
 
+    /// Returns a mutable copy of this URL's logical record.
+    UrlRecord toRecord() {
+        UrlRecord record = new UrlRecord();
+        record.scheme = scheme;
+        record.username = getRawUsernameOrEmpty();
+        record.password = getRawPasswordOrEmpty();
+        record.host = urlHost;
+        record.port = port;
+        record.path = new ArrayList<>(pathSegments);
+        record.opaquePath = opaquePath;
+        record.query = rawQueryValue;
+        record.fragment = rawFragmentValue;
+        return record;
+    }
+
     /// Returns the serialized URL.
     @Override
     public String href() {
