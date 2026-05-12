@@ -132,31 +132,16 @@ public final class WebURLTest {
         assertSame(ipv6, WebURL.parse(ipv6).href());
     }
 
-    /// Tests that repeated computed getters return cached values.
+    /// Tests that repeated expensive computed getters return cached values.
     @Test
-    public void cachesComputedValues() throws Exception {
+    public void cachesExpensiveComputedValues() throws Exception {
         WebURL url = WebURL.parse("https://user:pass@example.com:8080/a/b?x=1#f");
 
         assertSame(url.href(), url.href());
         assertSame(url.origin(), url.origin());
         assertSame(url.getScheme(), url.getScheme());
-        assertSame(url.getUsername(), url.getUsername());
-        assertSame(url.getRawUsername(), url.getRawUsername());
-        assertSame(url.getRawUsernameOrEmpty(), url.getRawUsernameOrEmpty());
-        assertSame(url.getPassword(), url.getPassword());
-        assertSame(url.getRawPassword(), url.getRawPassword());
-        assertSame(url.getRawPasswordOrEmpty(), url.getRawPasswordOrEmpty());
-        assertSame(url.getUserInfo(), url.getUserInfo());
-        assertSame(url.getRawUserInfo(), url.getRawUserInfo());
-        assertSame(url.getAuthority(), url.getAuthority());
-        assertSame(url.getRawAuthority(), url.getRawAuthority());
-        assertSame(url.getHost(), url.getHost());
-        assertSame(url.getPath(), url.getPath());
-        assertSame(url.getRawPath(), url.getRawPath());
-        assertSame(url.getQuery(), url.getQuery());
         assertSame(url.getRawQuery(), url.getRawQuery());
         assertSame(url.getRawQueryOrEmpty(), url.getRawQueryOrEmpty());
-        assertSame(url.getFragment(), url.getFragment());
         assertSame(url.getRawFragment(), url.getRawFragment());
         assertSame(url.getRawFragmentOrEmpty(), url.getRawFragmentOrEmpty());
         assertSame(url.href(), url.toDisplayString());

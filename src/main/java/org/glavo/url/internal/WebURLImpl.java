@@ -76,34 +76,6 @@ public final class WebURLImpl implements WebURL {
     private final boolean pathPrefix;
     /// Cached origin string, or `null` until requested.
     private @Nullable String origin;
-    /// Cached decoded username string, or `null` until requested or when absent.
-    private @Nullable String username;
-    /// Cached raw username string, or `null` until requested.
-    private @Nullable String rawUsername;
-    /// Cached decoded password string, or `null` until requested or when absent.
-    private @Nullable String password;
-    /// Cached raw password string, or `null` until requested.
-    private @Nullable String rawPassword;
-    /// Cached decoded user-info string, or `null` until requested or when absent.
-    private @Nullable String userInfo;
-    /// Cached raw user-info string, or `null` until requested or when absent.
-    private @Nullable String rawUserInfo;
-    /// Cached decoded authority string, or `null` until requested or when absent.
-    private @Nullable String authority;
-    /// Cached raw authority string, or `null` until requested or when absent.
-    private @Nullable String rawAuthority;
-    /// Cached host string, or `null` until requested or when absent.
-    private @Nullable String host;
-    /// Cached raw port string, or `null` until requested or when absent.
-    private @Nullable String rawPort;
-    /// Cached decoded path string, or `null` until requested.
-    private @Nullable String path;
-    /// Cached raw path string, or `null` until requested.
-    private @Nullable String rawPath;
-    /// Cached decoded query string, or `null` until requested or when absent.
-    private @Nullable String query;
-    /// Cached decoded fragment string, or `null` until requested or when absent.
-    private @Nullable String fragment;
     /// Cached RFC 2396 URI string, or `null` until requested.
     private @Nullable String rfc2396String;
     /// Cached display string, or `null` until requested.
@@ -142,11 +114,6 @@ public final class WebURLImpl implements WebURL {
         this.queryRange = queryRange;
         this.fragmentRange = fragmentRange;
         this.pathPrefix = pathPrefix;
-        if (record.host instanceof UrlHost.Domain domain) {
-            this.host = domain.value();
-        } else if (record.host instanceof UrlHost.Opaque opaque) {
-            this.host = opaque.value();
-        }
     }
 
     /// Returns whether this URL has an opaque path.
@@ -346,28 +313,13 @@ public final class WebURLImpl implements WebURL {
     @Override
     public @Nullable String getUsername() {
         @Nullable String rawValue = getRawUsername();
-        if (rawValue == null) {
-            return null;
-        }
-
-        @Nullable String value = username;
-        if (value == null) {
-            value = PercentEncoding.percentDecodeUtf8(rawValue);
-            username = value;
-        }
-        return value;
+        return rawValue == null ? null : PercentEncoding.percentDecodeUtf8(rawValue);
     }
 
     /// Returns the raw username, or the empty string when absent.
     @Override
     public String getRawUsernameOrEmpty() {
-        @Nullable String value = rawUsername;
-        if (value == null) {
-            String href = href();
-            value = IndexRanges.isAbsent(usernameRange) ? "" : IndexRanges.substring(href, usernameRange);
-            rawUsername = value;
-        }
-        return value;
+        return IndexRanges.isAbsent(usernameRange) ? "" : IndexRanges.substring(href(), usernameRange);
     }
 
     /// Returns the raw username, or `null` when absent.
@@ -380,28 +332,13 @@ public final class WebURLImpl implements WebURL {
     @Override
     public @Nullable String getPassword() {
         @Nullable String rawValue = getRawPassword();
-        if (rawValue == null) {
-            return null;
-        }
-
-        @Nullable String value = password;
-        if (value == null) {
-            value = PercentEncoding.percentDecodeUtf8(rawValue);
-            password = value;
-        }
-        return value;
+        return rawValue == null ? null : PercentEncoding.percentDecodeUtf8(rawValue);
     }
 
     /// Returns the raw password, or the empty string when absent.
     @Override
     public String getRawPasswordOrEmpty() {
-        @Nullable String value = rawPassword;
-        if (value == null) {
-            String href = href();
-            value = IndexRanges.isAbsent(passwordRange) ? "" : IndexRanges.substring(href, passwordRange);
-            rawPassword = value;
-        }
-        return value;
+        return IndexRanges.isAbsent(passwordRange) ? "" : IndexRanges.substring(href(), passwordRange);
     }
 
     /// Returns the raw password, or `null` when absent.
@@ -414,16 +351,7 @@ public final class WebURLImpl implements WebURL {
     @Override
     public @Nullable String getUserInfo() {
         @Nullable String rawValue = getRawUserInfo();
-        if (rawValue == null) {
-            return null;
-        }
-
-        @Nullable String value = userInfo;
-        if (value == null) {
-            value = PercentEncoding.percentDecodeUtf8(rawValue);
-            userInfo = value;
-        }
-        return value;
+        return rawValue == null ? null : PercentEncoding.percentDecodeUtf8(rawValue);
     }
 
     /// Returns the raw user-info, or `null` when absent.
@@ -433,28 +361,14 @@ public final class WebURLImpl implements WebURL {
             return null;
         }
 
-        @Nullable String value = rawUserInfo;
-        if (value == null) {
-            value = href().substring(IndexRanges.start(usernameRange), IndexRanges.start(hostRange) - 1);
-            rawUserInfo = value;
-        }
-        return value;
+        return href().substring(IndexRanges.start(usernameRange), IndexRanges.start(hostRange) - 1);
     }
 
     /// Returns the decoded authority, or `null` when absent.
     @Override
     public @Nullable String getAuthority() {
         @Nullable String rawValue = getRawAuthority();
-        if (rawValue == null) {
-            return null;
-        }
-
-        @Nullable String value = authority;
-        if (value == null) {
-            value = PercentEncoding.percentDecodeUtf8(rawValue);
-            authority = value;
-        }
-        return value;
+        return rawValue == null ? null : PercentEncoding.percentDecodeUtf8(rawValue);
     }
 
     /// Returns the raw authority, or `null` when absent.
@@ -464,13 +378,8 @@ public final class WebURLImpl implements WebURL {
             return null;
         }
 
-        @Nullable String value = rawAuthority;
-        if (value == null) {
-            value = href().substring(schemeEnd + 3,
-                    IndexRanges.isAbsent(portRange) ? IndexRanges.end(hostRange) : IndexRanges.end(portRange));
-            rawAuthority = value;
-        }
-        return value;
+        return href().substring(schemeEnd + 3,
+                IndexRanges.isAbsent(portRange) ? IndexRanges.end(hostRange) : IndexRanges.end(portRange));
     }
 
     /// Returns the host, or `null` when absent.
@@ -480,12 +389,7 @@ public final class WebURLImpl implements WebURL {
             return null;
         }
 
-        @Nullable String value = host;
-        if (value == null) {
-            value = IndexRanges.substring(href(), hostRange);
-            host = value;
-        }
-        return value;
+        return IndexRanges.substring(href(), hostRange);
     }
 
     /// Returns the effective port value, or `-1` when absent and no default is known.
@@ -501,34 +405,19 @@ public final class WebURLImpl implements WebURL {
             return null;
         }
 
-        @Nullable String value = rawPort;
-        if (value == null) {
-            value = IndexRanges.substring(href(), portRange);
-            rawPort = value;
-        }
-        return value;
+        return IndexRanges.substring(href(), portRange);
     }
 
     /// Returns the decoded path.
     @Override
     public String getPath() {
-        @Nullable String value = path;
-        if (value == null) {
-            value = PercentEncoding.percentDecodeUtf8(getRawPath());
-            path = value;
-        }
-        return value;
+        return PercentEncoding.percentDecodeUtf8(getRawPath());
     }
 
     /// Returns the raw path.
     @Override
     public String getRawPath() {
-        @Nullable String value = rawPath;
-        if (value == null) {
-            value = IndexRanges.substring(href(), pathRange);
-            rawPath = value;
-        }
-        return value;
+        return IndexRanges.substring(href(), pathRange);
     }
 
     /// Returns the decoded query, or `null` when absent.
@@ -538,12 +427,7 @@ public final class WebURLImpl implements WebURL {
             return null;
         }
 
-        @Nullable String value = query;
-        if (value == null) {
-            value = PercentEncoding.percentDecodeUtf8(rawQueryValue);
-            query = value;
-        }
-        return value;
+        return PercentEncoding.percentDecodeUtf8(rawQueryValue);
     }
 
     /// Returns the raw query, or `null` when absent.
@@ -566,12 +450,7 @@ public final class WebURLImpl implements WebURL {
             return null;
         }
 
-        @Nullable String value = fragment;
-        if (value == null) {
-            value = PercentEncoding.percentDecodeUtf8(rawFragmentValue);
-            fragment = value;
-        }
-        return value;
+        return PercentEncoding.percentDecodeUtf8(rawFragmentValue);
     }
 
     /// Returns the raw fragment, or `null` when absent.
