@@ -139,7 +139,7 @@ public final class UrlParser {
             if (!input.endsWith("]")) {
                 throw parseError(input, WebURLParseException.ErrorType.IPV6_UNCLOSED, input.length());
             }
-            return parseBracketedIpv6(input);
+            return parseIpv6(input);
         }
 
         if (opaque) {
@@ -164,7 +164,7 @@ public final class UrlParser {
             if (!input.endsWith("]")) {
                 throw parseError(input, WebURLParseException.ErrorType.IPV6_UNCLOSED, input.length());
             }
-            return parseBracketedIpv6(input);
+            return parseIpv6(input);
         }
         if (opaque) {
             return UrlHost.opaque(input);
@@ -182,22 +182,6 @@ public final class UrlParser {
         }
         return UrlHost.opaque(PercentEncoding.utf8PercentEncodeString(
                 input, PercentEncoding::isC0ControlPercentEncode));
-    }
-
-    /// Parses a bracketed IPv6 host and maps IPv6 parser indexes back to the brackets.
-    private static UrlHost.IPv6 parseBracketedIpv6(String input) {
-        try {
-            return UrlHost.ipv6(parseIpv6(input.substring(1, input.length() - 1)));
-        } catch (WebURLParseException exception) {
-            int index = exception.getIndex() < 0 ? -1 : exception.getIndex() + 1;
-            throw new WebURLParseException(
-                    input,
-                    exception.getErrorType(),
-                    exception.getReason(),
-                    index,
-                    exception
-            );
-        }
     }
 
     /// Converts a domain to ASCII.
@@ -387,15 +371,17 @@ public final class UrlParser {
         return next == 'x' || next == 'X' || next >= '0' && next <= '9';
     }
 
-    /// Parses an IPv6 address.
-    private static int[] parseIpv6(String input) {
-        int[] address = new int[8];
+    /// Parses a bracketed IPv6 host.
+    private static UrlHost.IPv6 parseIpv6(String input) {
+        long highBits = 0;
+        long lowBits = 0;
         int pieceIndex = 0;
         int compress = -1;
-        int pointer = 0;
+        int pointer = 1;
+        int end = input.length() - 1;
 
-        if (codePoint(input, pointer) == ':') {
-            if (codePoint(input, pointer + 1) != ':') {
+        if (codePoint(input, pointer, end) == ':') {
+            if (codePoint(input, pointer + 1, end) != ':') {
                 throw parseError(input, WebURLParseException.ErrorType.IPV6_INVALID_COMPRESSION, pointer);
             }
             pointer += 2;
@@ -403,12 +389,12 @@ public final class UrlParser {
             compress = pieceIndex;
         }
 
-        while (pointer < input.length()) {
+        while (pointer < end) {
             if (pieceIndex == 8) {
                 throw parseError(input, WebURLParseException.ErrorType.IPV6_TOO_MANY_PIECES, pointer);
             }
 
-            if (codePoint(input, pointer) == ':') {
+            if (codePoint(input, pointer, end) == ':') {
                 if (compress != -1) {
                     throw parseError(input, WebURLParseException.ErrorType.IPV6_MULTIPLE_COMPRESSION, pointer);
                 }
@@ -420,13 +406,13 @@ public final class UrlParser {
 
             int value = 0;
             int length = 0;
-            while (length < 4 && StringUtils.isAsciiHex(codePoint(input, pointer))) {
-                value = value * 0x10 + Character.digit(codePoint(input, pointer), 16);
+            while (length < 4 && StringUtils.isAsciiHex(codePoint(input, pointer, end))) {
+                value = value * 0x10 + Character.digit(codePoint(input, pointer, end), 16);
                 pointer++;
                 length++;
             }
 
-            if (codePoint(input, pointer) == '.') {
+            if (codePoint(input, pointer, end) == '.') {
                 if (length == 0) {
                     throw parseError(input, WebURLParseException.ErrorType.IPV4_IN_IPV6_INVALID_CODE_POINT, pointer);
                 }
@@ -435,20 +421,21 @@ public final class UrlParser {
                 }
                 pointer -= length;
                 int numbersSeen = 0;
-                while (codePoint(input, pointer) != EOF) {
+                int embeddedPiece = 0;
+                while (codePoint(input, pointer, end) != EOF) {
                     Integer ipv4Piece = null;
                     if (numbersSeen > 0) {
-                        if (codePoint(input, pointer) == '.' && numbersSeen < 4) {
+                        if (codePoint(input, pointer, end) == '.' && numbersSeen < 4) {
                             pointer++;
                         } else {
                             throw parseError(input, WebURLParseException.ErrorType.IPV4_IN_IPV6_INVALID_CODE_POINT, pointer);
                         }
                     }
-                    if (!StringUtils.isAsciiDigit(codePoint(input, pointer))) {
+                    if (!StringUtils.isAsciiDigit(codePoint(input, pointer, end))) {
                         throw parseError(input, WebURLParseException.ErrorType.IPV4_IN_IPV6_INVALID_CODE_POINT, pointer);
                     }
-                    while (StringUtils.isAsciiDigit(codePoint(input, pointer))) {
-                        int number = Character.digit(codePoint(input, pointer), 10);
+                    while (StringUtils.isAsciiDigit(codePoint(input, pointer, end))) {
+                        int number = Character.digit(codePoint(input, pointer, end), 10);
                         if (ipv4Piece == null) {
                             ipv4Piece = number;
                         } else if (ipv4Piece == 0) {
@@ -461,26 +448,36 @@ public final class UrlParser {
                         }
                         pointer++;
                     }
-                    address[pieceIndex] = address[pieceIndex] * 0x100 + ipv4Piece;
+                    embeddedPiece = embeddedPiece * 0x100 + ipv4Piece;
                     numbersSeen++;
                     if (numbersSeen == 2 || numbersSeen == 4) {
+                        if (pieceIndex < 4) {
+                            highBits = setIpv6Piece(highBits, pieceIndex, embeddedPiece);
+                        } else {
+                            lowBits = setIpv6Piece(lowBits, pieceIndex - 4, embeddedPiece);
+                        }
                         pieceIndex++;
+                        embeddedPiece = 0;
                     }
                 }
                 if (numbersSeen != 4) {
                     throw parseError(input, WebURLParseException.ErrorType.IPV4_IN_IPV6_TOO_FEW_PARTS, pointer);
                 }
                 break;
-            } else if (codePoint(input, pointer) == ':') {
+            } else if (codePoint(input, pointer, end) == ':') {
                 pointer++;
-                if (codePoint(input, pointer) == EOF) {
+                if (codePoint(input, pointer, end) == EOF) {
                     throw parseError(input, WebURLParseException.ErrorType.IPV6_INVALID_CODE_POINT, pointer);
                 }
-            } else if (codePoint(input, pointer) != EOF) {
+            } else if (codePoint(input, pointer, end) != EOF) {
                 throw parseError(input, WebURLParseException.ErrorType.IPV6_INVALID_CODE_POINT, pointer);
             }
 
-            address[pieceIndex] = value;
+            if (pieceIndex < 4) {
+                highBits = setIpv6Piece(highBits, pieceIndex, value);
+            } else {
+                lowBits = setIpv6Piece(lowBits, pieceIndex - 4, value);
+            }
             pieceIndex++;
         }
 
@@ -488,17 +485,28 @@ public final class UrlParser {
             int swaps = pieceIndex - compress;
             pieceIndex = 7;
             while (pieceIndex != 0 && swaps > 0) {
-                int temp = address[compress + swaps - 1];
-                address[compress + swaps - 1] = address[pieceIndex];
-                address[pieceIndex] = temp;
+                int sourceIndex = compress + swaps - 1;
+                if (sourceIndex != pieceIndex) {
+                    int value = ipv6Piece(highBits, lowBits, sourceIndex);
+                    if (pieceIndex < 4) {
+                        highBits = setIpv6Piece(highBits, pieceIndex, value);
+                    } else {
+                        lowBits = setIpv6Piece(lowBits, pieceIndex - 4, value);
+                    }
+                    if (sourceIndex < 4) {
+                        highBits = setIpv6Piece(highBits, sourceIndex, 0);
+                    } else {
+                        lowBits = setIpv6Piece(lowBits, sourceIndex - 4, 0);
+                    }
+                }
                 pieceIndex--;
                 swaps--;
             }
         } else if (pieceIndex != 8) {
-            throw parseError(input, WebURLParseException.ErrorType.IPV6_TOO_FEW_PIECES, input.length());
+            throw parseError(input, WebURLParseException.ErrorType.IPV6_TOO_FEW_PIECES, end);
         }
 
-        return address;
+        return UrlHost.ipv6(highBits, lowBits);
     }
 
     /// Returns whether a string is a single-dot path segment.
@@ -579,6 +587,26 @@ public final class UrlParser {
     /// Returns the code point at a UTF-16 index, or EOF.
     private static int codePoint(String input, int index) {
         return index >= 0 && index < input.length() ? input.codePointAt(index) : EOF;
+    }
+
+    /// Returns the code point at a UTF-16 index before an exclusive end, or EOF.
+    private static int codePoint(String input, int index, int end) {
+        return index >= 0 && index < end ? input.codePointAt(index) : EOF;
+    }
+
+    /// Returns one 16-bit piece from an IPv6 address.
+    private static int ipv6Piece(long highBits, long lowBits, int index) {
+        if (index < 4) {
+            return (int) ((highBits >>> (48 - index * 16)) & 0xffffL);
+        }
+        return (int) ((lowBits >>> (48 - (index - 4) * 16)) & 0xffffL);
+    }
+
+    /// Returns an IPv6 address half with one 16-bit piece replaced.
+    private static long setIpv6Piece(long bits, int index, int value) {
+        int shift = 48 - index * 16;
+        long mask = 0xffffL << shift;
+        return bits & ~mask | ((long) value & 0xffffL) << shift;
     }
 
     /// Returns the UTF-16 index of the next code point.

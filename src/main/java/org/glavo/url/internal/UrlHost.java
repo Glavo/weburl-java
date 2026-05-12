@@ -52,25 +52,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
         return new IPv4(value);
     }
 
-    /// Creates an IPv6 host from eight 16-bit address pieces.
-    static IPv6 ipv6(int[] value) {
-        if (value.length != 8) {
-            throw new IllegalArgumentException("IPv6 address must contain eight pieces");
-        }
-
-        long highBits = 0;
-        long lowBits = 0;
-        for (int i = 0; i < 4; i++) {
-            int piece = checkedIpv6Piece(value[i]);
-            highBits = highBits << 16 | piece;
-        }
-        for (int i = 4; i < 8; i++) {
-            int piece = checkedIpv6Piece(value[i]);
-            lowBits = lowBits << 16 | piece;
-        }
-        return ipv6(highBits, lowBits);
-    }
-
     /// Creates an IPv6 host from the high and low 64-bit halves of the address.
     static IPv6 ipv6(long highBits, long lowBits) {
         return new IPv6(highBits, lowBits);
@@ -300,14 +281,6 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
             return (int) ((highBits >>> (48 - index * 16)) & 0xffffL);
         }
         return (int) ((lowBits >>> (48 - (index - 4) * 16)) & 0xffffL);
-    }
-
-    /// Checks an IPv6 piece and returns it unchanged.
-    private static int checkedIpv6Piece(int value) {
-        if ((value & ~0xffff) != 0) {
-            throw new IllegalArgumentException("IPv6 address piece is out of range");
-        }
-        return value;
     }
 
     /// Finds the IPv6 zero run to compress during serialization.

@@ -350,6 +350,9 @@ public final class WebURLTest {
         assertEquals("127.0.0.1", WebURL.parse("http://127.1").getHost());
         assertEquals("http://[2001:db8::1]/", WebURL.parse("http://[2001:db8::1]/").href());
         assertEquals("[2001:db8::1]", WebURL.parse("http://[2001:db8::1]/").getHost());
+        assertEquals("http://[1:2::3:4]/", WebURL.parse("http://[1:2:0:0:0:0:3:4]/").href());
+        assertEquals("http://[::ffff:7f00:1]/", WebURL.parse("http://[::ffff:127.0.0.1]/").href());
+        assertEquals("http://[1:2:3:4:5:6:7:8]/", WebURL.parse("http://[1:2:3:4:5:6:7:8]/").href());
         assertEquals("https://xn--bcher-kva.example/", WebURL.parse("https://bücher.example/").href());
         assertEquals("xn--bcher-kva.example", WebURL.parse("https://bücher.example/").getHost());
         assertEquals("", WebURL.parse("file:///C:/demo").getHost());
