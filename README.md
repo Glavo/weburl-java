@@ -245,6 +245,8 @@ URI uri = WebURL.toURI("https://example.com/a b?q=1#f");
 
 When converting a `WebURL` to `java.net.URI`/`java.net.URL`, the URL is normalized to the RFC 2396 standard,
 so using `WebURL.toURI(String)` instead of `java.net.URI.create(String)` allows parsing a wider range of real-world URLs.
+`WebURL.toURI()` throws `URISyntaxException` when a normalized URL still has no Java `URI` representation, while
+`WebURL.toURL()` continues to report conversion and handler failures as `MalformedURLException`.
 
 ### Parsing User Input
 

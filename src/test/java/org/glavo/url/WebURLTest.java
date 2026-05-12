@@ -25,6 +25,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -133,7 +134,7 @@ public final class WebURLTest {
 
     /// Tests that repeated computed getters return cached values.
     @Test
-    public void cachesComputedValues() {
+    public void cachesComputedValues() throws Exception {
         WebURL url = WebURL.parse("https://user:pass@example.com:8080/a/b?x=1#f");
 
         assertSame(url.href(), url.href());
@@ -267,7 +268,7 @@ public final class WebURLTest {
 
     /// Tests decoded component getters preserve invalid percent triplets literally.
     @Test
-    public void preservesInvalidPercentTripletsInDecodedComponents() {
+    public void preservesInvalidPercentTripletsInDecodedComponents() throws Exception {
         WebURL url = WebURL.parse("http://example.com/%zz?x=%zz#%zz");
         URI uri = url.toURI();
 
@@ -486,7 +487,7 @@ public final class WebURLTest {
 
     /// Tests Java URI conversion preserves existing percent escapes.
     @Test
-    public void preservesPercentEscapesInJavaUriConversion() {
+    public void preservesPercentEscapesInJavaUriConversion() throws Exception {
         WebURL url = WebURL.parse("https://user%40name:pa%3Ass@example.com/a%2Fb?x=a%26b#frag%23ment");
         URI uri = url.toURI();
 
@@ -521,8 +522,16 @@ public final class WebURLTest {
 
         assertEquals("non-special:", emptyOpaque.toRFC2396String());
         assertEquals("non-special:#fragment", emptyOpaqueWithFragment.toRFC2396String());
-        assertThrows(UnsupportedOperationException.class, emptyOpaque::toURI);
-        assertThrows(UnsupportedOperationException.class, emptyOpaqueWithFragment::toURI);
+        assertThrows(URISyntaxException.class, emptyOpaque::toURI);
+        assertThrows(URISyntaxException.class, emptyOpaqueWithFragment::toURI);
+
+        IllegalArgumentException staticException =
+                assertThrows(IllegalArgumentException.class, () -> WebURL.toURI("non-special:"));
+        assertTrue(staticException.getCause() instanceof URISyntaxException);
+
+        MalformedURLException urlException = assertThrows(MalformedURLException.class, emptyOpaque::toURL);
+        assertTrue(urlException.getCause() instanceof URISyntaxException);
+        assertThrows(MalformedURLException.class, () -> WebURL.toURL("non-special:"));
     }
 
     /// Serializes and deserializes a `WebURL`.

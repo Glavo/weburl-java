@@ -612,25 +612,27 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the serialized URL as a Java `URI`.
     @Override
-    public URI toURI() {
+    public URI toURI() throws URISyntaxException {
         @Nullable URI cached = uri;
         if (cached != null) {
             return cached;
         }
 
-        try {
-            URI value = new URI(toRFC2396String());
-            uri = value;
-            return value;
-        } catch (URISyntaxException exception) {
-            throw new UnsupportedOperationException("This URL cannot be represented as an RFC 2396 URI", exception);
-        }
+        URI value = new URI(toRFC2396String());
+        uri = value;
+        return value;
     }
 
     /// Returns the serialized URL as a Java `URL`.
     @Override
     public URL toURL() throws MalformedURLException {
-        return toURI().toURL();
+        try {
+            return toURI().toURL();
+        } catch (URISyntaxException exception) {
+            MalformedURLException malformed = new MalformedURLException(exception.getMessage());
+            malformed.initCause(exception);
+            throw malformed;
+        }
     }
 
     /// Compares this URL with another URL by serialized URL string.
