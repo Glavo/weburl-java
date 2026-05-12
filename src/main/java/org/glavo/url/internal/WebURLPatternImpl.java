@@ -43,7 +43,7 @@ public final class WebURLPatternImpl implements WebURLPattern {
     /// Compiles a component builder.
     public static WebURLPattern compile(WebURLPattern.Builder builder, boolean ignoreCase) {
         WebURLPatternBuilderImpl implementation = implementation(Objects.requireNonNull(builder, "builder"));
-        return new WebURLPatternImpl(WebURLPatternEngine.compile(implementation.toEngineInit(), ignoreCase));
+        return new WebURLPatternImpl(WebURLPatternEngine.compile(implementation.toPatternInit(), ignoreCase));
     }
 
     /// Tests a URL string.
@@ -104,7 +104,7 @@ public final class WebURLPatternImpl implements WebURLPattern {
     @Contract(pure = true)
     public @Nullable WebURLPattern.Result exec(WebURLPattern.Builder input) {
         WebURLPatternBuilderImpl implementation = implementation(Objects.requireNonNull(input, "input"));
-        return toResult(engine.match(implementation.toEngineInit()));
+        return toResult(engine.match(implementation.toPatternInit()));
     }
 
     /// Returns the protocol pattern string without a trailing colon.

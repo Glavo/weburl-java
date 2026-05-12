@@ -16,7 +16,7 @@
 package org.glavo.url.internal;
 
 import org.glavo.url.WebURLPattern;
-import org.glavo.url.internal.pattern.WebURLPatternEngine;
+import org.glavo.url.internal.pattern.URLPatternInit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -119,8 +119,8 @@ public final class WebURLPatternBuilderImpl implements WebURLPattern.Builder {
         return this;
     }
 
-    /// Converts this builder to the internal init type.
-    WebURLPatternEngine.Init toEngineInit() {
-        return new WebURLPatternEngine.Init(scheme, username, password, host, port, path, query, fragment, baseURL);
+    /// Converts this builder to the internal URLPattern init value.
+    URLPatternInit toPatternInit() {
+        return new URLPatternInit(scheme, username, password, host, port, path, query, fragment, baseURL);
     }
 }

@@ -76,9 +76,38 @@ public final class WebURLPatternEngine {
         return compile(init, ignoreCase);
     }
 
-    /// Compiles a component init.
-    public static WebURLPatternEngine compile(Init input, boolean ignoreCase) {
-        return compile(input.toInternal(), ignoreCase);
+    /// Compiles a component URLPattern init.
+    public static WebURLPatternEngine compile(URLPatternInit input, boolean ignoreCase) {
+        URLPatternInit processed = URLPatternInit.process(input, URLPatternInit.ProcessType.PATTERN,
+                null, null, null, null, null, null, null, null);
+        fillDefaults(processed);
+        normalizeDefaultPort(processed);
+
+        PatternOptions defaultOptions = PatternOptions.DEFAULT.withIgnoreCase(ignoreCase);
+        PatternComponent protocol = PatternComponent.compile(require(processed.protocol),
+                URLPatternCanonicalizer::canonicalizeProtocol, defaultOptions);
+        PatternComponent username = PatternComponent.compile(require(processed.username),
+                URLPatternCanonicalizer::canonicalizeUsername, defaultOptions);
+        PatternComponent password = PatternComponent.compile(require(processed.password),
+                URLPatternCanonicalizer::canonicalizePassword, defaultOptions);
+        String hostnameValue = require(processed.hostname);
+        PatternComponent hostname = isIpv6Address(hostnameValue)
+                ? PatternComponent.exact(URLPatternCanonicalizer.canonicalizeIpv6Hostname(hostnameValue))
+                : PatternComponent.compile(hostnameValue, URLPatternCanonicalizer::canonicalizeHostname,
+                PatternOptions.HOSTNAME.withIgnoreCase(ignoreCase));
+        PatternComponent port = PatternComponent.compile(require(processed.port),
+                URLPatternCanonicalizer::canonicalizePort, defaultOptions);
+        PatternComponent pathname = protocol.matchesSpecialScheme()
+                ? PatternComponent.compile(require(processed.pathname),
+                URLPatternCanonicalizer::canonicalizePathname, PatternOptions.PATHNAME.withIgnoreCase(ignoreCase))
+                : PatternComponent.compile(require(processed.pathname),
+                URLPatternCanonicalizer::canonicalizeOpaquePathname, defaultOptions);
+        PatternComponent search = PatternComponent.compile(require(processed.search),
+                URLPatternCanonicalizer::canonicalizeSearch, defaultOptions);
+        PatternComponent hash = PatternComponent.compile(require(processed.hash),
+                URLPatternCanonicalizer::canonicalizeHash, defaultOptions);
+        return new WebURLPatternEngine(protocol, username, password, hostname, port, pathname, search, hash,
+                ignoreCase);
     }
 
     /// Matches a parsed URL.
@@ -96,11 +125,11 @@ public final class WebURLPatternEngine {
         }
     }
 
-    /// Matches a component init input.
-    public @Nullable MatchResult match(Init input) {
+    /// Matches a component URLPattern init input.
+    public @Nullable MatchResult match(URLPatternInit input) {
         URLPatternInit processed;
         try {
-            processed = URLPatternInit.process(input.toInternal(), URLPatternInit.ProcessType.URL,
+            processed = URLPatternInit.process(input, URLPatternInit.ProcessType.URL,
                     "", "", "", "", "", "", "", "");
         } catch (RuntimeException ignored) {
             return null;
@@ -172,40 +201,6 @@ public final class WebURLPatternEngine {
                 || pathname.hasRegExpGroups()
                 || search.hasRegExpGroups()
                 || hash.hasRegExpGroups();
-    }
-
-    /// Compiles an internal init.
-    private static WebURLPatternEngine compile(URLPatternInit init, boolean ignoreCase) {
-        URLPatternInit processed = URLPatternInit.process(init, URLPatternInit.ProcessType.PATTERN,
-                null, null, null, null, null, null, null, null);
-        fillDefaults(processed);
-        normalizeDefaultPort(processed);
-
-        PatternOptions defaultOptions = PatternOptions.DEFAULT.withIgnoreCase(ignoreCase);
-        PatternComponent protocol = PatternComponent.compile(require(processed.protocol),
-                URLPatternCanonicalizer::canonicalizeProtocol, defaultOptions);
-        PatternComponent username = PatternComponent.compile(require(processed.username),
-                URLPatternCanonicalizer::canonicalizeUsername, defaultOptions);
-        PatternComponent password = PatternComponent.compile(require(processed.password),
-                URLPatternCanonicalizer::canonicalizePassword, defaultOptions);
-        String hostnameValue = require(processed.hostname);
-        PatternComponent hostname = isIpv6Address(hostnameValue)
-                ? PatternComponent.exact(URLPatternCanonicalizer.canonicalizeIpv6Hostname(hostnameValue))
-                : PatternComponent.compile(hostnameValue, URLPatternCanonicalizer::canonicalizeHostname,
-                PatternOptions.HOSTNAME.withIgnoreCase(ignoreCase));
-        PatternComponent port = PatternComponent.compile(require(processed.port),
-                URLPatternCanonicalizer::canonicalizePort, defaultOptions);
-        PatternComponent pathname = protocol.matchesSpecialScheme()
-                ? PatternComponent.compile(require(processed.pathname),
-                URLPatternCanonicalizer::canonicalizePathname, PatternOptions.PATHNAME.withIgnoreCase(ignoreCase))
-                : PatternComponent.compile(require(processed.pathname),
-                URLPatternCanonicalizer::canonicalizeOpaquePathname, defaultOptions);
-        PatternComponent search = PatternComponent.compile(require(processed.search),
-                URLPatternCanonicalizer::canonicalizeSearch, defaultOptions);
-        PatternComponent hash = PatternComponent.compile(require(processed.hash),
-                URLPatternCanonicalizer::canonicalizeHash, defaultOptions);
-        return new WebURLPatternEngine(protocol, username, password, hostname, port, pathname, search, hash,
-                ignoreCase);
     }
 
     /// Matches already prepared input components.
@@ -322,24 +317,6 @@ public final class WebURLPatternEngine {
     /// Strips a leading prefix character if present.
     private static String stripPrefix(String input, char prefix) {
         return !input.isEmpty() && input.charAt(0) == prefix ? input.substring(1) : input;
-    }
-
-    /// Public-to-internal component init.
-    public record Init(
-            @Nullable String protocol,
-            @Nullable String username,
-            @Nullable String password,
-            @Nullable String hostname,
-            @Nullable String port,
-            @Nullable String pathname,
-            @Nullable String search,
-            @Nullable String hash,
-            @Nullable String baseURL
-    ) {
-        /// Converts this record to the mutable internal init shape.
-        URLPatternInit toInternal() {
-            return new URLPatternInit(protocol, username, password, hostname, port, pathname, search, hash, baseURL);
-        }
     }
 
     /// Prepared matching components.

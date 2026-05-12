@@ -23,32 +23,32 @@ import org.jetbrains.annotations.Nullable;
 
 /// Internal URLPatternInit value.
 @NotNullByDefault
-final class URLPatternInit {
+public final class URLPatternInit {
     /// Protocol component, or `null` when absent.
-    @Nullable String protocol;
+    public @Nullable String protocol;
     /// Username component, or `null` when absent.
-    @Nullable String username;
+    public @Nullable String username;
     /// Password component, or `null` when absent.
-    @Nullable String password;
+    public @Nullable String password;
     /// Hostname component, or `null` when absent.
-    @Nullable String hostname;
+    public @Nullable String hostname;
     /// Port component, or `null` when absent.
-    @Nullable String port;
+    public @Nullable String port;
     /// Pathname component, or `null` when absent.
-    @Nullable String pathname;
+    public @Nullable String pathname;
     /// Search component, or `null` when absent.
-    @Nullable String search;
+    public @Nullable String search;
     /// Hash component, or `null` when absent.
-    @Nullable String hash;
+    public @Nullable String hash;
     /// Base URL string, or `null` when absent.
-    @Nullable String baseURL;
+    public @Nullable String baseURL;
 
     /// Creates an empty init.
     URLPatternInit() {
     }
 
     /// Creates an init from components.
-    URLPatternInit(
+    public URLPatternInit(
             @Nullable String protocol,
             @Nullable String username,
             @Nullable String password,
