@@ -172,7 +172,7 @@ WebURL next = docs.resolve("guide/");
 
 ### Matching URL Patterns
 
-`WebURLPattern` implements the core WHATWG URLPattern API with Java-style naming and Java
+`WebURLPattern` provides the core WHATWG URLPattern API with Java-style naming and Java
 regular expressions as the regex backend:
 
 ```java

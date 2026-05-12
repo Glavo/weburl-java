@@ -34,7 +34,7 @@
 /// | [org.glavo.url.WebURL] | Immutable, normalized, absolute URL value |
 /// | [org.glavo.url.WebURLParser] | Reusable parser with configurable validation policy |
 /// | [org.glavo.url.WebURLParseException] | Unchecked exception carrying structured parse-error details |
-/// | [org.glavo.url.WebURLPattern] | Immutable WHATWG URLPattern matcher |
+/// | [org.glavo.url.WebURLPattern] | Immutable WHATWG URLPattern matcher interface |
 /// | [org.glavo.url.WebURLPatternSyntaxException] | Unchecked exception for URLPattern compilation failures |
 ///
 /// # Dependencies
