@@ -581,188 +581,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         return WebURLParser.getDefault().tryParseBrowserInput(input);
     }
 
-    /// Mutable builder for constructing immutable [WebURL] values from URL components.
-    ///
-    /// A builder is mutable and is not thread-safe. Each setter updates one logical URL component and returns this
-    /// builder so calls can be chained. Setter methods validate and normalize the supplied component according to
-    /// the current scheme. If a builder was created with [WebURL#newBuilder()], [#setScheme(String)] must be called
-    /// before any other component setter.
-    ///
-    /// Methods whose names contain `Raw` accept serialized component text, preserving valid percent escapes.
-    /// Methods without `Raw` accept decoded component text and percent-encode it for the target component.
-    /// Passing `null` to an optional component setter removes that component. The path component is required and
-    /// therefore cannot be set to `null`.
-    ///
-    /// `build()` performs final URL-shape validation and returns an immutable URL. Syntax errors in supplied
-    /// components are reported as [IllegalArgumentException]. Missing scheme or component combinations that cannot
-    /// form a URL are reported as [IllegalStateException].
-    ///
-    /// @since 0.2.0
-    @NotNullByDefault
-    sealed interface Builder permits WebURLBuilderImpl {
-        /// Sets the URL scheme.
-        ///
-        /// The scheme must not include the trailing colon. It is normalized to lowercase ASCII. The scheme may be
-        /// changed after other components have been set; affected components are revalidated against the new
-        /// scheme.
-        ///
-        /// @param scheme the URL scheme without the trailing colon
-        /// @return this builder
-        /// @throws IllegalArgumentException when `scheme` is not a valid URL scheme
-        @Contract("_ -> this")
-        WebURL.Builder setScheme(String scheme);
-
-        /// Sets the username from decoded text, or removes it when `username` is `null`.
-        ///
-        /// @param username the decoded username, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `username` cannot be represented as a URL username
-        @Contract("_ -> this")
-        WebURL.Builder setUsername(@Nullable String username);
-
-        /// Sets the username from serialized text, or removes it when `username` is `null`.
-        ///
-        /// @param username the raw username, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `username` is not valid serialized username text
-        @Contract("_ -> this")
-        WebURL.Builder setRawUsername(@Nullable String username);
-
-        /// Sets the password from decoded text, or removes it when `password` is `null`.
-        ///
-        /// @param password the decoded password, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `password` cannot be represented as a URL password
-        @Contract("_ -> this")
-        WebURL.Builder setPassword(@Nullable String password);
-
-        /// Sets the password from serialized text, or removes it when `password` is `null`.
-        ///
-        /// @param password the raw password, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `password` is not valid serialized password text
-        @Contract("_ -> this")
-        WebURL.Builder setRawPassword(@Nullable String password);
-
-        /// Sets the host from decoded text, or removes it when `host` is `null`.
-        ///
-        /// Domain hosts are processed with IDNA ToASCII. IPv4 and IPv6 hosts are normalized according to the URL
-        /// Standard. For non-special schemes, the host is treated as an opaque host.
-        ///
-        /// @param host the decoded host, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `host` cannot be represented as a URL host
-        @Contract("_ -> this")
-        WebURL.Builder setHost(@Nullable String host);
-
-        /// Sets the host from serialized text, or removes it when `host` is `null`.
-        ///
-        /// @param host the raw host, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `host` is not valid serialized host text
-        @Contract("_ -> this")
-        WebURL.Builder setRawHost(@Nullable String host);
-
-        /// Sets the port number.
-        ///
-        /// Passing `-1` removes the explicit port. A port equal to the default port for the current scheme is
-        /// normalized as absent.
-        ///
-        /// @param port the port number, or `-1` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `port` is outside `-1..65535`
-        @Contract("_ -> this")
-        WebURL.Builder setPort(int port);
-
-        /// Sets the port from serialized decimal text, or removes it when `port` is `null`.
-        ///
-        /// @param port the raw port text, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `port` is not a valid URL port
-        @Contract("_ -> this")
-        WebURL.Builder setRawPort(@Nullable String port);
-
-        /// Sets the path from decoded text.
-        ///
-        /// Slash characters are interpreted as path separators for hierarchical URLs. Characters that are not
-        /// allowed in serialized path text are percent-encoded.
-        ///
-        /// @param path the decoded path
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `path` cannot be represented as a URL path
-        @Contract("_ -> this")
-        WebURL.Builder setPath(String path);
-
-        /// Sets the path from serialized text.
-        ///
-        /// @param path the raw path
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `path` is not valid serialized path text
-        @Contract("_ -> this")
-        WebURL.Builder setRawPath(String path);
-
-        /// Sets the query from decoded text, or removes it when `query` is `null`.
-        ///
-        /// The leading question mark is not part of the component and must not be included.
-        ///
-        /// @param query the decoded query, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `query` cannot be represented as a URL query
-        @Contract("_ -> this")
-        WebURL.Builder setQuery(@Nullable String query);
-
-        /// Sets the query from serialized text, or removes it when `query` is `null`.
-        ///
-        /// The leading question mark is not part of the component and must not be included.
-        ///
-        /// @param query the raw query, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `query` is not valid serialized query text
-        @Contract("_ -> this")
-        WebURL.Builder setRawQuery(@Nullable String query);
-
-        /// Sets the fragment from decoded text, or removes it when `fragment` is `null`.
-        ///
-        /// The leading number sign is not part of the component and must not be included.
-        ///
-        /// @param fragment the decoded fragment, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `fragment` cannot be represented as a URL fragment
-        @Contract("_ -> this")
-        WebURL.Builder setFragment(@Nullable String fragment);
-
-        /// Sets the fragment from serialized text, or removes it when `fragment` is `null`.
-        ///
-        /// The leading number sign is not part of the component and must not be included.
-        ///
-        /// @param fragment the raw fragment, or `null` to remove it
-        /// @return this builder
-        /// @throws IllegalStateException when this builder has no scheme
-        /// @throws IllegalArgumentException when `fragment` is not valid serialized fragment text
-        @Contract("_ -> this")
-        WebURL.Builder setRawFragment(@Nullable String fragment);
-
-        /// Builds an immutable URL from the current builder state.
-        ///
-        /// @return the constructed URL
-        /// @throws IllegalStateException when the current components cannot form a valid absolute URL
-        @Contract("-> new")
-        WebURL build();
-    }
-
     /// Returns the complete serialized URL.
     ///
     /// The returned string is the WHATWG URL serialization of this URL. It includes the scheme and path,
@@ -1177,4 +995,186 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     @Contract(pure = true)
     @Override
     String toString();
+
+    /// Mutable builder for constructing immutable [WebURL] values from URL components.
+    ///
+    /// A builder is mutable and is not thread-safe. Each setter updates one logical URL component and returns this
+    /// builder so calls can be chained. Setter methods validate and normalize the supplied component according to
+    /// the current scheme. If a builder was created with [WebURL#newBuilder()], [#setScheme(String)] must be called
+    /// before any other component setter.
+    ///
+    /// Methods whose names contain `Raw` accept serialized component text, preserving valid percent escapes.
+    /// Methods without `Raw` accept decoded component text and percent-encode it for the target component.
+    /// Passing `null` to an optional component setter removes that component. The path component is required and
+    /// therefore cannot be set to `null`.
+    ///
+    /// `build()` performs final URL-shape validation and returns an immutable URL. Syntax errors in supplied
+    /// components are reported as [IllegalArgumentException]. Missing scheme or component combinations that cannot
+    /// form a URL are reported as [IllegalStateException].
+    ///
+    /// @since 0.2.0
+    @NotNullByDefault
+    sealed interface Builder permits WebURLBuilderImpl {
+        /// Sets the URL scheme.
+        ///
+        /// The scheme must not include the trailing colon. It is normalized to lowercase ASCII. The scheme may be
+        /// changed after other components have been set; affected components are revalidated against the new
+        /// scheme.
+        ///
+        /// @param scheme the URL scheme without the trailing colon
+        /// @return this builder
+        /// @throws IllegalArgumentException when `scheme` is not a valid URL scheme
+        @Contract("_ -> this")
+        WebURL.Builder setScheme(String scheme);
+
+        /// Sets the username from decoded text, or removes it when `username` is `null`.
+        ///
+        /// @param username the decoded username, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `username` cannot be represented as a URL username
+        @Contract("_ -> this")
+        WebURL.Builder setUsername(@Nullable String username);
+
+        /// Sets the username from serialized text, or removes it when `username` is `null`.
+        ///
+        /// @param username the raw username, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `username` is not valid serialized username text
+        @Contract("_ -> this")
+        WebURL.Builder setRawUsername(@Nullable String username);
+
+        /// Sets the password from decoded text, or removes it when `password` is `null`.
+        ///
+        /// @param password the decoded password, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `password` cannot be represented as a URL password
+        @Contract("_ -> this")
+        WebURL.Builder setPassword(@Nullable String password);
+
+        /// Sets the password from serialized text, or removes it when `password` is `null`.
+        ///
+        /// @param password the raw password, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `password` is not valid serialized password text
+        @Contract("_ -> this")
+        WebURL.Builder setRawPassword(@Nullable String password);
+
+        /// Sets the host from decoded text, or removes it when `host` is `null`.
+        ///
+        /// Domain hosts are processed with IDNA ToASCII. IPv4 and IPv6 hosts are normalized according to the URL
+        /// Standard. For non-special schemes, the host is treated as an opaque host.
+        ///
+        /// @param host the decoded host, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `host` cannot be represented as a URL host
+        @Contract("_ -> this")
+        WebURL.Builder setHost(@Nullable String host);
+
+        /// Sets the host from serialized text, or removes it when `host` is `null`.
+        ///
+        /// @param host the raw host, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `host` is not valid serialized host text
+        @Contract("_ -> this")
+        WebURL.Builder setRawHost(@Nullable String host);
+
+        /// Sets the port number.
+        ///
+        /// Passing `-1` removes the explicit port. A port equal to the default port for the current scheme is
+        /// normalized as absent.
+        ///
+        /// @param port the port number, or `-1` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `port` is outside `-1..65535`
+        @Contract("_ -> this")
+        WebURL.Builder setPort(int port);
+
+        /// Sets the port from serialized decimal text, or removes it when `port` is `null`.
+        ///
+        /// @param port the raw port text, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `port` is not a valid URL port
+        @Contract("_ -> this")
+        WebURL.Builder setRawPort(@Nullable String port);
+
+        /// Sets the path from decoded text.
+        ///
+        /// Slash characters are interpreted as path separators for hierarchical URLs. Characters that are not
+        /// allowed in serialized path text are percent-encoded.
+        ///
+        /// @param path the decoded path
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `path` cannot be represented as a URL path
+        @Contract("_ -> this")
+        WebURL.Builder setPath(String path);
+
+        /// Sets the path from serialized text.
+        ///
+        /// @param path the raw path
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `path` is not valid serialized path text
+        @Contract("_ -> this")
+        WebURL.Builder setRawPath(String path);
+
+        /// Sets the query from decoded text, or removes it when `query` is `null`.
+        ///
+        /// The leading question mark is not part of the component and must not be included.
+        ///
+        /// @param query the decoded query, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `query` cannot be represented as a URL query
+        @Contract("_ -> this")
+        WebURL.Builder setQuery(@Nullable String query);
+
+        /// Sets the query from serialized text, or removes it when `query` is `null`.
+        ///
+        /// The leading question mark is not part of the component and must not be included.
+        ///
+        /// @param query the raw query, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `query` is not valid serialized query text
+        @Contract("_ -> this")
+        WebURL.Builder setRawQuery(@Nullable String query);
+
+        /// Sets the fragment from decoded text, or removes it when `fragment` is `null`.
+        ///
+        /// The leading number sign is not part of the component and must not be included.
+        ///
+        /// @param fragment the decoded fragment, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `fragment` cannot be represented as a URL fragment
+        @Contract("_ -> this")
+        WebURL.Builder setFragment(@Nullable String fragment);
+
+        /// Sets the fragment from serialized text, or removes it when `fragment` is `null`.
+        ///
+        /// The leading number sign is not part of the component and must not be included.
+        ///
+        /// @param fragment the raw fragment, or `null` to remove it
+        /// @return this builder
+        /// @throws IllegalStateException when this builder has no scheme
+        /// @throws IllegalArgumentException when `fragment` is not valid serialized fragment text
+        @Contract("_ -> this")
+        WebURL.Builder setRawFragment(@Nullable String fragment);
+
+        /// Builds an immutable URL from the current builder state.
+        ///
+        /// @return the constructed URL
+        /// @throws IllegalStateException when the current components cannot form a valid absolute URL
+        @Contract("-> new")
+        WebURL build();
+    }
 }
