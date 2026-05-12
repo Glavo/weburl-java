@@ -145,6 +145,10 @@ public final class WebURLTest {
         assertSame(url.getUserInfo(), url.getUserInfo());
         assertSame(url.getAuthority(), url.getAuthority());
         assertSame(url.getHost(), url.getHost());
+        WebURL ipv4 = WebURL.parse("http://127.0.0.1/");
+        assertSame(ipv4.getHost(), ipv4.getHost());
+        WebURL ipv6 = WebURL.parse("http://[2001:db8::1]/");
+        assertSame(ipv6.getHost(), ipv6.getHost());
         assertSame(url.getPath(), url.getPath());
         assertSame(url.getQuery(), url.getQuery());
         assertSame(url.getRawQuery(), url.getRawQuery());

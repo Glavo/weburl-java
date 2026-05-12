@@ -44,8 +44,8 @@ public final class WebURLImpl implements WebURL {
     private final String scheme;
     /// URL host, or `null` when absent.
     private final @Nullable UrlHost urlHost;
-    /// Serialized host, or `null` when absent.
-    private final @Nullable String host;
+    /// Cached serialized host, or `null` when absent or when an IP host has not been requested.
+    private @Nullable String host;
     /// URL port, or `-1` when absent or defaulted.
     private final int port;
     /// Immutable non-opaque path segments.
@@ -130,7 +130,12 @@ public final class WebURLImpl implements WebURL {
         this.queryRange = queryRange;
         this.fragmentRange = fragmentRange;
         this.pathPrefix = pathPrefix;
-        this.host = serializedHost(record.host, href, hostRange);
+
+        if (record.host instanceof UrlHost.Domain domain) {
+            host = domain.value();
+        } else if (record.host instanceof UrlHost.Opaque opaque) {
+            host = opaque.value();
+        }
     }
 
     /// Returns whether this URL has an opaque path.
@@ -145,12 +150,11 @@ public final class WebURLImpl implements WebURL {
 
     /// Returns the serialized host plus port when a port is present.
     private String hostAndPort() {
-        @Nullable String host = this.host;
-        if (host == null) {
+        if (!hasHost()) {
             return "";
         }
         if (IndexRanges.isAbsent(portRange)) {
-            return host;
+            return serializedHost();
         }
 
         String href = href();
@@ -441,7 +445,7 @@ public final class WebURLImpl implements WebURL {
     /// Returns the host, or `null` when absent.
     @Override
     public @Nullable String getHost() {
-        return host;
+        return hasHost() ? serializedHost() : null;
     }
 
     /// Returns the effective port value, or `-1` when absent and no default is known.
@@ -634,22 +638,14 @@ public final class WebURLImpl implements WebURL {
         }
     }
 
-    /// Returns the serialized host string for the host value.
-    private static @Nullable String serializedHost(
-            @Nullable UrlHost host,
-            String href,
-            @IndexRange("href") long hostRange
-    ) {
-        if (host == null) {
-            return null;
+    /// Returns the serialized host string, computing it lazily for IP hosts.
+    private String serializedHost() {
+        @Nullable String value = host;
+        if (value == null) {
+            value = IndexRanges.substring(href(), hostRange);
+            host = value;
         }
-        if (host instanceof UrlHost.Domain domain) {
-            return domain.value();
-        }
-        if (host instanceof UrlHost.Opaque opaque) {
-            return opaque.value();
-        }
-        return IndexRanges.substring(href, hostRange);
+        return value;
     }
 
     /// Appends either a decoded display component or the original serialized component.
