@@ -144,6 +144,7 @@ public final class WebURLTest {
         assertSame(url.getPassword(), url.getPassword());
         assertSame(url.getUserInfo(), url.getUserInfo());
         assertSame(url.getAuthority(), url.getAuthority());
+        assertSame(url.getHost(), url.getHost());
         assertSame(url.getPath(), url.getPath());
         assertSame(url.getQuery(), url.getQuery());
         assertSame(url.getRawQuery(), url.getRawQuery());
