@@ -152,10 +152,8 @@ public final class WebURLTest {
         assertSame(url.getPath(), url.getPath());
         assertSame(url.getQuery(), url.getQuery());
         assertSame(url.getRawQuery(), url.getRawQuery());
-        assertSame(url.getRawQueryOrEmpty(), url.getRawQueryOrEmpty());
         assertSame(url.getFragment(), url.getFragment());
         assertSame(url.getRawFragment(), url.getRawFragment());
-        assertSame(url.getRawFragmentOrEmpty(), url.getRawFragmentOrEmpty());
         assertSame(url.href(), url.toDisplayString());
         assertSame(url.toDisplayString(), url.toDisplayString());
         assertSame(url.href(), url.toRFC2396String());
@@ -171,10 +169,8 @@ public final class WebURLTest {
         assertEquals("https", url.getScheme());
         assertEquals("user", url.getUsername());
         assertEquals("user", url.getRawUsername());
-        assertEquals("user", url.getRawUsernameOrEmpty());
         assertEquals("pass", url.getPassword());
         assertEquals("pass", url.getRawPassword());
-        assertEquals("pass", url.getRawPasswordOrEmpty());
         assertEquals("user:pass", url.getUserInfo());
         assertEquals("user:pass", url.getRawUserInfo());
         assertEquals("user:pass@example.com:8080", url.getAuthority());
@@ -184,17 +180,13 @@ public final class WebURLTest {
         assertEquals("8080", url.getRawPort());
         assertEquals("/a%2Fb", url.getRawPath());
         assertEquals("x=a%26b", url.getRawQuery());
-        assertEquals("x=a%26b", url.getRawQueryOrEmpty());
         assertEquals("frag%23ment", url.getRawFragment());
-        assertEquals("frag%23ment", url.getRawFragmentOrEmpty());
 
         WebURL absentComponents = WebURL.parse("https://example.com/path");
         assertNull(absentComponents.getUsername());
         assertNull(absentComponents.getRawUsername());
-        assertEquals("", absentComponents.getRawUsernameOrEmpty());
         assertNull(absentComponents.getPassword());
         assertNull(absentComponents.getRawPassword());
-        assertEquals("", absentComponents.getRawPasswordOrEmpty());
         assertNull(absentComponents.getUserInfo());
         assertNull(absentComponents.getRawUserInfo());
         assertEquals("example.com", absentComponents.getAuthority());
@@ -204,9 +196,7 @@ public final class WebURLTest {
         assertNull(absentComponents.getRawPort());
         assertEquals("/path", absentComponents.getRawPath());
         assertNull(absentComponents.getRawQuery());
-        assertEquals("", absentComponents.getRawQueryOrEmpty());
         assertNull(absentComponents.getRawFragment());
-        assertEquals("", absentComponents.getRawFragmentOrEmpty());
 
         WebURL defaultPort = WebURL.parse("https://example.com:443/path");
         assertEquals(443, defaultPort.getPort());

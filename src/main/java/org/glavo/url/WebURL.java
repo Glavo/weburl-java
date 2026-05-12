@@ -755,15 +755,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     @Contract(pure = true)
     @Nullable String getRawUsername();
 
-    /// Returns the raw username component or the empty string when absent.
-    ///
-    /// This method is a null-free convenience view over {@link #getRawUsername()}. It does not percent-decode
-    /// the returned value.
-    ///
-    /// @return the raw username component, or the empty string when absent
-    @Contract(pure = true)
-    String getRawUsernameOrEmpty();
-
     /// Returns the decoded password component.
     ///
     /// This method is the Java `URI`-style decoded view of the URL password. It is equivalent to
@@ -789,15 +780,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @return the raw password component, or `null` when absent
     @Contract(pure = true)
     @Nullable String getRawPassword();
-
-    /// Returns the raw password component or the empty string when absent.
-    ///
-    /// This method is a null-free convenience view over {@link #getRawPassword()}. It does not percent-decode
-    /// the returned value.
-    ///
-    /// @return the raw password component, or the empty string when absent
-    @Contract(pure = true)
-    String getRawPasswordOrEmpty();
 
     /// Returns the decoded user-info component.
     ///
@@ -955,15 +937,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     @Contract(pure = true)
     @Nullable String getRawQuery();
 
-    /// Returns the raw query component or the empty string when absent.
-    ///
-    /// This method is a null-free convenience view over {@link #getRawQuery()}. It does not include the leading
-    /// question mark and does not percent-decode the returned value.
-    ///
-    /// @return the raw query component, or the empty string when absent
-    @Contract(pure = true)
-    String getRawQueryOrEmpty();
-
     /// Returns the decoded fragment component.
     ///
     /// This method is the Java `URI`-style getter for the decoded URL fragment. It is equivalent to
@@ -987,15 +960,6 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     @Contract(pure = true)
     @Nullable String getRawFragment();
 
-    /// Returns the raw fragment component or the empty string when absent.
-    ///
-    /// This method is a null-free convenience view over {@link #getRawFragment()}. It does not include the
-    /// leading number sign and does not percent-decode the returned value.
-    ///
-    /// @return the raw fragment component, or the empty string when absent
-    @Contract(pure = true)
-    String getRawFragmentOrEmpty();
-
     /// Returns the WHATWG `URL.protocol` attribute.
     ///
     /// This is the web-style serialized scheme view: it returns {@link #getScheme()} followed by a trailing
@@ -1017,7 +981,8 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @since 0.3.0
     @Contract(pure = true)
     default String getWebUsername() {
-        return getRawUsernameOrEmpty();
+        @Nullable String username = getRawUsername();
+        return username == null ? "" : username;
     }
 
     /// Returns the WHATWG `URL.password` attribute.
@@ -1029,7 +994,8 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// @since 0.3.0
     @Contract(pure = true)
     default String getWebPassword() {
-        return getRawPasswordOrEmpty();
+        @Nullable String password = getRawPassword();
+        return password == null ? "" : password;
     }
 
     /// Returns the WHATWG `URL.host` attribute.

@@ -206,8 +206,8 @@ public final class WebURLImpl implements WebURL {
     UrlRecord toRecord() {
         UrlRecord record = new UrlRecord();
         record.scheme = scheme;
-        record.username = getRawUsernameOrEmpty();
-        record.password = getRawPasswordOrEmpty();
+        record.username = rawUsernameValue();
+        record.password = rawPasswordValue();
         record.host = urlHost;
         record.port = port;
         record.path = new ArrayList<>(pathSegments);
@@ -349,16 +349,15 @@ public final class WebURLImpl implements WebURL {
         return value;
     }
 
-    /// Returns the raw username, or the empty string when absent.
-    @Override
-    public String getRawUsernameOrEmpty() {
+    /// Returns the raw username value stored in URL record form.
+    String rawUsernameValue() {
         return IndexRanges.isAbsent(usernameRange) ? "" : IndexRanges.substring(href(), usernameRange);
     }
 
     /// Returns the raw username, or `null` when absent.
     @Override
     public @Nullable String getRawUsername() {
-        return IndexRanges.isAbsent(usernameRange) ? null : getRawUsernameOrEmpty();
+        return IndexRanges.isAbsent(usernameRange) ? null : rawUsernameValue();
     }
 
     /// Returns the decoded password, or `null` when absent.
@@ -377,16 +376,15 @@ public final class WebURLImpl implements WebURL {
         return value;
     }
 
-    /// Returns the raw password, or the empty string when absent.
-    @Override
-    public String getRawPasswordOrEmpty() {
+    /// Returns the raw password value stored in URL record form.
+    String rawPasswordValue() {
         return IndexRanges.isAbsent(passwordRange) ? "" : IndexRanges.substring(href(), passwordRange);
     }
 
     /// Returns the raw password, or `null` when absent.
     @Override
     public @Nullable String getRawPassword() {
-        return IndexRanges.isAbsent(passwordRange) ? null : getRawPasswordOrEmpty();
+        return IndexRanges.isAbsent(passwordRange) ? null : rawPasswordValue();
     }
 
     /// Returns the decoded user-info, or `null` when absent.
@@ -502,13 +500,6 @@ public final class WebURLImpl implements WebURL {
         return rawQueryValue;
     }
 
-    /// Returns the raw query, or the empty string when absent.
-    @Override
-    public String getRawQueryOrEmpty() {
-        @Nullable String value = rawQueryValue;
-        return value == null ? "" : value;
-    }
-
     /// Returns the decoded fragment, or `null` when absent.
     @Override
     public @Nullable String getFragment() {
@@ -528,13 +519,6 @@ public final class WebURLImpl implements WebURL {
     @Override
     public @Nullable String getRawFragment() {
         return rawFragmentValue;
-    }
-
-    /// Returns the raw fragment, or the empty string when absent.
-    @Override
-    public String getRawFragmentOrEmpty() {
-        @Nullable String value = rawFragmentValue;
-        return value == null ? "" : value;
     }
 
     /// Returns the serialized URL as a Java `URI`.

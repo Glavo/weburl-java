@@ -2,6 +2,12 @@
 
 ## 0.3.0 (In development)
 
+### Breaking Changes
+
+- Removed `WebURL` `getRawUsernameOrEmpty()`, `getRawPasswordOrEmpty()`, `getRawQueryOrEmpty()`,
+  and `getRawFragmentOrEmpty()`. Use the nullable Java-style raw getters or the null-free WHATWG-style
+  getters instead.
+
 ### New APIs
 
 - Added WHATWG-style `WebURL` component getters: `getWebProtocol()`, `getWebUsername()`,

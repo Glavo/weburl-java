@@ -1278,8 +1278,8 @@ public final class UrlParser {
                 recordValidationError(WebURLParseException.ErrorType.INVALID_REVERSE_SOLIDUS);
                 state = State.RELATIVE_SLASH;
             } else {
-                record.username = base.getRawUsernameOrEmpty();
-                record.password = base.getRawPasswordOrEmpty();
+                record.username = base.rawUsernameValue();
+                record.password = base.rawPasswordValue();
                 record.host = base.hostValue();
                 record.port = base.portValue();
                 record.path = base.pathSegments();
@@ -1316,8 +1316,8 @@ public final class UrlParser {
             } else if (c == '/') {
                 state = State.AUTHORITY;
             } else {
-                record.username = base.getRawUsernameOrEmpty();
-                record.password = base.getRawPasswordOrEmpty();
+                record.username = base.rawUsernameValue();
+                record.password = base.rawPasswordValue();
                 record.host = base.hostValue();
                 record.port = base.portValue();
                 state = State.PATH;
