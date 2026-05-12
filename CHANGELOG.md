@@ -13,6 +13,10 @@
 - Added WHATWG-style `WebURL` component getters: `getWebProtocol()`, `getWebUsername()`,
   `getWebPassword()`, `getWebHost()`, `getWebHostname()`, `getWebPort()`, `getWebPathname()`,
   `getWebSearch()`, and `getWebHash()`.
+- Added `WebURLPattern` and `WebURLPatternSyntaxException` for precompiled WHATWG URLPattern-style
+  matching with component builders, shorthand string patterns, base URL handling, `test`, `exec`,
+  capture groups, `ignoreCase`, and `hasRegExpGroups()`. The regex backend uses Java
+  `java.util.regex.Pattern`, so ECMAScript `v` / `vi` regex behavior is not fully equivalent.
 
 ## 0.2.0 (2026-05-12)
 

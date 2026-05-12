@@ -102,7 +102,7 @@ public final class UrlParser {
     }
 
     /// Returns the default port for a special scheme.
-    static int defaultPort(String scheme) {
+    public static int defaultPort(String scheme) {
         return switch (scheme) {
             case "ftp" -> 21;
             case "http", "ws" -> 80;

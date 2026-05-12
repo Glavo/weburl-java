@@ -28,6 +28,8 @@
 /// | [org.glavo.url.WebURL]          | Immutable, absolute URL value; resolved and normalized |
 /// | [org.glavo.url.WebURLParser]    | Reusable parser with configurable validation policy    |
 /// | [org.glavo.url.WebURLParseException] | Unchecked exception with structured error details |
+/// | [org.glavo.url.WebURLPattern]   | Immutable WHATWG URLPattern matcher                    |
+/// | [org.glavo.url.WebURLPatternSyntaxException] | Unchecked exception for URLPattern compilation failures |
 ///
 /// # Quick Start
 ///
@@ -44,6 +46,13 @@
 /// // Browser-address-bar-style input
 /// WebURL addr = WebURL.parseBrowserInput("example.com:8080/path");
 /// // addr.href() == "http://example.com:8080/path"
+///
+/// // URLPattern-style matching
+/// WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
+///         .setScheme("https")
+///         .setHost("example.com")
+///         .setPath("/users/:id"));
+/// pattern.test("https://example.com/users/42"); // true
 /// ```
 ///
 /// # Comparison with java.net
@@ -73,6 +82,7 @@
 /// @see org.glavo.url.WebURL
 /// @see org.glavo.url.WebURLParser
 /// @see org.glavo.url.WebURLParseException
+/// @see org.glavo.url.WebURLPattern
 @NotNullByDefault
 package org.glavo.url;
 

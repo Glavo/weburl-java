@@ -19,6 +19,7 @@ Chrome, Firefox, and Safari do, giving Java applications the same URL behavior a
 - [Add to Your Project](#add-to-your-project)
 - [Quick Start](#quick-start)
     - [Parsing URLs](#parsing-urls)
+    - [Matching URL Patterns](#matching-url-patterns)
     - [URL Components](#url-components)
     - [URL Normalization](#url-normalization)
     - [Error Handling](#error-handling)
@@ -168,6 +169,32 @@ WebURL page = WebURL.parse("api/v2", docs);
 WebURL next = docs.resolve("guide/");
 // -> "https://example.com/guide/"
 ```
+
+### Matching URL Patterns
+
+`WebURLPattern` implements the core WHATWG URLPattern API with Java-style naming and Java
+regular expressions as the regex backend:
+
+```java
+WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
+        .setScheme("https")
+        .setHost("example.com")
+        .setPath("/users/:id([0-9]+)"));
+
+pattern.test("https://example.com/users/42"); // true
+
+WebURLPattern.Result result = pattern.exec("https://example.com/users/42");
+result.pathname().groups().get("id"); // "42"
+```
+
+Pattern getters mirror `WebURL`: Java-style getters such as `getScheme()` and `getPath()` return
+component pattern strings without URL delimiters, while URLPattern attribute getters such as
+`getWebProtocol()` and `getWebPathname()` return WHATWG URLPattern attribute values. Unlike
+`WebURL.getWebProtocol()`, `WebURLPattern.getWebProtocol()` does not include a trailing colon.
+
+`WebURLPattern.Options` supports `ignoreCase`. The implementation uses `java.util.regex.Pattern`,
+so ECMAScript `v` / `vi` regular-expression features are not fully equivalent to browser
+URLPattern implementations.
 
 ### URL Components
 

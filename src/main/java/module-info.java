@@ -27,13 +27,15 @@
 /// # Module Contents
 ///
 /// The single exported package is [org.glavo.url].
-/// It contains three public types:
+/// It contains five primary public types:
 ///
 /// | Type | Role |
 /// |------|------|
 /// | [org.glavo.url.WebURL] | Immutable, normalized, absolute URL value |
 /// | [org.glavo.url.WebURLParser] | Reusable parser with configurable validation policy |
 /// | [org.glavo.url.WebURLParseException] | Unchecked exception carrying structured parse-error details |
+/// | [org.glavo.url.WebURLPattern] | Immutable WHATWG URLPattern matcher |
+/// | [org.glavo.url.WebURLPatternSyntaxException] | Unchecked exception for URLPattern compilation failures |
 ///
 /// # Dependencies
 ///

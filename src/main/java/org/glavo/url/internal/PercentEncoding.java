@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 
 /// Percent encoding and decoding helpers for URL components.
 @NotNullByDefault
-final class PercentEncoding {
+public final class PercentEncoding {
     /// Upper-case hexadecimal digits used by percent encoding.
     private static final String UPPER_HEX_DIGITS = "0123456789ABCDEF";
 
@@ -38,13 +38,13 @@ final class PercentEncoding {
     }
 
     /// Decodes percent triplets from the UTF-8 bytes of a string.
-    static byte[] percentDecodeString(String input) {
+    public static byte[] percentDecodeString(String input) {
         int firstTriplet = firstValidPercentTriplet(input);
         return firstTriplet < 0 ? Utf8.encode(input) : percentDecodeString(input, firstTriplet);
     }
 
     /// Decodes valid percent triplets in a URL component as UTF-8.
-    static String percentDecodeUtf8(String input) {
+    public static String percentDecodeUtf8(String input) {
         int firstTriplet = firstValidPercentTriplet(input);
         return firstTriplet < 0 ? input : Utf8.decode(percentDecodeString(input, firstTriplet));
     }
@@ -87,7 +87,7 @@ final class PercentEncoding {
     }
 
     /// Percent-encodes one Unicode code point with the given byte predicate.
-    static String utf8PercentEncodeCodePoint(int codePoint, BytePredicate percentEncodePredicate) {
+    public static String utf8PercentEncodeCodePoint(int codePoint, BytePredicate percentEncodePredicate) {
         if (codePoint >= 0 && codePoint <= 0x7f) {
             return percentEncodePredicate.test(codePoint)
                     ? percentEncodedByteString(codePoint)
@@ -97,7 +97,7 @@ final class PercentEncoding {
     }
 
     /// Percent-encodes a string with the given byte predicate.
-    static String utf8PercentEncodeString(String input, BytePredicate percentEncodePredicate) {
+    public static String utf8PercentEncodeString(String input, BytePredicate percentEncodePredicate) {
         for (int index = 0; index < input.length(); ) {
             int codePoint = input.codePointAt(index);
             if (codePoint > 0x7f || percentEncodePredicate.test(codePoint)) {
@@ -109,7 +109,7 @@ final class PercentEncoding {
     }
 
     /// Percent-encodes a decoded component string with the given byte predicate.
-    static String utf8PercentEncodeDecodedString(String input, BytePredicate percentEncodePredicate) {
+    public static String utf8PercentEncodeDecodedString(String input, BytePredicate percentEncodePredicate) {
         for (int index = 0; index < input.length(); ) {
             int codePoint = input.codePointAt(index);
             if (codePoint == '%' || codePoint > 0x7f || percentEncodePredicate.test(codePoint)) {
@@ -177,48 +177,48 @@ final class PercentEncoding {
     }
 
     /// Returns whether the byte belongs to the C0 control percent encode set.
-    static boolean isC0ControlPercentEncode(int value) {
+    public static boolean isC0ControlPercentEncode(int value) {
         return value <= 0x1f || value > 0x7e;
     }
 
     /// Returns whether the byte belongs to the fragment percent encode set.
-    static boolean isFragmentPercentEncode(int value) {
+    public static boolean isFragmentPercentEncode(int value) {
         return isC0ControlPercentEncode(value) || value == ' ' || value == '"' || value == '<'
                 || value == '>' || value == '`';
     }
 
     /// Returns whether the byte belongs to the query percent encode set.
-    static boolean isQueryPercentEncode(int value) {
+    public static boolean isQueryPercentEncode(int value) {
         return isC0ControlPercentEncode(value) || value == ' ' || value == '"' || value == '#'
                 || value == '<' || value == '>';
     }
 
     /// Returns whether the byte belongs to the special-query percent encode set.
-    static boolean isSpecialQueryPercentEncode(int value) {
+    public static boolean isSpecialQueryPercentEncode(int value) {
         return isQueryPercentEncode(value) || value == '\'';
     }
 
     /// Returns whether the byte belongs to the path percent encode set.
-    static boolean isPathPercentEncode(int value) {
+    public static boolean isPathPercentEncode(int value) {
         return isQueryPercentEncode(value) || value == '?' || value == '`' || value == '{'
                 || value == '}' || value == '^';
     }
 
     /// Returns whether the byte belongs to the userinfo percent encode set.
-    static boolean isUserinfoPercentEncode(int value) {
+    public static boolean isUserinfoPercentEncode(int value) {
         return isPathPercentEncode(value) || value == '/' || value == ':' || value == ';'
                 || value == '=' || value == '@' || value == '[' || value == '\\' || value == ']'
                 || value == '|';
     }
 
     /// Returns whether the character starts an invalid percent triplet at the given UTF-16 index.
-    static boolean startsInvalidPercentTriplet(String input, int pointer) {
+    public static boolean startsInvalidPercentTriplet(String input, int pointer) {
         return input.charAt(pointer) == '%'
                 && !isValidPercentTriplet(input, pointer, input.length());
     }
 
     /// Returns whether the string contains a valid percent triplet at the given UTF-16 index.
-    static boolean isValidPercentTriplet(String input, int pointer, int end) {
+    public static boolean isValidPercentTriplet(String input, int pointer, int end) {
         return pointer + 2 < end
                 && input.charAt(pointer) == '%'
                 && StringUtils.isAsciiHex(input.charAt(pointer + 1))
@@ -239,12 +239,12 @@ final class PercentEncoding {
     }
 
     /// Decodes the byte value represented by a valid percent triplet.
-    static int percentEncodedByte(String input, int pointer) {
+    public static int percentEncodedByte(String input, int pointer) {
         return hexValue(input.charAt(pointer + 1)) * 16 + hexValue(input.charAt(pointer + 2));
     }
 
     /// Appends the UTF-8 bytes of one code point as percent escapes.
-    static void appendUtf8PercentEncodedCodePoint(StringBuilder output, int codePoint) {
+    public static void appendUtf8PercentEncodedCodePoint(StringBuilder output, int codePoint) {
         if (codePoint <= 0x7f) {
             output.append(percentEncodedByteString(codePoint));
             return;
@@ -284,7 +284,7 @@ final class PercentEncoding {
     /// Predicate over unsigned byte values.
     @FunctionalInterface
     @NotNullByDefault
-    interface BytePredicate {
+    public interface BytePredicate {
         /// Returns whether the byte should be percent-encoded.
         boolean test(int value);
     }
