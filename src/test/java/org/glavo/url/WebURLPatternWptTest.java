@@ -44,8 +44,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt/urlpatterntestdata.json
 @NotNullByDefault
 public final class WebURLPatternWptTest {
-    /// Local path to Ada's vendored URLPattern WPT data.
-    private static final Path DATA_PATH = Path.of("external", "ada", "tests", "wpt", "urlpatterntestdata.json");
+    /// System property pointing to downloaded Ada URLPattern WPT resource JSON files.
+    private static final String ADA_URL_PATTERN_WPT_RESOURCES_PROPERTY =
+            "org.glavo.url.ada.urlpattern.wpt.resources";
 
     /// Test indexes selected to cover literal, wildcard, base URL, and named group behavior.
     /// Cases with custom regular-expression groups are skipped until standard-compatible regex semantics are available.
@@ -206,8 +207,18 @@ public final class WebURLPatternWptTest {
 
     /// Reads Ada's vendored WPT data.
     private static JsonArray readData() throws IOException {
-        try (Reader reader = Files.newBufferedReader(DATA_PATH, StandardCharsets.UTF_8)) {
+        try (Reader reader = Files.newBufferedReader(resourcePath("urlpatterntestdata.json"),
+                StandardCharsets.UTF_8)) {
             return JsonParser.parseReader(reader).getAsJsonArray();
         }
+    }
+
+    /// Resolves a downloaded Ada URLPattern WPT resource path.
+    private static Path resourcePath(String resourceName) {
+        String resources = System.getProperty(ADA_URL_PATTERN_WPT_RESOURCES_PROPERTY);
+        if (resources == null || resources.isEmpty()) {
+            throw new IllegalStateException("Missing system property: " + ADA_URL_PATTERN_WPT_RESOURCES_PROPERTY);
+        }
+        return Path.of(resources, resourceName);
     }
 }

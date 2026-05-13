@@ -201,14 +201,32 @@ val wptDownloadTasks = wptResources.map {
     }
 }
 
+val adaUrlPatternWptCommit = "d53b80614100a4f7ac40ae0ec3c1644185bb2f6d"
+val downloadAdaUrlPatternWptData = tasks.register<de.undercouch.gradle.tasks.download.Download>(
+    "downloadAda-urlpatterntestdata"
+) {
+    src("https://raw.githubusercontent.com/ada-url/ada/$adaUrlPatternWptCommit/tests/wpt/urlpatterntestdata.json")
+    dest(downloadDir.map { dir -> dir.file("ada/urlpatterntestdata.json") })
+    overwrite(false)
+    connectTimeout(30_000)
+    readTimeout(180_000)
+    retries(3)
+}
+
 tasks.register("downloadWptResources") {
     dependsOn(wptDownloadTasks)
+    dependsOn(downloadAdaUrlPatternWptData)
 }
 
 tasks.test {
     dependsOn("downloadWptResources")
     inputs.dir(downloadDir.map { it.dir("wpt") })
+    inputs.file(downloadDir.map { it.file("ada/urlpatterntestdata.json") })
     systemProperty("org.glavo.url.wpt.resources", downloadDir.map { it.dir("wpt") }.get().asFile.absolutePath)
+    systemProperty(
+        "org.glavo.url.ada.urlpattern.wpt.resources",
+        downloadDir.map { it.dir("ada") }.get().asFile.absolutePath
+    )
 }
 
 tasks.jacocoTestReport {
