@@ -47,15 +47,32 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
     /// Returns the matched component input.
     @Override
     @Contract(pure = true)
-    public String input() {
+    public String getInput() {
         return input;
     }
 
     /// Returns named and numeric capture groups.
     @Override
     @Contract(pure = true)
-    public @Unmodifiable Map<String, @Nullable String> groups() {
+    public @Unmodifiable Map<String, @Nullable String> getGroups() {
         return groups;
+    }
+
+    /// Returns a named capture group.
+    @Override
+    @Contract(pure = true)
+    public @Nullable String getGroup(String name) {
+        return groups.get(Objects.requireNonNull(name, "name"));
+    }
+
+    /// Returns a numeric capture group.
+    @Override
+    @Contract(pure = true)
+    public @Nullable String getGroup(int index) {
+        if (index < 0) {
+            throw new IndexOutOfBoundsException("index: " + index);
+        }
+        return groups.get(Integer.toString(index));
     }
 
     /// Compares this component result with another object.
@@ -63,8 +80,8 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
     @Contract(pure = true)
     public boolean equals(@Nullable Object obj) {
         return obj instanceof WebURLPattern.ComponentResult other
-                && input.equals(other.input())
-                && groups.equals(other.groups());
+                && input.equals(other.getInput())
+                && groups.equals(other.getGroups());
     }
 
     /// Returns the hash code of this component result.

@@ -289,7 +289,7 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
         ///
         /// @return the matched component input
         @Contract(pure = true)
-        String input();
+        String getInput();
 
         /// Returns named and numeric capture groups.
         ///
@@ -297,7 +297,28 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
         ///
         /// @return immutable capture groups
         @Contract(pure = true)
-        @Unmodifiable Map<String, @Nullable String> groups();
+        @Unmodifiable Map<String, @Nullable String> getGroups();
+
+        /// Returns a named capture group.
+        ///
+        /// This method returns `null` when the group is absent or when the group is present but did not match.
+        ///
+        /// @param name the group name
+        /// @return the group value, or `null` when absent or unmatched
+        @Contract(pure = true)
+        @Nullable String getGroup(String name);
+
+        /// Returns a numeric capture group.
+        ///
+        /// URLPattern numeric groups are exposed with decimal string keys such as `"0"` and `"1"`;
+        /// this method converts the index to that key. Unlike `java.util.regex.MatchResult`, group
+        /// index `0` means URLPattern's first anonymous capture group, not the entire component match.
+        ///
+        /// @param index the numeric URLPattern capture group index
+        /// @return the group value, or `null` when absent or unmatched
+        /// @throws IndexOutOfBoundsException when `index` is negative
+        @Contract(pure = true)
+        @Nullable String getGroup(int index);
     }
 
     /// Result for a successful URLPattern match.
