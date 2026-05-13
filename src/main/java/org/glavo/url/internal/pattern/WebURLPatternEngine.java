@@ -16,8 +16,8 @@
 package org.glavo.url.internal.pattern;
 
 import org.glavo.url.WebURL;
-import org.glavo.url.WebURLPatternSyntaxException;
 import org.glavo.url.internal.UrlParser;
+import org.glavo.url.pattern.WebURLPatternSyntaxException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 

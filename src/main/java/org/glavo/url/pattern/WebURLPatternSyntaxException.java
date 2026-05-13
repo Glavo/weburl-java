@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.glavo.url;
+package org.glavo.url.pattern;
 
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +23,8 @@ import java.util.Objects;
 
 /// An unchecked exception thrown when a [WebURLPattern] cannot be compiled.
 ///
-/// This exception is used for URLPattern grammar errors, component canonicalization failures,
-/// and failures reported by Java's regular expression compiler. The null-returning
-/// `tryCompile` factory methods catch this type and return `null`.
+/// This exception is used for URLPattern grammar errors and component canonicalization failures.
+/// The null-returning `tryCompile` factory methods catch this type and return `null`.
 ///
 /// @since 0.3.0
 @NotNullByDefault

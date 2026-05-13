@@ -175,6 +175,8 @@ WebURL next = docs.resolve("guide/");
 `WebURLPattern` provides the core WHATWG URLPattern API with Java-style naming:
 
 ```java
+import org.glavo.url.pattern.WebURLPattern;
+
 WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
         .setScheme("https")
         .setHost("example.com")
@@ -191,7 +193,8 @@ component pattern strings without URL delimiters, while URLPattern attribute get
 `getWebProtocol()` and `getWebPathname()` return WHATWG URLPattern attribute values. Unlike
 `WebURL.getWebProtocol()`, `WebURLPattern.getWebProtocol()` does not include a trailing colon.
 
-`WebURLPattern.Options` supports `ignoreCase`. Custom regular-expression groups are not supported yet because
+The URLPattern API lives in `org.glavo.url.pattern`. `WebURLPattern.Options` supports `ignoreCase`.
+Custom regular-expression groups are not supported yet because
 URLPattern uses ECMAScript `v` / `vi` regular-expression semantics, which are not equivalent to Java regular
 expressions. Pattern strings containing custom regular-expression groups are rejected during compilation.
 

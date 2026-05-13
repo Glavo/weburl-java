@@ -15,6 +15,8 @@
  */
 package org.glavo.url;
 
+import org.glavo.url.pattern.WebURLPattern;
+import org.glavo.url.pattern.WebURLPatternSyntaxException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;

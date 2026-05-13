@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.glavo.url;
+package org.glavo.url.pattern;
 
+import org.glavo.url.WebURL;
 import org.glavo.url.internal.WebURLPatternBuilderImpl;
 import org.glavo.url.internal.WebURLPatternComponentResultImpl;
 import org.glavo.url.internal.WebURLPatternImpl;

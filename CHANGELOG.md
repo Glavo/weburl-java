@@ -13,13 +13,14 @@
 - Added WHATWG-style `WebURL` component getters: `getWebProtocol()`, `getWebUsername()`,
   `getWebPassword()`, `getWebHost()`, `getWebHostname()`, `getWebPort()`, `getWebPathname()`,
   `getWebSearch()`, and `getWebHash()`.
-- Added `WebURLPattern` and `WebURLPatternSyntaxException` for precompiled WHATWG URLPattern-style
+- Added `org.glavo.url.pattern.WebURLPattern` and `WebURLPatternSyntaxException` for precompiled WHATWG URLPattern-style
   matching with component builders, shorthand string patterns, base URL handling, `test`, `exec`,
   capture groups, `ignoreCase`, and `hasRegExpGroups()`. Custom regular-expression groups are not
   supported yet because URLPattern uses ECMAScript `v` / `vi` regex behavior, which is not equivalent
   to Java regular expressions.
   `WebURLPattern` and its nested `Options`, `ComponentResult`, and `Result` types are exposed as
-  interfaces with internal immutable implementations, matching the `WebURL` API shape.
+  interfaces with internal immutable implementations, matching the `WebURL` API shape. The URLPattern
+  API lives in the separate `org.glavo.url.pattern` package.
 
 ## 0.2.0 (2026-05-12)
 

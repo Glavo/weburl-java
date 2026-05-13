@@ -15,8 +15,8 @@
  */
 package org.glavo.url.internal;
 
-import org.glavo.url.WebURLPattern;
 import org.glavo.url.internal.pattern.URLPatternInit;
+import org.glavo.url.pattern.WebURLPattern;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;

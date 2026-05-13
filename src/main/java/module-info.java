@@ -26,16 +26,18 @@
 ///
 /// # Module Contents
 ///
-/// The single exported package is [org.glavo.url].
-/// It contains five primary public types:
+/// The module exports [org.glavo.url] for URL values and parsing, and
+/// [org.glavo.url.pattern] for URLPattern matching.
+///
+/// It contains these primary public types:
 ///
 /// | Type | Role |
 /// |------|------|
 /// | [org.glavo.url.WebURL] | Immutable, normalized, absolute URL value |
 /// | [org.glavo.url.WebURLParser] | Reusable parser with configurable validation policy |
 /// | [org.glavo.url.WebURLParseException] | Unchecked exception carrying structured parse-error details |
-/// | [org.glavo.url.WebURLPattern] | Immutable WHATWG URLPattern matcher interface |
-/// | [org.glavo.url.WebURLPatternSyntaxException] | Unchecked exception for URLPattern compilation failures |
+/// | [org.glavo.url.pattern.WebURLPattern] | Immutable WHATWG URLPattern matcher interface |
+/// | [org.glavo.url.pattern.WebURLPatternSyntaxException] | Unchecked exception for URLPattern compilation failures |
 ///
 /// # Dependencies
 ///
@@ -57,4 +59,5 @@ module org.glavo.url {
     requires static org.jetbrains.annotations;
 
     exports org.glavo.url;
+    exports org.glavo.url.pattern;
 }
