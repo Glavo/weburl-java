@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.glavo.url;
+package org.glavo.url.pattern;
 
-import org.glavo.url.pattern.WebURLPattern;
-import org.glavo.url.pattern.WebURLPatternParser;
-import org.glavo.url.pattern.WebURLPatternSyntaxException;
+import org.glavo.url.WebURL;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
