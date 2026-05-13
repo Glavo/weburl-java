@@ -60,7 +60,11 @@ public final class RegExpElementProcessorTest {
         assertSupported("(?:ab)");
         assertTranslated("(?<name>ab)", "(?:ab)");
         assertTranslated("[[a-z]--a]", "[b-z]");
-        assertTranslated("[\\d&&[0-1]]", "[0-1]");
+        assertTranslated("[\\d&&[0-1]]", "[01]");
+        assertTranslated("[[a-f]--[bd]]", "[acef]");
+        assertTranslated("[[a-z]&&[m-p]]", "[m-p]");
+        assertTranslated("[[a-c][x-z]]", "[a-cx-z]");
+        assertTranslated("[a&&b]", "[^\\s\\S]");
     }
 
     /// Tests literal, wildcard, and alternative matching with the supported policy.
@@ -107,6 +111,15 @@ public final class RegExpElementProcessorTest {
         assertDoesNotMatch("[[a-z]--a]", "a");
         assertMatches("[\\d&&[0-1]]", "0");
         assertDoesNotMatch("[\\d&&[0-1]]", "3");
+        assertMatches("[[a-f]--[bd]]", "a");
+        assertMatches("[[a-f]--[bd]]", "e");
+        assertDoesNotMatch("[[a-f]--[bd]]", "b");
+        assertMatches("[[a-z]&&[m-p]]", "n");
+        assertDoesNotMatch("[[a-z]&&[m-p]]", "q");
+        assertMatches("[[a-c][x-z]]", "b");
+        assertMatches("[[a-c][x-z]]", "y");
+        assertDoesNotMatch("[[a-c][x-z]]", "m");
+        assertDoesNotMatch("[a&&b]", "a");
     }
 
     /// Tests escape matching with the supported policy.
@@ -180,7 +193,9 @@ public final class RegExpElementProcessorTest {
         assertUnsupported("a{2,1}");
         assertUnsupported("a{}");
         assertUnsupported("[]");
-        assertUnsupported("[a&&b]");
+        assertUnsupported("[a&&b&&]");
+        assertUnsupported("[a&&b--c]");
+        assertUnsupported("[^a&&b]");
         assertUnsupported("[a[b]");
         assertUnsupported("\\");
     }

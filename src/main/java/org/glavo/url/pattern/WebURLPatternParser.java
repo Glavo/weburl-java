@@ -68,8 +68,9 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
         /// - literal characters allowed by URLPattern regular-expression tokenization;
         /// - the `.` wildcard;
         /// - top-level `|` alternatives;
-        /// - character classes such as `[abc]`, `[^abc]`, and `[a-z]`, without nested classes or set operations;
-        /// - the limited class set operations `[[a-z]--a]` and `[\d&&[0-1]]`;
+        /// - character classes such as `[abc]`, `[^abc]`, and `[a-z]`;
+        /// - finite ASCII class-set expressions using nested positive classes, ranges, `\d`, `\w`, union,
+        ///   intersection `&&`, and subtraction `--`;
         /// - character-class escapes `\d`, `\D`, `\w`, and `\W`;
         /// - control escapes `\n`, `\r`, `\t`, and `\f`;
         /// - syntax escapes for regular-expression syntax characters, with `\-` also accepted inside character classes;
@@ -79,8 +80,8 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
         ///   not expose inner regular-expression groups.
         ///
         /// Numbered capture groups, lookahead, and lookbehind are rejected. Anchors, backreferences, Unicode
-        /// and property escapes, word-boundary escapes, possessive quantifiers, nested character classes, and
-        /// other character-class set operations are also rejected.
+        /// and property escapes, word-boundary escapes, possessive quantifiers, complemented class-set
+        /// operands such as `\D` and `\W`, and non-ASCII class-set operands are also rejected.
         ///
         /// Unsupported syntax is rejected during compilation. This is the default policy.
         SUPPORTED,
