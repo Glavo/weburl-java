@@ -30,7 +30,7 @@
 ///         .setPath("/users/:id"));
 /// pattern.test("https://example.com/users/42"); // true
 ///
-/// WebURLPattern ignoreCasePattern = WebURLPatternParser.getIgnoreCase()
+/// WebURLPattern ignoreCasePattern = WebURLPatternParser.getDefault().withIgnoreCase()
 ///         .compile("https://example.com/users/:id");
 /// ignoreCasePattern.test("https://example.com/Users/42"); // true
 /// ```

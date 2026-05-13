@@ -188,7 +188,7 @@ pattern.test("https://example.com/users/42"); // true
 WebURLPattern.Result result = pattern.exec("https://example.com/users/42");
 result.pathname().groups().get("id"); // "42"
 
-WebURLPattern ignoreCasePattern = WebURLPatternParser.getIgnoreCase()
+WebURLPattern ignoreCasePattern = WebURLPatternParser.getDefault().withIgnoreCase()
         .compile("https://example.com/users/:id");
 ignoreCasePattern.test("https://example.com/Users/42"); // true
 ```
@@ -198,8 +198,8 @@ component pattern strings without URL delimiters, while URLPattern attribute get
 `getWebProtocol()` and `getWebPathname()` return WHATWG URLPattern attribute values. Unlike
 `WebURL.getWebProtocol()`, `WebURLPattern.getWebProtocol()` does not include a trailing colon.
 
-The URLPattern API lives in `org.glavo.url.pattern`. Use `WebURLPatternParser.getIgnoreCase()` when
-compiled patterns should match case-insensitively.
+The URLPattern API lives in `org.glavo.url.pattern`. Use
+`WebURLPatternParser.getDefault().withIgnoreCase()` when compiled patterns should match case-insensitively.
 Custom regular-expression groups are not supported yet because
 URLPattern uses ECMAScript `v` / `vi` regular-expression semantics, which are not equivalent to Java regular
 expressions. Pattern strings containing custom regular-expression groups are rejected during compilation.

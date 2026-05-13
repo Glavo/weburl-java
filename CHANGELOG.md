@@ -18,9 +18,9 @@
   capture groups, `ignoreCase`, and `hasRegExpGroups()`. Custom regular-expression groups are not
   supported yet because URLPattern uses ECMAScript `v` / `vi` regex behavior, which is not equivalent
   to Java regular expressions.
-  `WebURLPatternParser` owns compilation policy such as case-insensitive matching. `WebURLPattern`
-  and its nested `ComponentResult` and `Result` types are exposed as interfaces with internal
-  immutable implementations, matching the `WebURL` API shape. The URLPattern
+  `WebURLPatternParser` owns compilation policy; derive case-insensitive parsers with
+  `withIgnoreCase()`. `WebURLPattern` and its nested `ComponentResult` and `Result` types are
+  exposed as interfaces with internal immutable implementations, matching the `WebURL` API shape. The URLPattern
   API lives in the separate `org.glavo.url.pattern` package.
 
 ## 0.2.0 (2026-05-12)

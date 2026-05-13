@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 /// A reusable parser for compiling immutable [WebURLPattern] matchers.
 ///
 /// `WebURLPatternParser` encapsulates URLPattern compilation policy. The static convenience methods
-/// on [WebURLPattern] use [#getDefault()]. Callers that need case-insensitive matching can reuse the
-/// parser returned by [#getIgnoreCase()] instead of passing per-call option objects.
+/// on [WebURLPattern] use [#getDefault()]. Callers that need case-insensitive matching can derive a
+/// parser with [#withIgnoreCase()] or [#withIgnoreCase(boolean)] instead of passing per-call option objects.
 ///
 /// # Thread Safety and Reuse
 ///
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 /// # Usage
 ///
 /// ```java
-/// WebURLPatternParser parser = WebURLPatternParser.getIgnoreCase();
+/// WebURLPatternParser parser = WebURLPatternParser.getDefault().withIgnoreCase();
 /// WebURLPattern pattern = parser.compile("https://example.com/users/:id");
 /// pattern.test("https://example.com/Users/42"); // true
 /// ```
@@ -53,15 +53,22 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
         return WebURLPatternParserImpl.DEFAULT;
     }
 
-    /// Returns the case-insensitive URLPattern parser.
+    /// Returns a parser with case-insensitive matching enabled.
     ///
-    /// This parser compiles patterns for case-insensitive matching.
+    /// If this parser already uses case-insensitive matching, this method may return this parser.
     ///
-    /// @return the case-insensitive parser
+    /// @return a parser that compiles case-insensitive patterns
     @Contract(pure = true)
-    static WebURLPatternParser getIgnoreCase() {
-        return WebURLPatternParserImpl.IGNORE_CASE;
-    }
+    WebURLPatternParser withIgnoreCase();
+
+    /// Returns a parser with the specified case sensitivity policy.
+    ///
+    /// If this parser already uses the requested policy, this method may return this parser.
+    ///
+    /// @param ignoreCase whether compiled patterns should use case-insensitive matching
+    /// @return a parser that uses the specified case sensitivity policy
+    @Contract(pure = true)
+    WebURLPatternParser withIgnoreCase(boolean ignoreCase);
 
     /// Returns whether patterns compiled by this parser use case-insensitive matching.
     ///

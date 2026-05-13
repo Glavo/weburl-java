@@ -28,10 +28,10 @@ import java.util.Objects;
 @NotNullByDefault
 public final class WebURLPatternParserImpl implements WebURLPatternParser {
     /// The default case-sensitive parser.
-    public static final WebURLPatternParser DEFAULT = new WebURLPatternParserImpl(false);
+    public static final WebURLPatternParserImpl DEFAULT = new WebURLPatternParserImpl(false);
 
     /// The case-insensitive parser.
-    public static final WebURLPatternParser IGNORE_CASE = new WebURLPatternParserImpl(true);
+    private static final WebURLPatternParserImpl IGNORE_CASE = new WebURLPatternParserImpl(true);
 
     /// Whether compiled patterns use case-insensitive matching.
     private final boolean ignoreCase;
@@ -48,6 +48,20 @@ public final class WebURLPatternParserImpl implements WebURLPatternParser {
     @Contract(pure = true)
     public boolean isIgnoreCase() {
         return ignoreCase;
+    }
+
+    /// Returns a parser with case-insensitive matching enabled.
+    @Override
+    @Contract(pure = true)
+    public WebURLPatternParser withIgnoreCase() {
+        return withIgnoreCase(true);
+    }
+
+    /// Returns a parser with the specified case sensitivity policy.
+    @Override
+    @Contract(pure = true)
+    public WebURLPatternParser withIgnoreCase(boolean ignoreCase) {
+        return ignoreCase ? IGNORE_CASE : DEFAULT;
     }
 
     /// Compiles a shorthand URLPattern string.
@@ -117,6 +131,6 @@ public final class WebURLPatternParserImpl implements WebURLPatternParser {
     @Override
     @Contract(pure = true)
     public String toString() {
-        return ignoreCase ? "WebURLPatternParser.IGNORE_CASE" : "WebURLPatternParser.DEFAULT";
+        return ignoreCase ? "WebURLPatternParser[ignoreCase=true]" : "WebURLPatternParser.DEFAULT";
     }
 }

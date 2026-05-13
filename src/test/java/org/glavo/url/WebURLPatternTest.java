@@ -191,13 +191,14 @@ public final class WebURLPatternTest {
     public void supportsIgnoreCase() {
         WebURLPattern sensitive = WebURLPatternParser.getDefault()
                 .compile(WebURLPattern.newBuilder().setPath("/Books"));
-        WebURLPattern insensitive = WebURLPatternParser.getIgnoreCase()
+        WebURLPattern insensitive = WebURLPatternParser.getDefault().withIgnoreCase()
                 .compile(WebURLPattern.newBuilder().setPath("/Books"));
 
         assertFalse(sensitive.test(WebURLPattern.newBuilder().setPath("/books")));
         assertFalse(sensitive.isIgnoreCase());
         assertTrue(insensitive.test(WebURLPattern.newBuilder().setPath("/books")));
-        assertTrue(WebURLPatternParser.getIgnoreCase().isIgnoreCase());
+        assertTrue(WebURLPatternParser.getDefault().withIgnoreCase(true).isIgnoreCase());
+        assertEquals(WebURLPatternParser.getDefault(), WebURLPatternParser.getDefault().withIgnoreCase(false));
         assertTrue(insensitive.isIgnoreCase());
     }
 
