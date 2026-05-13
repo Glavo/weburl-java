@@ -286,6 +286,81 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// Result for one matched URLPattern component.
     @NotNullByDefault
     sealed interface ComponentResult extends MatchResult permits WebURLPatternComponentResultImpl {
+        /// Returns the start index of the whole component match.
+        ///
+        /// The index is relative to the component input represented by this result.
+        ///
+        /// @return the start index of the whole component match
+        @Override
+        @Contract(pure = true)
+        int start();
+
+        /// Returns the start index of a Java-style capture group.
+        ///
+        /// Group `0` is the whole component match. Groups `1` through [#groupCount()] are URLPattern
+        /// capture groups in matching order. If the requested group exists but did not match, this
+        /// method returns `-1`.
+        ///
+        /// @param group the Java-style capture group index
+        /// @return the start index of the group, or `-1` when the group did not match
+        /// @throws IndexOutOfBoundsException when `group` is negative or greater than [#groupCount()]
+        @Override
+        @Contract(pure = true)
+        int start(int group);
+
+        /// Returns the end index of the whole component match.
+        ///
+        /// The index is relative to the component input represented by this result.
+        ///
+        /// @return the end index of the whole component match
+        @Override
+        @Contract(pure = true)
+        int end();
+
+        /// Returns the end index of a Java-style capture group.
+        ///
+        /// Group `0` is the whole component match. Groups `1` through [#groupCount()] are URLPattern
+        /// capture groups in matching order. If the requested group exists but did not match, this
+        /// method returns `-1`.
+        ///
+        /// @param group the Java-style capture group index
+        /// @return the end index of the group, or `-1` when the group did not match
+        /// @throws IndexOutOfBoundsException when `group` is negative or greater than [#groupCount()]
+        @Override
+        @Contract(pure = true)
+        int end(int group);
+
+        /// Returns the whole component match.
+        ///
+        /// This is equivalent to `group(0)`.
+        ///
+        /// @return the whole component match
+        @Override
+        @Contract(pure = true)
+        String group();
+
+        /// Returns a Java-style capture group.
+        ///
+        /// Group `0` is the whole component match. Groups `1` through [#groupCount()] are URLPattern
+        /// capture groups in matching order. If the requested group exists but did not match, this
+        /// method returns `null`.
+        ///
+        /// @param group the Java-style capture group index
+        /// @return the group value, or `null` when the group did not match
+        /// @throws IndexOutOfBoundsException when `group` is negative or greater than [#groupCount()]
+        @Override
+        @Contract(pure = true)
+        @Nullable String group(int group);
+
+        /// Returns the number of Java-style capture groups.
+        ///
+        /// The returned value excludes group `0`, which is always the whole component match.
+        ///
+        /// @return the number of capture groups
+        @Override
+        @Contract(pure = true)
+        int groupCount();
+
         /// Returns URLPattern named and numeric capture groups.
         ///
         /// Unmatched optional groups are represented by `null` values.
