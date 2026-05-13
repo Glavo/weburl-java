@@ -29,6 +29,10 @@ import java.util.Objects;
 /// Internal immutable implementation of `WebURLPatternComponentResult`.
 @NotNullByDefault
 public final class WebURLPatternComponentResultImpl implements WebURLPatternComponentResult {
+    /// Sentinel value stored in group caches for unmatched capture groups.
+    @SuppressWarnings("StringOperationCanBeSimplified")
+    private static final String UNMATCHED_GROUP = new String();
+
     /// Component input containing all matched ranges.
     private final String input;
     /// Range of the whole matched component input.
@@ -37,6 +41,12 @@ public final class WebURLPatternComponentResultImpl implements WebURLPatternComp
     private final @IndexRange("input") long @Unmodifiable [] groupRanges;
     /// Public group keys mapped to `groupRanges` indexes.
     private final @Unmodifiable Map<String, Integer> groupIndexes;
+    /// Cached whole component match.
+    private volatile @Nullable String match;
+    /// Cached capture group values indexed by `groupRanges`.
+    private volatile String @Nullable [] groupValues;
+    /// Cached URLPattern groups object view.
+    private volatile @Nullable @Unmodifiable Map<String, @Nullable String> webGroups;
 
     /// Creates a component result.
     ///
@@ -89,7 +99,12 @@ public final class WebURLPatternComponentResultImpl implements WebURLPatternComp
     @Override
     @Contract(pure = true)
     public String group() {
-        return IndexRanges.substring(input, range);
+        @Nullable String result = match;
+        if (result == null) {
+            result = IndexRanges.substring(input, range);
+            match = result;
+        }
+        return result;
     }
 
     /// Returns one Java-style capture group.
@@ -113,15 +128,24 @@ public final class WebURLPatternComponentResultImpl implements WebURLPatternComp
     @Override
     @Contract(pure = true)
     public @Unmodifiable Map<String, @Nullable String> getWebGroups() {
+        @Nullable Map<String, @Nullable String> result = webGroups;
+        if (result != null) {
+            return result;
+        }
+
         if (groupIndexes.isEmpty()) {
-            return Map.of();
+            result = Map.of();
+            webGroups = result;
+            return result;
         }
 
         LinkedHashMap<String, @Nullable String> groups = new LinkedHashMap<>();
         for (Map.Entry<String, Integer> entry : groupIndexes.entrySet()) {
             groups.put(entry.getKey(), groupValue(entry.getValue()));
         }
-        return Collections.unmodifiableMap(groups);
+        result = Collections.unmodifiableMap(groups);
+        webGroups = result;
+        return result;
     }
 
     /// Returns a named URLPattern capture group.
@@ -147,8 +171,27 @@ public final class WebURLPatternComponentResultImpl implements WebURLPatternComp
         if (index < 0 || index >= groupRanges.length) {
             return null;
         }
+        String value = cachedGroupValue(index);
+        return value == UNMATCHED_GROUP ? null : value;
+    }
+
+    /// Returns the cached group value or the unmatched-group sentinel.
+    private String cachedGroupValue(int index) {
+        @Nullable String[] currentValues = groupValues;
+        if (currentValues != null) {
+            @Nullable String value = currentValues[index];
+            if (value != null) {
+                return value;
+            }
+        }
+
         @IndexRange("input") long groupRange = groupRanges[index];
-        return IndexRanges.isAbsent(groupRange) ? null : IndexRanges.substring(input, groupRange);
+        String value = IndexRanges.isAbsent(groupRange) ? UNMATCHED_GROUP : IndexRanges.substring(input, groupRange);
+
+        String[] nextValues = currentValues == null ? new String[groupRanges.length] : currentValues.clone();
+        nextValues[index] = value;
+        groupValues = nextValues;
+        return value;
     }
 
     /// Returns the Java-style group range start.
