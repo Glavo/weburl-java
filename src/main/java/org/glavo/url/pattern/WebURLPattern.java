@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
+import java.util.regex.MatchResult;
 
 /// An immutable, precompiled matcher for WHATWG URL Pattern syntax.
 ///
@@ -284,41 +285,39 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
 
     /// Result for one matched URLPattern component.
     @NotNullByDefault
-    sealed interface ComponentResult permits WebURLPatternComponentResultImpl {
-        /// Returns the matched component input.
-        ///
-        /// @return the matched component input
-        @Contract(pure = true)
-        String getInput();
-
-        /// Returns named and numeric capture groups.
+    sealed interface ComponentResult extends MatchResult permits WebURLPatternComponentResultImpl {
+        /// Returns URLPattern named and numeric capture groups.
         ///
         /// Unmatched optional groups are represented by `null` values.
         ///
-        /// @return immutable capture groups
+        /// This map follows URLPattern groups object semantics. Numeric keys such as `"0"` refer to
+        /// anonymous URLPattern groups, while [#group(int)] follows `java.util.regex.MatchResult`
+        /// semantics where group `0` is the whole component match.
+        ///
+        /// @return immutable URLPattern capture groups
         @Contract(pure = true)
-        @Unmodifiable Map<String, @Nullable String> getGroups();
+        @Unmodifiable Map<String, @Nullable String> getWebGroups();
 
-        /// Returns a named capture group.
+        /// Returns a named URLPattern capture group.
         ///
         /// This method returns `null` when the group is absent or when the group is present but did not match.
         ///
         /// @param name the group name
         /// @return the group value, or `null` when absent or unmatched
         @Contract(pure = true)
-        @Nullable String getGroup(String name);
+        @Nullable String getWebGroup(String name);
 
-        /// Returns a numeric capture group.
+        /// Returns a numeric URLPattern capture group.
         ///
-        /// URLPattern numeric groups are exposed with decimal string keys such as `"0"` and `"1"`;
-        /// this method converts the index to that key. Unlike `java.util.regex.MatchResult`, group
-        /// index `0` means URLPattern's first anonymous capture group, not the entire component match.
+        /// URLPattern numeric groups are exposed with decimal string keys such as `"0"` and `"1"`.
+        /// Unlike [#group(int)], index `0` means URLPattern's first anonymous capture group, not the
+        /// entire component match.
         ///
         /// @param index the numeric URLPattern capture group index
         /// @return the group value, or `null` when absent or unmatched
         /// @throws IndexOutOfBoundsException when `index` is negative
         @Contract(pure = true)
-        @Nullable String getGroup(int index);
+        @Nullable String getWebGroup(int index);
     }
 
     /// Result for a successful URLPattern match.

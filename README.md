@@ -186,7 +186,7 @@ WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
 pattern.test("https://example.com/users/42"); // true
 
 WebURLPattern.Result result = pattern.exec("https://example.com/users/42");
-result.pathname().getGroup("id"); // "42"
+result.pathname().getWebGroup("id"); // "42"
 
 WebURLPattern ignoreCasePattern = WebURLPatternParser.getDefault().withIgnoreCase()
         .compile("https://example.com/users/:id");
@@ -196,6 +196,8 @@ ignoreCasePattern.test("https://example.com/Users/42"); // true
 Builder setters and component pattern getters use names such as `setSchemePattern()` and
 `getSchemePattern()` to distinguish pattern strings from parsed `WebURL` component values.
 `WebURLPattern` does not expose a separate WHATWG-style getter view.
+Component results implement `java.util.regex.MatchResult`; use `group()` and `group(int)` for
+Java-style match groups, and `getWebGroup(...)` for URLPattern groups object semantics.
 
 The URLPattern API lives in `org.glavo.url.pattern`. Use
 `WebURLPatternParser.getDefault().withIgnoreCase()` when compiled patterns should match case-insensitively.

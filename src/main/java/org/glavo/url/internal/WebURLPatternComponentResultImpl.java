@@ -57,17 +57,62 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
                 Objects.requireNonNull(groupIndexes, "groupIndexes")));
     }
 
-    /// Returns the matched component input.
+    /// Returns the start index of the whole component match.
     @Override
     @Contract(pure = true)
-    public String getInput() {
-        return IndexRanges.substring(input, range);
+    public int start() {
+        return start(0);
     }
 
-    /// Returns named and numeric capture groups.
+    /// Returns the start index of one Java-style capture group.
     @Override
     @Contract(pure = true)
-    public @Unmodifiable Map<String, @Nullable String> getGroups() {
+    public int start(int group) {
+        return group == 0 ? IndexRanges.start(range) : groupRangeStart(group - 1);
+    }
+
+    /// Returns the end index of the whole component match.
+    @Override
+    @Contract(pure = true)
+    public int end() {
+        return end(0);
+    }
+
+    /// Returns the end index of one Java-style capture group.
+    @Override
+    @Contract(pure = true)
+    public int end(int group) {
+        return group == 0 ? IndexRanges.end(range) : groupRangeEnd(group - 1);
+    }
+
+    /// Returns the whole component match.
+    @Override
+    @Contract(pure = true)
+    public String group() {
+        return group(0);
+    }
+
+    /// Returns one Java-style capture group.
+    @Override
+    @Contract(pure = true)
+    public @Nullable String group(int group) {
+        if (group == 0) {
+            return IndexRanges.substring(input, range);
+        }
+        return groupValue(matchResultGroupIndex(group));
+    }
+
+    /// Returns the number of Java-style capture groups.
+    @Override
+    @Contract(pure = true)
+    public int groupCount() {
+        return groupRanges.length;
+    }
+
+    /// Returns URLPattern named and numeric capture groups.
+    @Override
+    @Contract(pure = true)
+    public @Unmodifiable Map<String, @Nullable String> getWebGroups() {
         if (groupIndexes.isEmpty()) {
             return Map.of();
         }
@@ -79,22 +124,22 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
         return Collections.unmodifiableMap(groups);
     }
 
-    /// Returns a named capture group.
+    /// Returns a named URLPattern capture group.
     @Override
     @Contract(pure = true)
-    public @Nullable String getGroup(String name) {
+    public @Nullable String getWebGroup(String name) {
         Integer index = groupIndexes.get(Objects.requireNonNull(name, "name"));
         return index == null ? null : groupValue(index);
     }
 
-    /// Returns a numeric capture group.
+    /// Returns a numeric URLPattern capture group.
     @Override
     @Contract(pure = true)
-    public @Nullable String getGroup(int index) {
+    public @Nullable String getWebGroup(int index) {
         if (index < 0) {
             throw new IndexOutOfBoundsException("index: " + index);
         }
-        return getGroup(Integer.toString(index));
+        return getWebGroup(Integer.toString(index));
     }
 
     /// Returns the group value for the given capture group index.
@@ -106,26 +151,46 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
         return IndexRanges.isAbsent(groupRange) ? null : IndexRanges.substring(input, groupRange);
     }
 
+    /// Returns the Java-style group range start.
+    private int groupRangeStart(int index) {
+        @IndexRange("input") long groupRange = groupRanges[matchResultGroupIndex(index + 1)];
+        return IndexRanges.isAbsent(groupRange) ? -1 : IndexRanges.start(groupRange);
+    }
+
+    /// Returns the Java-style group range end.
+    private int groupRangeEnd(int index) {
+        @IndexRange("input") long groupRange = groupRanges[matchResultGroupIndex(index + 1)];
+        return IndexRanges.isAbsent(groupRange) ? -1 : IndexRanges.end(groupRange);
+    }
+
+    /// Converts a Java-style group index to an internal capture group index.
+    private int matchResultGroupIndex(int group) {
+        if (group < 0 || group > groupRanges.length) {
+            throw new IndexOutOfBoundsException("group: " + group);
+        }
+        return group - 1;
+    }
+
     /// Compares this component result with another object.
     @Override
     @Contract(pure = true)
     public boolean equals(@Nullable Object obj) {
         return obj instanceof WebURLPattern.ComponentResult other
-                && getInput().equals(other.getInput())
-                && getGroups().equals(other.getGroups());
+                && group().equals(other.group())
+                && getWebGroups().equals(other.getWebGroups());
     }
 
     /// Returns the hash code of this component result.
     @Override
     @Contract(pure = true)
     public int hashCode() {
-        return 31 * getInput().hashCode() + getGroups().hashCode();
+        return 31 * group().hashCode() + getWebGroups().hashCode();
     }
 
     /// Returns a string representation of this component result.
     @Override
     @Contract(pure = true)
     public String toString() {
-        return "ComponentResult[input=" + getInput() + ", groups=" + getGroups() + "]";
+        return "ComponentResult[match=" + group() + ", webGroups=" + getWebGroups() + "]";
     }
 }

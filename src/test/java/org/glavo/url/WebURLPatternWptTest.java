@@ -165,11 +165,11 @@ public final class WebURLPatternWptTest {
             }
             WebURLPattern.ComponentResult actual = resultComponent(result, entry.getKey());
             JsonObject expectedComponent = entry.getValue().getAsJsonObject();
-            assertEquals(expectedComponent.get("input").getAsString(), actual.getInput(), entry.getKey());
+            assertEquals(expectedComponent.get("input").getAsString(), actual.group(), entry.getKey());
 
             JsonObject expectedGroups = expectedComponent.getAsJsonObject("groups");
             for (Map.Entry<String, JsonElement> expectedGroup : expectedGroups.entrySet()) {
-                assertEquals(expectedGroup.getValue().getAsString(), actual.getGroup(expectedGroup.getKey()),
+                assertEquals(expectedGroup.getValue().getAsString(), actual.getWebGroup(expectedGroup.getKey()),
                         entry.getKey() + "." + expectedGroup.getKey());
             }
         }
