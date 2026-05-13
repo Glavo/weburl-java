@@ -178,14 +178,14 @@ public final class WebURLPatternWptTest {
     /// Returns one compiled pattern field.
     private static String patternField(WebURLPattern pattern, String field) {
         return switch (field) {
-            case "protocol" -> pattern.getWebProtocol();
-            case "username" -> pattern.getWebUsername();
-            case "password" -> pattern.getWebPassword();
-            case "hostname" -> pattern.getWebHostname();
-            case "port" -> pattern.getWebPort();
-            case "pathname" -> pattern.getWebPathname();
-            case "search" -> pattern.getWebSearch();
-            case "hash" -> pattern.getWebHash();
+            case "protocol" -> pattern.getSchemePattern();
+            case "username" -> pattern.getUsernamePattern();
+            case "password" -> pattern.getPasswordPattern();
+            case "hostname" -> pattern.getHostPattern();
+            case "port" -> pattern.getPortPattern();
+            case "pathname" -> pattern.getPathPattern();
+            case "search" -> pattern.getQueryPattern();
+            case "hash" -> pattern.getFragmentPattern();
             default -> throw new AssertionError("Unsupported URLPattern result field: " + field);
         };
     }

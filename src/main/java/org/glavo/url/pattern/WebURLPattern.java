@@ -34,11 +34,9 @@ import java.util.Map;
 /// a shorthand pattern string or from component patterns via [Builder], and it can match URL
 /// strings, [WebURL] values, or component inputs.
 ///
-/// The API intentionally follows `WebURL` naming. Java-style getters such as [#getScheme()]
-/// and [#getPath()] return normalized pattern strings without URL delimiters. URLPattern
-/// attribute getters such as [#getWebProtocol()] and [#getWebPathname()] return the corresponding
-/// URLPattern standard attribute values; unlike [WebURL#getWebProtocol()], `getWebProtocol()` on
-/// this interface does not include a trailing colon.
+/// Component pattern getters such as [#getSchemePattern()] and [#getPathPattern()] return normalized
+/// URLPattern component pattern strings without URL delimiters. These names avoid confusing
+/// component pattern strings with parsed URL component values.
 ///
 /// Custom regular-expression groups are not supported yet because URLPattern uses ECMAScript
 /// `v` / `vi` regular-expression semantics, which are not equivalent to Java regular expressions.
@@ -169,71 +167,37 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     @Contract(pure = true)
     @Nullable Result exec(Builder input);
 
-    /// Returns the protocol pattern string without a trailing colon.
+    /// Returns the scheme component pattern string without a trailing colon.
     @Contract(pure = true)
-    String getScheme();
+    String getSchemePattern();
 
     /// Returns the username pattern string.
     @Contract(pure = true)
-    String getUsername();
+    String getUsernamePattern();
 
     /// Returns the password pattern string.
     @Contract(pure = true)
-    String getPassword();
+    String getPasswordPattern();
 
-    /// Returns the hostname pattern string.
+    /// Returns the host component pattern string.
     @Contract(pure = true)
-    String getHost();
+    String getHostPattern();
 
     /// Returns the port pattern string.
     @Contract(pure = true)
-    String getPort();
+    String getPortPattern();
 
-    /// Returns the pathname pattern string.
+    /// Returns the path component pattern string.
     @Contract(pure = true)
-    String getPath();
+    String getPathPattern();
 
-    /// Returns the search pattern string without a leading question mark.
+    /// Returns the query component pattern string without a leading question mark.
     @Contract(pure = true)
-    String getQuery();
+    String getQueryPattern();
 
-    /// Returns the hash pattern string without a leading number sign.
+    /// Returns the fragment component pattern string without a leading number sign.
     @Contract(pure = true)
-    String getFragment();
-
-    /// Returns the URLPattern `protocol` attribute pattern string.
-    ///
-    /// Unlike [WebURL#getWebProtocol()], this URLPattern attribute does not include a trailing colon.
-    @Contract(pure = true)
-    String getWebProtocol();
-
-    /// Returns the URLPattern `username` attribute pattern string.
-    @Contract(pure = true)
-    String getWebUsername();
-
-    /// Returns the URLPattern `password` attribute pattern string.
-    @Contract(pure = true)
-    String getWebPassword();
-
-    /// Returns the URLPattern `hostname` attribute pattern string.
-    @Contract(pure = true)
-    String getWebHostname();
-
-    /// Returns the URLPattern `port` attribute pattern string.
-    @Contract(pure = true)
-    String getWebPort();
-
-    /// Returns the URLPattern `pathname` attribute pattern string.
-    @Contract(pure = true)
-    String getWebPathname();
-
-    /// Returns the URLPattern `search` attribute pattern string without a leading question mark.
-    @Contract(pure = true)
-    String getWebSearch();
-
-    /// Returns the URLPattern `hash` attribute pattern string without a leading number sign.
-    @Contract(pure = true)
-    String getWebHash();
+    String getFragmentPattern();
 
     /// Returns whether this pattern was compiled with case-insensitive matching.
     @Contract(pure = true)

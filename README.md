@@ -193,10 +193,9 @@ WebURLPattern ignoreCasePattern = WebURLPatternParser.getDefault().withIgnoreCas
 ignoreCasePattern.test("https://example.com/Users/42"); // true
 ```
 
-Pattern getters mirror `WebURL`: Java-style getters such as `getScheme()` and `getPath()` return
-component pattern strings without URL delimiters, while URLPattern attribute getters such as
-`getWebProtocol()` and `getWebPathname()` return WHATWG URLPattern attribute values. Unlike
-`WebURL.getWebProtocol()`, `WebURLPattern.getWebProtocol()` does not include a trailing colon.
+Component pattern getters such as `getSchemePattern()` and `getPathPattern()` return normalized
+pattern strings without URL delimiters. `WebURLPattern` does not expose a separate WHATWG-style
+getter view; the `*Pattern` suffix distinguishes pattern strings from parsed `WebURL` component values.
 
 The URLPattern API lives in `org.glavo.url.pattern`. Use
 `WebURLPatternParser.getDefault().withIgnoreCase()` when compiled patterns should match case-insensitively.

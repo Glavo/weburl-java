@@ -47,23 +47,14 @@ public final class WebURLPatternTest {
                 .setQuery("q=:term")
                 .setFragment("section"));
 
-        assertEquals("https", pattern.getScheme());
-        assertEquals("user", pattern.getUsername());
-        assertEquals("pass", pattern.getPassword());
-        assertEquals("example.com", pattern.getHost());
-        assertEquals("8080", pattern.getPort());
-        assertEquals("/books/:id", pattern.getPath());
-        assertEquals("q=:term", pattern.getQuery());
-        assertEquals("section", pattern.getFragment());
-
-        assertEquals("https", pattern.getWebProtocol());
-        assertEquals("user", pattern.getWebUsername());
-        assertEquals("pass", pattern.getWebPassword());
-        assertEquals("example.com", pattern.getWebHostname());
-        assertEquals("8080", pattern.getWebPort());
-        assertEquals("/books/:id", pattern.getWebPathname());
-        assertEquals("q=:term", pattern.getWebSearch());
-        assertEquals("section", pattern.getWebHash());
+        assertEquals("https", pattern.getSchemePattern());
+        assertEquals("user", pattern.getUsernamePattern());
+        assertEquals("pass", pattern.getPasswordPattern());
+        assertEquals("example.com", pattern.getHostPattern());
+        assertEquals("8080", pattern.getPortPattern());
+        assertEquals("/books/:id", pattern.getPathPattern());
+        assertEquals("q=:term", pattern.getQueryPattern());
+        assertEquals("section", pattern.getFragmentPattern());
     }
 
     /// Tests shorthand string compilation with a base URL.
@@ -71,9 +62,9 @@ public final class WebURLPatternTest {
     public void compilesShorthandWithBaseUrl() {
         WebURLPattern pattern = WebURLPattern.compile("./books/:id", "https://example.com/library/index.html");
 
-        assertEquals("https", pattern.getWebProtocol());
-        assertEquals("example.com", pattern.getWebHostname());
-        assertEquals("/library/books/:id", pattern.getWebPathname());
+        assertEquals("https", pattern.getSchemePattern());
+        assertEquals("example.com", pattern.getHostPattern());
+        assertEquals("/library/books/:id", pattern.getPathPattern());
         assertTrue(pattern.test("https://example.com/library/books/123"));
         assertFalse(pattern.test("https://example.com/books/123"));
     }
@@ -83,9 +74,9 @@ public final class WebURLPatternTest {
     public void compilesAbsoluteShorthandString() {
         WebURLPattern pattern = WebURLPattern.compile("https://example.com/users/:id");
 
-        assertEquals("https", pattern.getWebProtocol());
-        assertEquals("example.com", pattern.getWebHostname());
-        assertEquals("/users/:id", pattern.getWebPathname());
+        assertEquals("https", pattern.getSchemePattern());
+        assertEquals("example.com", pattern.getHostPattern());
+        assertEquals("/users/:id", pattern.getPathPattern());
         assertTrue(pattern.test("https://example.com/users/alice"));
         assertFalse(pattern.test("http://example.com/users/alice"));
     }
@@ -211,7 +202,7 @@ public final class WebURLPatternTest {
                 .setPort("443")
                 .setPath("/"));
 
-        assertEquals("", pattern.getWebPort());
+        assertEquals("", pattern.getPortPattern());
         assertTrue(pattern.test("https://example.com/"));
         assertTrue(pattern.test("https://example.com:443/"));
     }
@@ -225,7 +216,7 @@ public final class WebURLPatternTest {
                 .setPort("080")
                 .setPath("/"));
 
-        assertEquals("80", pattern.getWebPort());
+        assertEquals("80", pattern.getPortPattern());
         assertTrue(pattern.test("https://example.com:80/"));
         assertThrows(WebURLPatternSyntaxException.class,
                 () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPort("80x")));
@@ -239,7 +230,7 @@ public final class WebURLPatternTest {
                 .setHost("[0:0:0:0:0:0:0:1]")
                 .setPath("/"));
 
-        assertEquals("[::1]", pattern.getWebHostname());
+        assertEquals("[::1]", pattern.getHostPattern());
         assertTrue(pattern.test("http://[::1]/"));
         assertThrows(WebURLPatternSyntaxException.class,
                 () -> WebURLPattern.compile(WebURLPattern.newBuilder().setHost("[::fffff]")));
@@ -250,7 +241,7 @@ public final class WebURLPatternTest {
     public void matchesEmptyComponentsExactly() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPort(""));
 
-        assertEquals("", pattern.getWebPort());
+        assertEquals("", pattern.getPortPattern());
         assertTrue(pattern.test(WebURLPattern.newBuilder().setPort("")));
         assertFalse(pattern.test(WebURLPattern.newBuilder().setPort("8080")));
     }

@@ -19,8 +19,9 @@
   supported yet because URLPattern uses ECMAScript `v` / `vi` regex behavior, which is not equivalent
   to Java regular expressions.
   `WebURLPatternParser` owns compilation policy; derive case-insensitive parsers with
-  `withIgnoreCase()`. `WebURLPattern` and its nested `ComponentResult` and `Result` types are
-  exposed as interfaces with internal immutable implementations, matching the `WebURL` API shape. The URLPattern
+  `withIgnoreCase()`. `WebURLPattern` exposes component pattern getters such as
+  `getSchemePattern()` instead of a separate WHATWG-style getter view. `WebURLPattern` and its nested
+  `ComponentResult` and `Result` types are exposed as interfaces with internal immutable implementations, matching the `WebURL` API shape. The URLPattern
   API lives in the separate `org.glavo.url.pattern` package.
 
 ## 0.2.0 (2026-05-12)

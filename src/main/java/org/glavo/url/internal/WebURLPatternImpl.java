@@ -107,115 +107,59 @@ public final class WebURLPatternImpl implements WebURLPattern {
         return toResult(engine.match(implementation.toPatternInit()));
     }
 
-    /// Returns the protocol pattern string without a trailing colon.
+    /// Returns the scheme component pattern string without a trailing colon.
     @Override
     @Contract(pure = true)
-    public String getScheme() {
+    public String getSchemePattern() {
         return engine.protocol();
     }
 
     /// Returns the username pattern string.
     @Override
     @Contract(pure = true)
-    public String getUsername() {
+    public String getUsernamePattern() {
         return engine.username();
     }
 
     /// Returns the password pattern string.
     @Override
     @Contract(pure = true)
-    public String getPassword() {
+    public String getPasswordPattern() {
         return engine.password();
     }
 
-    /// Returns the hostname pattern string.
+    /// Returns the host component pattern string.
     @Override
     @Contract(pure = true)
-    public String getHost() {
+    public String getHostPattern() {
         return engine.hostname();
     }
 
     /// Returns the port pattern string.
     @Override
     @Contract(pure = true)
-    public String getPort() {
+    public String getPortPattern() {
         return engine.port();
     }
 
-    /// Returns the pathname pattern string.
+    /// Returns the path component pattern string.
     @Override
     @Contract(pure = true)
-    public String getPath() {
+    public String getPathPattern() {
         return engine.pathname();
     }
 
-    /// Returns the search pattern string without a leading question mark.
+    /// Returns the query component pattern string without a leading question mark.
     @Override
     @Contract(pure = true)
-    public String getQuery() {
+    public String getQueryPattern() {
         return engine.search();
     }
 
-    /// Returns the hash pattern string without a leading number sign.
+    /// Returns the fragment component pattern string without a leading number sign.
     @Override
     @Contract(pure = true)
-    public String getFragment() {
-        return engine.hash();
-    }
-
-    /// Returns the URLPattern `protocol` attribute pattern string.
-    @Override
-    @Contract(pure = true)
-    public String getWebProtocol() {
-        return engine.protocol();
-    }
-
-    /// Returns the URLPattern `username` attribute pattern string.
-    @Override
-    @Contract(pure = true)
-    public String getWebUsername() {
-        return engine.username();
-    }
-
-    /// Returns the URLPattern `password` attribute pattern string.
-    @Override
-    @Contract(pure = true)
-    public String getWebPassword() {
-        return engine.password();
-    }
-
-    /// Returns the URLPattern `hostname` attribute pattern string.
-    @Override
-    @Contract(pure = true)
-    public String getWebHostname() {
-        return engine.hostname();
-    }
-
-    /// Returns the URLPattern `port` attribute pattern string.
-    @Override
-    @Contract(pure = true)
-    public String getWebPort() {
-        return engine.port();
-    }
-
-    /// Returns the URLPattern `pathname` attribute pattern string.
-    @Override
-    @Contract(pure = true)
-    public String getWebPathname() {
-        return engine.pathname();
-    }
-
-    /// Returns the URLPattern `search` attribute pattern string without a leading question mark.
-    @Override
-    @Contract(pure = true)
-    public String getWebSearch() {
-        return engine.search();
-    }
-
-    /// Returns the URLPattern `hash` attribute pattern string without a leading number sign.
-    @Override
-    @Contract(pure = true)
-    public String getWebHash() {
+    public String getFragmentPattern() {
         return engine.hash();
     }
 

@@ -19,7 +19,8 @@
 /// This package contains the URLPattern API, separate from the core URL value and parser types in
 /// [org.glavo.url]. A [WebURLPattern] is an immutable, precompiled matcher that can be constructed
 /// from shorthand URLPattern strings or from component patterns. [WebURLPatternParser] provides
-/// reusable compilation policy, including case-insensitive matching.
+/// reusable compilation policy, including case-insensitive matching. Component pattern getters use
+/// names such as `getSchemePattern()` to distinguish pattern strings from parsed URL component values.
 ///
 /// # Quick Start
 ///
