@@ -137,7 +137,7 @@ public final class PercentEncoding {
                     output.append((char) codePoint);
                 }
             } else {
-                appendUtf8PercentEncodedCodePoint(output, codePoint);
+                appendUtf8PercentEncodedCodePoint(output, scalarValue(codePoint));
             }
             index += Character.charCount(codePoint);
         }
@@ -161,7 +161,7 @@ public final class PercentEncoding {
                     output.append((char) codePoint);
                 }
             } else {
-                byte[] bytes = Utf8.encode(new String(Character.toChars(codePoint)));
+                byte[] bytes = Utf8.encode(new String(Character.toChars(scalarValue(codePoint))));
                 for (byte b : bytes) {
                     int value = b & 0xff;
                     if (percentEncodePredicate.test(value)) {
@@ -245,6 +245,7 @@ public final class PercentEncoding {
 
     /// Appends the UTF-8 bytes of one code point as percent escapes.
     public static void appendUtf8PercentEncodedCodePoint(StringBuilder output, int codePoint) {
+        codePoint = scalarValue(codePoint);
         if (codePoint <= 0x7f) {
             output.append(percentEncodedByteString(codePoint));
             return;
@@ -254,6 +255,11 @@ public final class PercentEncoding {
         for (byte b : bytes) {
             output.append(percentEncodedByteString(b & 0xff));
         }
+    }
+
+    /// Converts surrogate code points to the replacement character.
+    private static int scalarValue(int codePoint) {
+        return codePoint >= 0xd800 && codePoint <= 0xdfff ? 0xfffd : codePoint;
     }
 
     /// Converts an ASCII hexadecimal digit to its numeric value.

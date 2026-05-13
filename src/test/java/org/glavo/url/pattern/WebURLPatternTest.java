@@ -209,7 +209,12 @@ public final class WebURLPatternTest {
         assertEquals("42", result.getPath().group(1));
         assertTrue(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/123")));
         assertFalse(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/abc")));
-        assertNull(WebURLPattern.tryCompile(WebURLPattern.newBuilder().setPathPattern("/books/:id(a(?:b))")));
+
+        WebURLPattern nonCapturing = WebURLPattern.compile(
+                WebURLPattern.newBuilder().setPathPattern("/books/:id(a(?:b))"));
+        WebURLPattern.Result nonCapturingResult = requireMatch(
+                nonCapturing.exec(WebURLPattern.newBuilder().setPathPattern("/books/ab")));
+        assertEquals("ab", nonCapturingResult.getPath().getWebGroup("id"));
     }
 
     /// Tests the reject regular-expression policy.
@@ -308,13 +313,13 @@ public final class WebURLPatternTest {
     public void canonicalizesIpv6HostPatterns() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
                 .setSchemePattern("http")
-                .setHostPattern("[0:0:0:0:0:0:0:1]")
+                .setHostPattern("[0\\:0\\:0\\:0\\:0\\:0\\:0\\:1]")
                 .setPathPattern("/"));
 
-        assertEquals("[::1]", pattern.getHostPattern());
+        assertEquals("[\\:\\:1]", pattern.getHostPattern());
         assertTrue(pattern.test("http://[::1]/"));
         assertThrows(WebURLPatternSyntaxException.class,
-                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setHostPattern("[::fffff]")));
+                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setHostPattern("[\\:\\:fffff]")));
     }
 
     /// Tests explicit empty component patterns.

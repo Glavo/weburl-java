@@ -75,6 +75,26 @@ final class PatternComponent {
     static PatternComponent compile(String input, Function<String, String> encodingCallback, PatternOptions options) {
         List<PatternPart> parts = processRegExpParts(PatternParser.parsePatternString(input, options, encodingCallback),
                 options.regExpPolicy());
+        return compileParts(parts, options);
+    }
+
+    /// Compiles an IPv6 hostname component pattern.
+    static PatternComponent compileIpv6Hostname(String input, PatternOptions options) {
+        List<PatternPart> parts = processRegExpParts(PatternParser.parsePatternString(input, options,
+                URLPatternCanonicalizer::canonicalizeIpv6HostnamePatternText), options.regExpPolicy());
+        if (parts.size() == 1) {
+            PatternPart part = parts.get(0);
+            if (part.type() == PatternPart.Type.FIXED_TEXT && part.modifier() == PatternPart.Modifier.NONE) {
+                String canonical = URLPatternCanonicalizer.canonicalizeIpv6Hostname(part.value());
+                return new PatternComponent(PatternParser.escapePatternString(canonical), null, List.of(), false,
+                        Type.EXACT_MATCH, canonical);
+            }
+        }
+        return compileParts(parts, options);
+    }
+
+    /// Compiles already parsed component parts.
+    private static PatternComponent compileParts(List<PatternPart> parts, PatternOptions options) {
         boolean hasRegExpGroups = false;
         for (PatternPart part : parts) {
             if (part.isRegExp()) {
@@ -203,7 +223,7 @@ final class PatternComponent {
 
     /// Returns whether this component matches a special URL scheme.
     boolean matchesSpecialScheme() {
-        return test("http") || test("https") || test("ws") || test("wss") || test("ftp");
+        return test("http") || test("https") || test("ws") || test("wss") || test("ftp") || test("file");
     }
 
     /// Runs regular-expression matching for a complex component.

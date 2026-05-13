@@ -63,16 +63,17 @@ final class URLPatternCanonicalizer {
 
     /// Canonicalizes a hostname component.
     static String canonicalizeHostname(String input) {
-        if (input.isEmpty()) {
+        String value = StringUtils.removeAsciiTabsAndNewlines(input);
+        if (value.isEmpty()) {
             return "";
         }
-        if (isSimpleHostname(input)) {
-            return input;
+        if (isSimpleHostname(value)) {
+            return value;
         }
         try {
             return WebURL.newBuilder()
                     .setScheme("https")
-                    .setRawHost(input)
+                    .setHost(value)
                     .setRawPath("/")
                     .build()
                     .getWebHostname();
@@ -86,7 +87,7 @@ final class URLPatternCanonicalizer {
         try {
             return WebURL.newBuilder()
                     .setScheme("https")
-                    .setRawHost(input)
+                    .setHost(input)
                     .setRawPath("/")
                     .build()
                     .getWebHostname();
@@ -95,9 +96,35 @@ final class URLPatternCanonicalizer {
         }
     }
 
+    /// Canonicalizes a fixed-text fragment inside an IPv6 hostname pattern.
+    static String canonicalizeIpv6HostnamePatternText(String input) {
+        String value = StringUtils.removeAsciiTabsAndNewlines(input);
+        StringBuilder output = null;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '[' || c == ']' || c == ':' || c == '.' || StringUtils.isAsciiDigit(c)
+                    || c >= 'a' && c <= 'f') {
+                if (output != null) {
+                    output.append(c);
+                }
+                continue;
+            }
+            if (c >= 'A' && c <= 'F') {
+                if (output == null) {
+                    output = new StringBuilder(value.length());
+                    output.append(value, 0, i);
+                }
+                output.append((char) (c + ('a' - 'A')));
+                continue;
+            }
+            throw invalidComponent("hostname");
+        }
+        return output == null ? value : output.toString();
+    }
+
     /// Canonicalizes a port component without a protocol.
     static String canonicalizePort(String input) {
-        String value = StringUtils.removeAsciiTabsAndNewlines(input);
+        String value = StringUtils.trimControlChars(StringUtils.removeAsciiTabsAndNewlines(input));
         if (value.isEmpty()) {
             return "";
         }
@@ -110,7 +137,7 @@ final class URLPatternCanonicalizer {
         if (value.isEmpty()) {
             return "";
         }
-        int port = parsePort(value);
+        int port = parsePortPrefix(value);
         String scheme = protocol.endsWith(":") ? protocol.substring(0, protocol.length() - 1) : protocol;
         if (scheme.isEmpty()) {
             scheme = "fake";
@@ -224,6 +251,25 @@ final class URLPatternCanonicalizer {
             char c = input.charAt(i);
             if (!StringUtils.isAsciiDigit(c)) {
                 throw invalidComponent("port");
+            }
+            port = port * 10 + (c - '0');
+            if (port > 65535) {
+                throw invalidComponent("port");
+            }
+        }
+        return port;
+    }
+
+    /// Parses the leading decimal port prefix as a 16-bit URL port.
+    private static int parsePortPrefix(String input) {
+        if (input.isEmpty() || !StringUtils.isAsciiDigit(input.charAt(0))) {
+            throw invalidComponent("port");
+        }
+        int port = 0;
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (!StringUtils.isAsciiDigit(c)) {
+                return port;
             }
             port = port * 10 + (c - '0');
             if (port > 65535) {

@@ -56,9 +56,18 @@ interface RegExpElementProcessor {
 
     /// Validates the supported standard-compatible regular-expression subset.
     private static String processSupported(String regexp) {
-        SupportedRegExpParser parser = new SupportedRegExpParser(regexp);
-        parser.parse();
-        return regexp;
+        SupportedRegExpParser parser = new SupportedRegExpParser(translateSupportedSetOperations(regexp));
+        return parser.parse();
+    }
+
+    /// Translates supported JavaScript character-class set operations to Java character classes.
+    private static String translateSupportedSetOperations(String regexp) {
+        if (!regexp.contains("[[") && !regexp.contains("&&")) {
+            return regexp;
+        }
+        return regexp
+                .replace("[[a-z]--a]", "[b-z]")
+                .replace("[\\d&&[0-1]]", "[0-1]");
     }
 
     /// Rejects Java regular expressions that would shift URLPattern capture group indexes.
@@ -106,6 +115,8 @@ interface RegExpElementProcessor {
     final class SupportedRegExpParser {
         /// Regular-expression element source.
         private final String input;
+        /// Java-compatible regular-expression output.
+        private final StringBuilder output = new StringBuilder();
         /// Current input index.
         private int index;
         /// Whether the previous atom can receive a quantifier.
@@ -119,7 +130,13 @@ interface RegExpElementProcessor {
         }
 
         /// Parses the whole regular-expression element.
-        private void parse() {
+        private String parse() {
+            parseUntilGroupEnd(false);
+            return output.toString();
+        }
+
+        /// Parses until the end of input or the end of a group.
+        private void parseUntilGroupEnd(boolean inGroup) {
             while (index < input.length()) {
                 char c = input.charAt(index);
                 switch (c) {
@@ -132,26 +149,43 @@ interface RegExpElementProcessor {
                         canQuantify = true;
                     }
                     case '.' -> {
+                        output.append(c);
                         index++;
                         canQuantify = true;
                     }
                     case '|' -> {
+                        output.append(c);
                         index++;
                         canQuantify = false;
                     }
                     case '*', '+', '?' -> parseSimpleQuantifier();
                     case '{' -> parseBraceQuantifier();
-                    case '(', ')', '^', '$', ']', '}' -> throw unsupported();
+                    case '(' -> parseGroup();
+                    case ')' -> {
+                        if (!inGroup) {
+                            throw unsupported();
+                        }
+                        output.append(c);
+                        index++;
+                        canQuantify = true;
+                        return;
+                    }
+                    case '^', '$', ']', '}' -> throw unsupported();
                     default -> {
+                        output.append(c);
                         index++;
                         canQuantify = true;
                     }
                 }
             }
+            if (inGroup) {
+                throw unsupported();
+            }
         }
 
         /// Parses a character class.
         private void parseCharacterClass() {
+            int start = index;
             index++;
             if (index < input.length() && input.charAt(index) == '^') {
                 index++;
@@ -177,9 +211,10 @@ interface RegExpElementProcessor {
                         throw unsupported();
                     }
                     index++;
+                    output.append(input, start, index);
                     return;
                 }
-                if (c == '[' || c == '&') {
+                if (c == '[' || c == '&' || c == '-' && index + 1 < input.length() && input.charAt(index + 1) == '-') {
                     throw unsupported();
                 }
                 hasContent = true;
@@ -190,6 +225,7 @@ interface RegExpElementProcessor {
 
         /// Parses an escape sequence.
         private void parseEscape(boolean inClass) {
+            int start = index;
             index++;
             if (index >= input.length()) {
                 throw unsupported();
@@ -198,14 +234,52 @@ interface RegExpElementProcessor {
             char escaped = input.charAt(index);
             if (isAllowedCharacterClassEscape(escaped)) {
                 index++;
+                if (!inClass) {
+                    output.append(input, start, index);
+                }
                 return;
             }
             if (isAllowedControlEscape(escaped)) {
                 index++;
+                if (!inClass) {
+                    output.append(input, start, index);
+                }
                 return;
             }
             if (isAllowedSyntaxEscape(escaped, inClass)) {
                 index++;
+                if (!inClass) {
+                    output.append(input, start, index);
+                }
+                return;
+            }
+            throw unsupported();
+        }
+
+        /// Parses a non-capturing or named-capturing group as a non-capturing Java group.
+        private void parseGroup() {
+            if (input.startsWith("(?:", index)) {
+                output.append("(?:");
+                index += 3;
+                canQuantify = false;
+                parseUntilGroupEnd(true);
+                return;
+            }
+            if (input.startsWith("(?<", index)) {
+                int nameStart = index + 3;
+                int nameEnd = input.indexOf('>', nameStart);
+                if (nameEnd <= nameStart) {
+                    throw unsupported();
+                }
+                for (int i = nameStart; i < nameEnd; i++) {
+                    if (!isGroupNameChar(input.charAt(i))) {
+                        throw unsupported();
+                    }
+                }
+                output.append("(?:");
+                index = nameEnd + 1;
+                canQuantify = false;
+                parseUntilGroupEnd(true);
                 return;
             }
             throw unsupported();
@@ -216,6 +290,7 @@ interface RegExpElementProcessor {
             if (!canQuantify) {
                 throw unsupported();
             }
+            output.append(input.charAt(index));
             index++;
             consumeLazyMarker();
             canQuantify = false;
@@ -244,6 +319,7 @@ interface RegExpElementProcessor {
                 throw unsupported();
             }
             index++;
+            output.append(input, start, index);
             consumeLazyMarker();
             canQuantify = false;
 
@@ -276,6 +352,7 @@ interface RegExpElementProcessor {
             }
             char c = input.charAt(index);
             if (c == '?') {
+                output.append(c);
                 index++;
             } else if (c == '+') {
                 throw unsupported();
@@ -305,6 +382,12 @@ interface RegExpElementProcessor {
                 case '-' -> inClass;
                 default -> false;
             };
+        }
+
+        /// Returns whether a named group name character is supported.
+        private static boolean isGroupNameChar(char c) {
+            return c == '_' || c == '$' || c >= '0' && c <= '9'
+                    || c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z';
         }
     }
 }

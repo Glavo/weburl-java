@@ -106,10 +106,29 @@ final class ConstructorStringParser {
                 case AUTHORITY -> {
                     if (isIdentityTerminator()) {
                         rewind();
-                        changeState(State.USERNAME, 0);
+                        if (isPasswordPrefix()) {
+                            result.username = "";
+                            changeState(State.PASSWORD, 1);
+                        } else {
+                            changeState(State.USERNAME, 0);
+                        }
                     } else if (isPathnameStart() || isSearchPrefix() || isHashPrefix()) {
-                        rewind();
-                        changeState(State.HOSTNAME, 0);
+                        if (tokenIndex == componentStart || isNonSpecialPatternChar(componentStart, '/')) {
+                            if (tokenIndex != componentStart) {
+                                tokenIndex = componentStart;
+                            }
+                            result.hostname = "";
+                            if (isPathnameStart()) {
+                                changeState(State.PATHNAME, 0);
+                            } else if (isSearchPrefix()) {
+                                changeState(State.SEARCH, 1);
+                            } else {
+                                changeState(State.HASH, 1);
+                            }
+                        } else {
+                            rewind();
+                            changeState(State.HOSTNAME, 0);
+                        }
                     }
                 }
                 case USERNAME -> {
@@ -231,8 +250,13 @@ final class ConstructorStringParser {
             result.search = "";
         }
 
+        int nextComponentStart = tokenIndex + skip;
+        hostnameIpv6BracketDepth = newState == State.HOSTNAME && isNonSpecialPatternChar(nextComponentStart, '[')
+                ? 1
+                : 0;
+
         state = newState;
-        tokenIndex += skip;
+        tokenIndex = nextComponentStart;
         componentStart = tokenIndex;
     }
 

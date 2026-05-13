@@ -351,7 +351,9 @@ final class PatternParser {
         ArrayList<String> names = new ArrayList<>();
         @Nullable String segmentWildcardRegexp = null;
 
-        for (PatternPart part : parts) {
+        for (int index = 0; index < parts.size(); index++) {
+            PatternPart part = parts.get(index);
+            @Nullable PatternPart previousPart = index == 0 ? null : parts.get(index - 1);
             if (part.type() == PatternPart.Type.FIXED_TEXT) {
                 if (part.modifier() == PatternPart.Modifier.NONE) {
                     regexp.append(escapeRegexpString(part.value()));
@@ -370,7 +372,18 @@ final class PatternParser {
                 }
                 regexpValue = segmentWildcardRegexp;
             } else if (part.type() == PatternPart.Type.FULL_WILDCARD) {
-                regexpValue = ".*";
+                if (part.modifier() == PatternPart.Modifier.OPTIONAL
+                        && part.prefix().isEmpty()
+                        && part.suffix().isEmpty()
+                        && previousPart != null
+                        && previousPart.type() == PatternPart.Type.FULL_WILDCARD
+                        && previousPart.modifier() == PatternPart.Modifier.NONE
+                        && previousPart.prefix().isEmpty()
+                        && previousPart.suffix().isEmpty()) {
+                    regexpValue = ".+";
+                } else {
+                    regexpValue = ".*";
+                }
             }
 
             if (part.prefix().isEmpty() && part.suffix().isEmpty()) {

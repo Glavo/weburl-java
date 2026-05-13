@@ -21,7 +21,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.MediaType;
 import org.junit.jupiter.api.TestFactory;
@@ -36,7 +35,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -76,9 +74,7 @@ public final class WebURLPatternWptTest {
 
     /// Asserts one WPT case.
     private static void assertCase(int index, JsonObject testCase, TestReporter reporter) {
-        @Nullable String unsupportedReason = unsupportedReason(testCase);
-        publishMetadata(index, testCase, reporter, unsupportedReason);
-        Assumptions.assumeTrue(unsupportedReason == null, unsupportedReason);
+        publishMetadata(index, testCase, reporter);
         @Nullable WebURLPattern pattern = compilePattern(testCase.getAsJsonArray("pattern"));
         JsonElement expectedObject = testCase.get("expected_obj");
         if (expectedObject != null && expectedObject.isJsonPrimitive()
@@ -237,21 +233,12 @@ public final class WebURLPatternWptTest {
     private static void publishMetadata(
             int index,
             JsonObject testCase,
-            TestReporter reporter,
-            @Nullable String unsupportedReason
+            TestReporter reporter
     ) {
-        if (unsupportedReason == null) {
-            reporter.publishEntry(Map.of(
-                    "wpt.index", Integer.toString(index),
-                    "wpt.source", sourceUri(index).toString()
-            ));
-        } else {
-            reporter.publishEntry(Map.of(
-                    "wpt.index", Integer.toString(index),
-                    "wpt.source", sourceUri(index).toString(),
-                    "wpt.unsupportedReason", unsupportedReason
-            ));
-        }
+        reporter.publishEntry(Map.of(
+                "wpt.index", Integer.toString(index),
+                "wpt.source", sourceUri(index).toString()
+        ));
         reporter.publishFile("urlpatterntestdata-" + index + ".json", MediaType.APPLICATION_JSON,
                 path -> Files.writeString(path, asciiJson(testCase), StandardCharsets.UTF_8));
     }
@@ -279,180 +266,6 @@ public final class WebURLPatternWptTest {
             }
         }
         return builder.toString();
-    }
-
-    /// Returns the reason why this WPT case is not supported.
-    private static @Nullable String unsupportedReason(JsonObject testCase) {
-        if (containsNonAsciiHostname(testCase)) {
-            return "IDNA hostname canonicalization in URLPattern matching is not fully implemented";
-        }
-        if (containsString(testCase, value -> value.indexOf('\ufffd') >= 0 || value.contains("%EF%BF%BD"))) {
-            return "Replacement-character URLPattern canonicalization is not fully implemented";
-        }
-        if (containsUnsupportedPortCanonicalization(testCase)) {
-            return "URLPattern port truncation and space handling are not fully implemented";
-        }
-        if (containsString(patternArguments(testCase), value -> value.contains("(?:")
-                || value.contains("(?<")
-                || value.contains("[[")
-                || value.contains("&&")
-                || value.contains("--"))) {
-            return "Unsupported JavaScript regular-expression syntax";
-        }
-        if (containsString(patternArguments(testCase), value -> value.startsWith("file:///"))) {
-            return "file: constructor string handling is not fully implemented";
-        }
-        if (containsString(patternArguments(testCase), value -> value.contains("\\:") && value.contains("@"))) {
-            return "Escaped userinfo delimiters in constructor strings are not fully implemented";
-        }
-        if (containsString(patternArguments(testCase), WebURLPatternWptTest::isIpv6HostnamePatternSyntax)) {
-            return "IPv6 hostname pattern syntax is not fully implemented";
-        }
-        if (containsHostnameAsciiTabsOrNewlines(testCase)) {
-            return "Hostname ASCII tab and newline canonicalization is not fully implemented";
-        }
-        if (containsString(patternArguments(testCase), value -> value.contains("{}"))) {
-            return "Empty URLPattern parts are not fully implemented";
-        }
-        return null;
-    }
-
-    /// Returns whether a case contains a non-ASCII hostname.
-    private static boolean containsNonAsciiHostname(JsonObject testCase) {
-        return containsComponentString(testCase, "hostname", WebURLPatternWptTest::containsNonAscii)
-                || containsString(testCase, WebURLPatternWptTest::urlAuthorityContainsNonAscii);
-    }
-
-    /// Returns whether a case contains unsupported port canonicalization behavior.
-    private static boolean containsUnsupportedPortCanonicalization(JsonObject testCase) {
-        return containsComponentString(patternArguments(testCase), "port", value -> value.indexOf(' ') >= 0)
-                || containsComponentString(inputArguments(testCase), "port", value ->
-                value.contains("?") || value.contains("\\") || startsWithDigitAndContainsLetter(value));
-    }
-
-    /// Returns whether a case contains hostname ASCII tabs or newlines.
-    private static boolean containsHostnameAsciiTabsOrNewlines(JsonObject testCase) {
-        return containsComponentString(testCase, "hostname", value ->
-                value.indexOf('\n') >= 0 || value.indexOf('\r') >= 0 || value.indexOf('\t') >= 0);
-    }
-
-    /// Returns whether a pattern string contains IPv6 hostname pattern syntax.
-    private static boolean isIpv6HostnamePatternSyntax(String value) {
-        return value.contains("[\\") || value.contains("[:") || value.contains("[*")
-                || value.contains("[") && value.contains("\\:");
-    }
-
-    /// Returns whether a string contains a non-ASCII character.
-    private static boolean containsNonAscii(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            if (value.charAt(i) > 0x7f) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// Returns whether a URL-like string contains a non-ASCII authority host.
-    private static boolean urlAuthorityContainsNonAscii(String value) {
-        int schemeEnd = value.indexOf("://");
-        if (schemeEnd < 0) {
-            return false;
-        }
-        int authorityStart = schemeEnd + 3;
-        int authorityEnd = value.length();
-        for (int i = authorityStart; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (c == '/' || c == '?' || c == '#') {
-                authorityEnd = i;
-                break;
-            }
-        }
-        int hostStart = value.lastIndexOf('@', authorityEnd - 1);
-        hostStart = hostStart >= authorityStart ? hostStart + 1 : authorityStart;
-        for (int i = hostStart; i < authorityEnd; i++) {
-            if (value.charAt(i) > 0x7f) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// Returns whether a string starts with a digit and contains an ASCII letter.
-    private static boolean startsWithDigitAndContainsLetter(String value) {
-        if (value.isEmpty() || !Character.isDigit(value.charAt(0))) {
-            return false;
-        }
-        for (int i = 1; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z') {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// Returns the WPT `pattern` arguments.
-    private static JsonArray patternArguments(JsonObject testCase) {
-        return testCase.getAsJsonArray("pattern");
-    }
-
-    /// Returns the WPT `inputs` arguments.
-    private static @Nullable JsonArray inputArguments(JsonObject testCase) {
-        return testCase.getAsJsonArray("inputs");
-    }
-
-    /// Returns whether a component field has a string matching a predicate.
-    private static boolean containsComponentString(JsonElement element, String field, Predicate<String> predicate) {
-        if (element == null || element.isJsonNull()) {
-            return false;
-        }
-        if (element.isJsonArray()) {
-            for (JsonElement child : element.getAsJsonArray()) {
-                if (containsComponentString(child, field, predicate)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        if (!element.isJsonObject()) {
-            return false;
-        }
-
-        JsonObject object = element.getAsJsonObject();
-        JsonElement value = object.get(field);
-        if (value != null && value.isJsonPrimitive() && predicate.test(value.getAsString())) {
-            return true;
-        }
-        for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-            if (containsComponentString(entry.getValue(), field, predicate)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// Returns whether any string in a JSON value matches a predicate.
-    private static boolean containsString(@Nullable JsonElement element, Predicate<String> predicate) {
-        if (element == null || element.isJsonNull()) {
-            return false;
-        }
-        if (element.isJsonPrimitive()) {
-            return element.getAsJsonPrimitive().isString() && predicate.test(element.getAsString());
-        }
-        if (element.isJsonArray()) {
-            for (JsonElement child : element.getAsJsonArray()) {
-                if (containsString(child, predicate)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
-            if (containsString(entry.getValue(), predicate)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /// Returns one compiled pattern field.

@@ -57,6 +57,10 @@ public final class RegExpElementProcessorTest {
         assertSupported("\\.\\+\\*\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\\\/");
         assertSupported("a{1}b{2,}c{3,5}?");
         assertSupported("a+?");
+        assertSupported("(?:ab)");
+        assertTranslated("(?<name>ab)", "(?:ab)");
+        assertTranslated("[[a-z]--a]", "[b-z]");
+        assertTranslated("[\\d&&[0-1]]", "[0-1]");
     }
 
     /// Tests literal, wildcard, and alternative matching with the supported policy.
@@ -76,6 +80,11 @@ public final class RegExpElementProcessorTest {
         assertMatches("cat|dog", "dog");
         assertDoesNotMatch("cat|dog", "cow");
         assertDoesNotMatch("cat|dog", "catdog");
+
+        assertMatches("a(?:b|c)", "ab");
+        assertMatches("a(?:b|c)", "ac");
+        assertDoesNotMatch("a(?:b|c)", "ad");
+        assertMatches("(?<inner>ab)", "ab");
     }
 
     /// Tests character class matching with the supported policy.
@@ -93,6 +102,11 @@ public final class RegExpElementProcessorTest {
         assertMatches("[a-c][^0-9]", "c_");
         assertDoesNotMatch("[a-c][^0-9]", "d_");
         assertDoesNotMatch("[a-c][^0-9]", "a5");
+
+        assertMatches("[[a-z]--a]", "z");
+        assertDoesNotMatch("[[a-z]--a]", "a");
+        assertMatches("[\\d&&[0-1]]", "0");
+        assertDoesNotMatch("[\\d&&[0-1]]", "3");
     }
 
     /// Tests escape matching with the supported policy.
@@ -153,7 +167,6 @@ public final class RegExpElementProcessorTest {
     @Test
     public void supportedPolicyRejectsUnsupportedSyntax() {
         assertUnsupported("(ab)");
-        assertUnsupported("(?:ab)");
         assertUnsupported("(?=ab)");
         assertUnsupported("(?<=ab)");
         assertUnsupported("^abc");
@@ -198,6 +211,14 @@ public final class RegExpElementProcessorTest {
     /// @param regexp the regular-expression element source
     private static void assertSupported(String regexp) {
         assertEquals(regexp, RegExpElementProcessor.SUPPORTED.process(regexp));
+    }
+
+    /// Asserts that the supported policy translates a regular-expression element.
+    ///
+    /// @param regexp the regular-expression element source
+    /// @param expected the expected Java-compatible source
+    private static void assertTranslated(String regexp, String expected) {
+        assertEquals(expected, RegExpElementProcessor.SUPPORTED.process(regexp));
     }
 
     /// Asserts that the supported policy rejects a regular-expression element.

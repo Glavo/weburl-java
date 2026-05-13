@@ -111,7 +111,8 @@ public final class WebURLPatternEngine {
                 URLPatternCanonicalizer::canonicalizePassword, defaultOptions);
         String hostnameValue = require(processed.hostname);
         PatternComponent hostname = isIpv6Address(hostnameValue)
-                ? PatternComponent.exact(URLPatternCanonicalizer.canonicalizeIpv6Hostname(hostnameValue))
+                ? PatternComponent.compileIpv6Hostname(hostnameValue,
+                PatternOptions.HOSTNAME.withIgnoreCase(ignoreCase).withRegExpPolicy(regExpPolicy))
                 : PatternComponent.compile(hostnameValue, URLPatternCanonicalizer::canonicalizeHostname,
                 PatternOptions.HOSTNAME.withIgnoreCase(ignoreCase).withRegExpPolicy(regExpPolicy));
         PatternComponent port = PatternComponent.compile(require(processed.port),
@@ -313,7 +314,9 @@ public final class WebURLPatternEngine {
             int defaultPort = UrlParser.defaultPort(protocol);
             try {
                 String canonicalPort = URLPatternCanonicalizer.canonicalizePort(port);
-                init.port = Integer.toString(defaultPort).equals(canonicalPort) ? "" : canonicalPort;
+                init.port = port.equals(canonicalPort) && Integer.toString(defaultPort).equals(canonicalPort)
+                        ? ""
+                        : canonicalPort;
             } catch (WebURLPatternSyntaxException ignored) {
                 // Non-literal port patterns are compiled later by the component parser.
             }

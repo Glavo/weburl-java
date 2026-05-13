@@ -69,15 +69,18 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
         /// - the `.` wildcard;
         /// - top-level `|` alternatives;
         /// - character classes such as `[abc]`, `[^abc]`, and `[a-z]`, without nested classes or set operations;
+        /// - the limited class set operations `[[a-z]--a]` and `[\d&&[0-1]]`;
         /// - character-class escapes `\d`, `\D`, `\w`, and `\W`;
         /// - control escapes `\n`, `\r`, `\t`, and `\f`;
         /// - syntax escapes for regular-expression syntax characters, with `\-` also accepted inside character classes;
-        /// - quantifiers `*`, `+`, `?`, `{m}`, `{m,}`, and `{m,n}`, including lazy forms such as `*?`.
+        /// - quantifiers `*`, `+`, `?`, `{m}`, `{m,}`, and `{m,n}`, including lazy forms such as `*?`;
+        /// - non-capturing groups `(?:...)`;
+        /// - named capture groups `(?<name>...)`, compiled as non-capturing groups because URLPattern does
+        ///   not expose inner regular-expression groups.
         ///
-        /// Parenthesized regular-expression constructs are not supported yet, including capture groups,
-        /// named capture groups, non-capturing groups, lookahead, and lookbehind. Anchors, backreferences,
-        /// Unicode and property escapes, word-boundary escapes, possessive quantifiers, nested character
-        /// classes, and character-class set operations are also rejected.
+        /// Numbered capture groups, lookahead, and lookbehind are rejected. Anchors, backreferences, Unicode
+        /// and property escapes, word-boundary escapes, possessive quantifiers, nested character classes, and
+        /// other character-class set operations are also rejected.
         ///
         /// Unsupported syntax is rejected during compilation. This is the default policy.
         SUPPORTED,
