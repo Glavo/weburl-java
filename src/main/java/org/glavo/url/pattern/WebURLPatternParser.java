@@ -63,6 +63,22 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
     enum RegExpPolicy {
         /// Accepts the currently implemented standard-compatible JavaScript regular-expression subset.
         ///
+        /// This policy currently accepts:
+        ///
+        /// - literal characters allowed by URLPattern regular-expression tokenization;
+        /// - the `.` wildcard;
+        /// - top-level `|` alternatives;
+        /// - character classes such as `[abc]`, `[^abc]`, and `[a-z]`, without nested classes or set operations;
+        /// - character-class escapes `\d`, `\D`, `\w`, and `\W`;
+        /// - control escapes `\n`, `\r`, `\t`, and `\f`;
+        /// - syntax escapes for regular-expression syntax characters, with `\-` also accepted inside character classes;
+        /// - quantifiers `*`, `+`, `?`, `{m}`, `{m,}`, and `{m,n}`, including lazy forms such as `*?`.
+        ///
+        /// Parenthesized regular-expression constructs are not supported yet, including capture groups,
+        /// named capture groups, non-capturing groups, lookahead, and lookbehind. Anchors, backreferences,
+        /// Unicode and property escapes, word-boundary escapes, possessive quantifiers, nested character
+        /// classes, and character-class set operations are also rejected.
+        ///
         /// Unsupported syntax is rejected during compilation. This is the default policy.
         SUPPORTED,
 
