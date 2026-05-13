@@ -19,7 +19,6 @@ import org.glavo.url.WebURL;
 import org.glavo.url.internal.WebURLPatternBuilderImpl;
 import org.glavo.url.internal.WebURLPatternComponentResultImpl;
 import org.glavo.url.internal.WebURLPatternImpl;
-import org.glavo.url.internal.WebURLPatternOptionsImpl;
 import org.glavo.url.internal.WebURLPatternResultImpl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
-import java.util.Objects;
 
 /// An immutable, precompiled matcher for WHATWG URL Pattern syntax.
 ///
@@ -56,32 +54,18 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// @throws WebURLPatternSyntaxException when the pattern cannot be compiled
     @Contract("_ -> new")
     static WebURLPattern compile(String input) {
-        return compile(input, null, Options.DEFAULT);
+        return WebURLPatternParser.getDefault().compile(input);
     }
 
     /// Compiles a shorthand URLPattern string with a base URL.
     ///
     /// @param input the shorthand pattern string
-    /// @param baseURL the base URL used for relative pattern strings
+    /// @param baseURL the base URL used for relative pattern strings, or `null` for no base URL
     /// @return the compiled URL pattern
     /// @throws WebURLPatternSyntaxException when the pattern or base URL cannot be compiled
     @Contract("_, _ -> new")
-    static WebURLPattern compile(String input, String baseURL) {
-        return compile(input, baseURL, Options.DEFAULT);
-    }
-
-    /// Compiles a shorthand URLPattern string with a base URL and options.
-    ///
-    /// @param input the shorthand pattern string
-    /// @param baseURL the base URL used for relative pattern strings
-    /// @param options compilation options
-    /// @return the compiled URL pattern
-    /// @throws WebURLPatternSyntaxException when the pattern or base URL cannot be compiled
-    @Contract("_, _, _ -> new")
-    static WebURLPattern compile(String input, @Nullable String baseURL, Options options) {
-        Objects.requireNonNull(input, "input");
-        Objects.requireNonNull(options, "options");
-        return WebURLPatternImpl.compile(input, baseURL, options.ignoreCase());
+    static WebURLPattern compile(String input, @Nullable String baseURL) {
+        return WebURLPatternParser.getDefault().compile(input, baseURL);
     }
 
     /// Compiles a component URLPattern builder.
@@ -91,20 +75,7 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// @throws WebURLPatternSyntaxException when the components cannot be compiled
     @Contract("_ -> new")
     static WebURLPattern compile(Builder builder) {
-        return compile(builder, Options.DEFAULT);
-    }
-
-    /// Compiles a component URLPattern builder with options.
-    ///
-    /// @param builder the component pattern builder
-    /// @param options compilation options
-    /// @return the compiled URL pattern
-    /// @throws WebURLPatternSyntaxException when the components cannot be compiled
-    @Contract("_, _ -> new")
-    static WebURLPattern compile(Builder builder, Options options) {
-        Objects.requireNonNull(builder, "builder");
-        Objects.requireNonNull(options, "options");
-        return WebURLPatternImpl.compile(builder, options.ignoreCase());
+        return WebURLPatternParser.getDefault().compile(builder);
     }
 
     /// Tries to compile a shorthand URLPattern string.
@@ -112,30 +83,16 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// @param input the shorthand pattern string
     /// @return the compiled URL pattern, or `null` when compilation fails
     static @Nullable WebURLPattern tryCompile(String input) {
-        return tryCompile(input, null, Options.DEFAULT);
+        return WebURLPatternParser.getDefault().tryCompile(input);
     }
 
     /// Tries to compile a shorthand URLPattern string with a base URL.
     ///
     /// @param input the shorthand pattern string
-    /// @param baseURL the base URL used for relative pattern strings
+    /// @param baseURL the base URL used for relative pattern strings, or `null` for no base URL
     /// @return the compiled URL pattern, or `null` when compilation fails
-    static @Nullable WebURLPattern tryCompile(String input, String baseURL) {
-        return tryCompile(input, baseURL, Options.DEFAULT);
-    }
-
-    /// Tries to compile a shorthand URLPattern string with a base URL and options.
-    ///
-    /// @param input the shorthand pattern string
-    /// @param baseURL the base URL used for relative pattern strings
-    /// @param options compilation options
-    /// @return the compiled URL pattern, or `null` when compilation fails
-    static @Nullable WebURLPattern tryCompile(String input, @Nullable String baseURL, Options options) {
-        try {
-            return compile(input, baseURL, options);
-        } catch (WebURLPatternSyntaxException ignored) {
-            return null;
-        }
+    static @Nullable WebURLPattern tryCompile(String input, @Nullable String baseURL) {
+        return WebURLPatternParser.getDefault().tryCompile(input, baseURL);
     }
 
     /// Tries to compile a component URLPattern builder.
@@ -143,20 +100,7 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// @param builder the component pattern builder
     /// @return the compiled URL pattern, or `null` when compilation fails
     static @Nullable WebURLPattern tryCompile(Builder builder) {
-        return tryCompile(builder, Options.DEFAULT);
-    }
-
-    /// Tries to compile a component URLPattern builder with options.
-    ///
-    /// @param builder the component pattern builder
-    /// @param options compilation options
-    /// @return the compiled URL pattern, or `null` when compilation fails
-    static @Nullable WebURLPattern tryCompile(Builder builder, Options options) {
-        try {
-            return compile(builder, options);
-        } catch (WebURLPatternSyntaxException ignored) {
-            return null;
-        }
+        return WebURLPatternParser.getDefault().tryCompile(builder);
     }
 
     /// Creates a new mutable URLPattern component builder.
@@ -372,28 +316,6 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
         /// @return this builder
         @Contract("_ -> this")
         Builder setBaseURL(@Nullable String baseURL);
-    }
-
-    /// URLPattern compilation options.
-    @NotNullByDefault
-    sealed interface Options permits WebURLPatternOptionsImpl {
-        /// Default URLPattern options.
-        Options DEFAULT = new WebURLPatternOptionsImpl(false);
-
-        /// Creates URLPattern compilation options.
-        ///
-        /// @param ignoreCase whether component matching should be case-insensitive
-        /// @return new URLPattern compilation options
-        @Contract("_ -> new")
-        static Options of(boolean ignoreCase) {
-            return new WebURLPatternOptionsImpl(ignoreCase);
-        }
-
-        /// Returns whether component matching should be case-insensitive.
-        ///
-        /// @return `true` for case-insensitive matching
-        @Contract(pure = true)
-        boolean ignoreCase();
     }
 
     /// Result for one matched URLPattern component.

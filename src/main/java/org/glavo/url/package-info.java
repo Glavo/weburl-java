@@ -75,6 +75,7 @@
 /// @see org.glavo.url.WebURLParser
 /// @see org.glavo.url.WebURLParseException
 /// @see org.glavo.url.pattern.WebURLPattern
+/// @see org.glavo.url.pattern.WebURLPatternParser
 @NotNullByDefault
 package org.glavo.url;
 

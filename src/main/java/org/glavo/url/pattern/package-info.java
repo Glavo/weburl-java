@@ -18,7 +18,8 @@
 ///
 /// This package contains the URLPattern API, separate from the core URL value and parser types in
 /// [org.glavo.url]. A [WebURLPattern] is an immutable, precompiled matcher that can be constructed
-/// from shorthand URLPattern strings or from component patterns.
+/// from shorthand URLPattern strings or from component patterns. [WebURLPatternParser] provides
+/// reusable compilation policy, including case-insensitive matching.
 ///
 /// # Quick Start
 ///
@@ -28,9 +29,14 @@
 ///         .setHost("example.com")
 ///         .setPath("/users/:id"));
 /// pattern.test("https://example.com/users/42"); // true
+///
+/// WebURLPattern ignoreCasePattern = WebURLPatternParser.getIgnoreCase()
+///         .compile("https://example.com/users/:id");
+/// ignoreCasePattern.test("https://example.com/Users/42"); // true
 /// ```
 ///
 /// @see org.glavo.url.pattern.WebURLPattern
+/// @see org.glavo.url.pattern.WebURLPatternParser
 /// @see org.glavo.url.pattern.WebURLPatternSyntaxException
 @NotNullByDefault
 package org.glavo.url.pattern;

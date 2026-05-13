@@ -16,6 +16,7 @@
 package org.glavo.url;
 
 import org.glavo.url.pattern.WebURLPattern;
+import org.glavo.url.pattern.WebURLPatternParser;
 import org.glavo.url.pattern.WebURLPatternSyntaxException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -188,15 +189,15 @@ public final class WebURLPatternTest {
     /// Tests case-insensitive matching.
     @Test
     public void supportsIgnoreCase() {
-        WebURLPattern sensitive = WebURLPattern.compile(
-                WebURLPattern.newBuilder().setPath("/Books"),
-                WebURLPattern.Options.of(false));
-        WebURLPattern insensitive = WebURLPattern.compile(
-                WebURLPattern.newBuilder().setPath("/Books"),
-                WebURLPattern.Options.of(true));
+        WebURLPattern sensitive = WebURLPatternParser.getDefault()
+                .compile(WebURLPattern.newBuilder().setPath("/Books"));
+        WebURLPattern insensitive = WebURLPatternParser.getIgnoreCase()
+                .compile(WebURLPattern.newBuilder().setPath("/Books"));
 
         assertFalse(sensitive.test(WebURLPattern.newBuilder().setPath("/books")));
+        assertFalse(sensitive.isIgnoreCase());
         assertTrue(insensitive.test(WebURLPattern.newBuilder().setPath("/books")));
+        assertTrue(WebURLPatternParser.getIgnoreCase().isIgnoreCase());
         assertTrue(insensitive.isIgnoreCase());
     }
 

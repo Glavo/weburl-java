@@ -37,6 +37,7 @@
 /// | [org.glavo.url.WebURLParser] | Reusable parser with configurable validation policy |
 /// | [org.glavo.url.WebURLParseException] | Unchecked exception carrying structured parse-error details |
 /// | [org.glavo.url.pattern.WebURLPattern] | Immutable WHATWG URLPattern matcher interface |
+/// | [org.glavo.url.pattern.WebURLPatternParser] | Reusable URLPattern compiler with configurable compilation policy |
 /// | [org.glavo.url.pattern.WebURLPatternSyntaxException] | Unchecked exception for URLPattern compilation failures |
 ///
 /// # Dependencies
@@ -51,7 +52,8 @@
 /// [org.glavo.url.WebURL] instances are deeply immutable and safe for concurrent use without
 /// additional synchronization. The built-in parsers exposed by
 /// [org.glavo.url.WebURLParser#getDefault()] and
-/// [org.glavo.url.WebURLParser#getStrict()] are likewise immutable and thread-safe.
+/// [org.glavo.url.WebURLParser#getStrict()] are likewise immutable and thread-safe. URLPattern
+/// matchers and parsers are also immutable and reusable.
 ///
 /// @see <a href="https://url.spec.whatwg.org/">WHATWG URL Living Standard</a>
 /// @see org.glavo.url
