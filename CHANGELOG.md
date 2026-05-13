@@ -20,7 +20,8 @@
   to Java regular expressions.
   `WebURLPatternParser` owns compilation policy; derive case-insensitive parsers with
   `withIgnoreCase()`. `WebURLPattern` exposes component pattern getters such as
-  `getSchemePattern()` instead of a separate WHATWG-style getter view. `WebURLPattern` and its nested
+  `getSchemePattern()` and builder setters such as `setSchemePattern()` instead of a separate
+  WHATWG-style getter view. `WebURLPattern` and its nested
   `ComponentResult` and `Result` types are exposed as interfaces with internal immutable implementations, matching the `WebURL` API shape. The URLPattern
   API lives in the separate `org.glavo.url.pattern` package.
 

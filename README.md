@@ -179,9 +179,9 @@ import org.glavo.url.pattern.WebURLPattern;
 import org.glavo.url.pattern.WebURLPatternParser;
 
 WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
-        .setScheme("https")
-        .setHost("example.com")
-        .setPath("/users/:id"));
+        .setSchemePattern("https")
+        .setHostPattern("example.com")
+        .setPathPattern("/users/:id"));
 
 pattern.test("https://example.com/users/42"); // true
 
@@ -193,9 +193,9 @@ WebURLPattern ignoreCasePattern = WebURLPatternParser.getDefault().withIgnoreCas
 ignoreCasePattern.test("https://example.com/Users/42"); // true
 ```
 
-Component pattern getters such as `getSchemePattern()` and `getPathPattern()` return normalized
-pattern strings without URL delimiters. `WebURLPattern` does not expose a separate WHATWG-style
-getter view; the `*Pattern` suffix distinguishes pattern strings from parsed `WebURL` component values.
+Builder setters and component pattern getters use names such as `setSchemePattern()` and
+`getSchemePattern()` to distinguish pattern strings from parsed `WebURL` component values.
+`WebURLPattern` does not expose a separate WHATWG-style getter view.
 
 The URLPattern API lives in `org.glavo.url.pattern`. Use
 `WebURLPatternParser.getDefault().withIgnoreCase()` when compiled patterns should match case-insensitively.

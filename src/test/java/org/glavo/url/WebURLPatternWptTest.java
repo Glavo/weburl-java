@@ -132,14 +132,14 @@ public final class WebURLPatternWptTest {
         for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
             String value = entry.getValue().getAsString();
             switch (entry.getKey()) {
-                case "protocol" -> builder.setScheme(value);
-                case "username" -> builder.setUsername(value);
-                case "password" -> builder.setPassword(value);
-                case "hostname" -> builder.setHost(value);
-                case "port" -> builder.setPort(value);
-                case "pathname" -> builder.setPath(value);
-                case "search" -> builder.setQuery(value);
-                case "hash" -> builder.setFragment(value);
+                case "protocol" -> builder.setSchemePattern(value);
+                case "username" -> builder.setUsernamePattern(value);
+                case "password" -> builder.setPasswordPattern(value);
+                case "hostname" -> builder.setHostPattern(value);
+                case "port" -> builder.setPortPattern(value);
+                case "pathname" -> builder.setPathPattern(value);
+                case "search" -> builder.setQueryPattern(value);
+                case "hash" -> builder.setFragmentPattern(value);
                 case "baseURL" -> builder.setBaseURL(value);
                 default -> throw new AssertionError("Unsupported URLPattern field: " + entry.getKey());
             }

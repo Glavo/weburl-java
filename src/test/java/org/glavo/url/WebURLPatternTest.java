@@ -38,14 +38,14 @@ public final class WebURLPatternTest {
     @Test
     public void compilesBuilderPatterns() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
-                .setScheme("https")
-                .setUsername("user")
-                .setPassword("pass")
-                .setHost("example.com")
-                .setPort("8080")
-                .setPath("/books/:id")
-                .setQuery("q=:term")
-                .setFragment("section"));
+                .setSchemePattern("https")
+                .setUsernamePattern("user")
+                .setPasswordPattern("pass")
+                .setHostPattern("example.com")
+                .setPortPattern("8080")
+                .setPathPattern("/books/:id")
+                .setQueryPattern("q=:term")
+                .setFragmentPattern("section"));
 
         assertEquals("https", pattern.getSchemePattern());
         assertEquals("user", pattern.getUsernamePattern());
@@ -85,10 +85,10 @@ public final class WebURLPatternTest {
     @Test
     public void matchesInputsAndCapturesGroups() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
-                .setScheme("https")
-                .setHost("example.com")
-                .setPath("/books/:id")
-                .setQuery("q=:term"));
+                .setSchemePattern("https")
+                .setHostPattern("example.com")
+                .setPathPattern("/books/:id")
+                .setQueryPattern("q=:term"));
 
         WebURLPattern.Result stringResult = requireMatch(
                 pattern.exec("https://example.com/books/42?q=java#ignored"));
@@ -99,10 +99,10 @@ public final class WebURLPatternTest {
         assertTrue(pattern.test(WebURL.parse("https://example.com/books/7?q=url")));
 
         WebURLPattern.Result componentResult = requireMatch(pattern.exec(WebURLPattern.newBuilder()
-                .setScheme("https")
-                .setHost("example.com")
-                .setPath("/books/99")
-                .setQuery("q=patterns")));
+                .setSchemePattern("https")
+                .setHostPattern("example.com")
+                .setPathPattern("/books/99")
+                .setQueryPattern("q=patterns")));
         assertEquals("99", componentResult.pathname().groups().get("id"));
         assertEquals("patterns", componentResult.search().groups().get("term"));
     }
@@ -112,8 +112,8 @@ public final class WebURLPatternTest {
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L209-L276
     @Test
     public void capturesEmptyWildcardGroups() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/foo/bar"));
-        WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPath("/foo/bar")));
+        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo/bar"));
+        WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPathPattern("/foo/bar")));
 
         assertEquals("", result.protocol().input());
         assertEquals(Map.of("0", ""), result.protocol().groups());
@@ -138,7 +138,7 @@ public final class WebURLPatternTest {
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L280-L303
     @Test
     public void capturesNonEmptyWildcardGroups() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/foo/bar"));
+        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo/bar"));
         WebURLPattern.Result result = requireMatch(pattern.exec("https://example.com/foo/bar"));
 
         assertEquals("https", result.protocol().input());
@@ -152,8 +152,8 @@ public final class WebURLPatternTest {
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L83-L146
     @Test
     public void mapsMultipleCaptureGroups() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/:a/:b/:c"));
-        WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPath("/x/y/z")));
+        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/:a/:b/:c"));
+        WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
 
         assertEquals("x", result.pathname().groups().get("a"));
         assertEquals("y", result.pathname().groups().get("b"));
@@ -165,7 +165,7 @@ public final class WebURLPatternTest {
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L339-L393
     @Test
     public void reportsRegExpGroups() {
-        assertFalse(WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/a/:foo/:baz?/b/*"))
+        assertFalse(WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz?/b/*"))
                 .hasRegExpGroups());
     }
 
@@ -173,21 +173,21 @@ public final class WebURLPatternTest {
     @Test
     public void rejectsCustomRegularExpressionGroups() {
         assertThrows(WebURLPatternSyntaxException.class,
-                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/a/:foo/:baz([a-z]+)?/b/*")));
-        assertNull(WebURLPattern.tryCompile(WebURLPattern.newBuilder().setPath("/a/:foo/:baz([a-z]+)?/b/*")));
+                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*")));
+        assertNull(WebURLPattern.tryCompile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*")));
     }
 
     /// Tests case-insensitive matching.
     @Test
     public void supportsIgnoreCase() {
         WebURLPattern sensitive = WebURLPatternParser.getDefault()
-                .compile(WebURLPattern.newBuilder().setPath("/Books"));
+                .compile(WebURLPattern.newBuilder().setPathPattern("/Books"));
         WebURLPattern insensitive = WebURLPatternParser.getDefault().withIgnoreCase()
-                .compile(WebURLPattern.newBuilder().setPath("/Books"));
+                .compile(WebURLPattern.newBuilder().setPathPattern("/Books"));
 
-        assertFalse(sensitive.test(WebURLPattern.newBuilder().setPath("/books")));
+        assertFalse(sensitive.test(WebURLPattern.newBuilder().setPathPattern("/books")));
         assertFalse(sensitive.isIgnoreCase());
-        assertTrue(insensitive.test(WebURLPattern.newBuilder().setPath("/books")));
+        assertTrue(insensitive.test(WebURLPattern.newBuilder().setPathPattern("/books")));
         assertTrue(WebURLPatternParser.getDefault().withIgnoreCase(true).isIgnoreCase());
         assertEquals(WebURLPatternParser.getDefault(), WebURLPatternParser.getDefault().withIgnoreCase(false));
         assertTrue(insensitive.isIgnoreCase());
@@ -197,10 +197,10 @@ public final class WebURLPatternTest {
     @Test
     public void normalizesDefaultPortPatterns() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
-                .setScheme("https")
-                .setHost("example.com")
-                .setPort("443")
-                .setPath("/"));
+                .setSchemePattern("https")
+                .setHostPattern("example.com")
+                .setPortPattern("443")
+                .setPathPattern("/"));
 
         assertEquals("", pattern.getPortPattern());
         assertTrue(pattern.test("https://example.com/"));
@@ -211,62 +211,62 @@ public final class WebURLPatternTest {
     @Test
     public void canonicalizesPortPatterns() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
-                .setScheme("https")
-                .setHost("example.com")
-                .setPort("080")
-                .setPath("/"));
+                .setSchemePattern("https")
+                .setHostPattern("example.com")
+                .setPortPattern("080")
+                .setPathPattern("/"));
 
         assertEquals("80", pattern.getPortPattern());
         assertTrue(pattern.test("https://example.com:80/"));
         assertThrows(WebURLPatternSyntaxException.class,
-                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPort("80x")));
+                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPortPattern("80x")));
     }
 
     /// Tests URL IPv6 host canonicalization in pattern components.
     @Test
     public void canonicalizesIpv6HostPatterns() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
-                .setScheme("http")
-                .setHost("[0:0:0:0:0:0:0:1]")
-                .setPath("/"));
+                .setSchemePattern("http")
+                .setHostPattern("[0:0:0:0:0:0:0:1]")
+                .setPathPattern("/"));
 
         assertEquals("[::1]", pattern.getHostPattern());
         assertTrue(pattern.test("http://[::1]/"));
         assertThrows(WebURLPatternSyntaxException.class,
-                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setHost("[::fffff]")));
+                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setHostPattern("[::fffff]")));
     }
 
     /// Tests explicit empty component patterns.
     @Test
     public void matchesEmptyComponentsExactly() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPort(""));
+        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPortPattern(""));
 
         assertEquals("", pattern.getPortPattern());
-        assertTrue(pattern.test(WebURLPattern.newBuilder().setPort("")));
-        assertFalse(pattern.test(WebURLPattern.newBuilder().setPort("8080")));
+        assertTrue(pattern.test(WebURLPattern.newBuilder().setPortPattern("")));
+        assertFalse(pattern.test(WebURLPattern.newBuilder().setPortPattern("8080")));
     }
 
     /// Tests invalid pattern handling.
     @Test
     public void rejectsInvalidPatterns() {
         assertThrows(WebURLPatternSyntaxException.class,
-                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/:id((.))")));
+                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/:id((.))")));
         assertThrows(WebURLPatternSyntaxException.class,
-                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setScheme("1bad")));
+                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setSchemePattern("1bad")));
         assertThrows(WebURLPatternSyntaxException.class,
-                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/:id([)")));
-        assertNull(WebURLPattern.tryCompile(WebURLPattern.newBuilder().setPath("/:id((.))")));
+                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/:id([)")));
+        assertNull(WebURLPattern.tryCompile(WebURLPattern.newBuilder().setPathPattern("/:id((.))")));
     }
 
     /// Tests invalid match input handling.
     @Test
     public void returnsNullForInvalidInputs() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPath("/foo"));
+        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo"));
 
         assertFalse(pattern.test("not a url"));
         assertNull(pattern.exec("not a url"));
-        assertFalse(pattern.test(WebURLPattern.newBuilder().setPort("99999")));
-        assertNull(pattern.exec(WebURLPattern.newBuilder().setPort("99999")));
+        assertFalse(pattern.test(WebURLPattern.newBuilder().setPortPattern("99999")));
+        assertNull(pattern.exec(WebURLPattern.newBuilder().setPortPattern("99999")));
     }
 
     /// Requires a non-null match result.

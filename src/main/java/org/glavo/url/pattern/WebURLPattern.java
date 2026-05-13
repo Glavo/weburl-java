@@ -34,9 +34,9 @@ import java.util.Map;
 /// a shorthand pattern string or from component patterns via [Builder], and it can match URL
 /// strings, [WebURL] values, or component inputs.
 ///
-/// Component pattern getters such as [#getSchemePattern()] and [#getPathPattern()] return normalized
-/// URLPattern component pattern strings without URL delimiters. These names avoid confusing
-/// component pattern strings with parsed URL component values.
+/// Builder setters and component pattern getters such as [Builder#setSchemePattern(String)] and
+/// [#getSchemePattern()] use the `Pattern` suffix to avoid confusing component pattern strings with
+/// parsed URL component values.
 ///
 /// Custom regular-expression groups are not supported yet because URLPattern uses ECMAScript
 /// `v` / `vi` regular-expression semantics, which are not equivalent to Java regular expressions.
@@ -210,69 +210,69 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     @Contract(pure = true)
     boolean hasRegExpGroups();
 
-    /// Mutable builder for URLPattern component patterns or component match input.
+    /// Mutable builder for URLPattern component pattern strings or component match input strings.
     ///
-    /// The builder stores URLPattern standard component names. Setter names mirror `WebURL`:
-    /// scheme maps to URLPattern `protocol`, host maps to URLPattern `hostname`, path maps to
-    /// URLPattern `pathname`, query maps to URLPattern `search`, and fragment maps to URLPattern
-    /// `hash`.
+    /// The builder uses `*Pattern` names because the primary construction use case stores URLPattern
+    /// component pattern strings. Scheme maps to URLPattern `protocol`, host maps to URLPattern
+    /// `hostname`, path maps to URLPattern `pathname`, query maps to URLPattern `search`, and fragment
+    /// maps to URLPattern `hash`.
     @NotNullByDefault
     sealed interface Builder permits WebURLPatternBuilderImpl {
-        /// Sets the protocol or scheme component.
+        /// Sets the scheme component pattern string.
         ///
-        /// @param scheme the protocol or scheme component, or `null` when absent
+        /// @param schemePattern the scheme component pattern string, or `null` when absent
         /// @return this builder
         @Contract("_ -> this")
-        Builder setScheme(@Nullable String scheme);
+        Builder setSchemePattern(@Nullable String schemePattern);
 
-        /// Sets the username component.
+        /// Sets the username component pattern string.
         ///
-        /// @param username the username component, or `null` when absent
+        /// @param usernamePattern the username component pattern string, or `null` when absent
         /// @return this builder
         @Contract("_ -> this")
-        Builder setUsername(@Nullable String username);
+        Builder setUsernamePattern(@Nullable String usernamePattern);
 
-        /// Sets the password component.
+        /// Sets the password component pattern string.
         ///
-        /// @param password the password component, or `null` when absent
+        /// @param passwordPattern the password component pattern string, or `null` when absent
         /// @return this builder
         @Contract("_ -> this")
-        Builder setPassword(@Nullable String password);
+        Builder setPasswordPattern(@Nullable String passwordPattern);
 
-        /// Sets the hostname or host component.
+        /// Sets the host component pattern string.
         ///
-        /// @param host the hostname component, or `null` when absent
+        /// @param hostPattern the host component pattern string, or `null` when absent
         /// @return this builder
         @Contract("_ -> this")
-        Builder setHost(@Nullable String host);
+        Builder setHostPattern(@Nullable String hostPattern);
 
-        /// Sets the port component.
+        /// Sets the port component pattern string.
         ///
-        /// @param port the port component, or `null` when absent
+        /// @param portPattern the port component pattern string, or `null` when absent
         /// @return this builder
         @Contract("_ -> this")
-        Builder setPort(@Nullable String port);
+        Builder setPortPattern(@Nullable String portPattern);
 
-        /// Sets the pathname or path component.
+        /// Sets the path component pattern string.
         ///
-        /// @param path the pathname component, or `null` when absent
+        /// @param pathPattern the path component pattern string, or `null` when absent
         /// @return this builder
         @Contract("_ -> this")
-        Builder setPath(@Nullable String path);
+        Builder setPathPattern(@Nullable String pathPattern);
 
-        /// Sets the search or query component.
+        /// Sets the query component pattern string.
         ///
-        /// @param query the search component, or `null` when absent
+        /// @param queryPattern the query component pattern string, or `null` when absent
         /// @return this builder
         @Contract("_ -> this")
-        Builder setQuery(@Nullable String query);
+        Builder setQueryPattern(@Nullable String queryPattern);
 
-        /// Sets the hash or fragment component.
+        /// Sets the fragment component pattern string.
         ///
-        /// @param fragment the hash component, or `null` when absent
+        /// @param fragmentPattern the fragment component pattern string, or `null` when absent
         /// @return this builder
         @Contract("_ -> this")
-        Builder setFragment(@Nullable String fragment);
+        Builder setFragmentPattern(@Nullable String fragmentPattern);
 
         /// Sets the base URL.
         ///

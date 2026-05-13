@@ -47,67 +47,67 @@ public final class WebURLPatternBuilderImpl implements WebURLPattern.Builder {
     public WebURLPatternBuilderImpl() {
     }
 
-    /// Sets the protocol or scheme component.
+    /// Sets the scheme component pattern string.
     @Override
     @Contract("_ -> this")
-    public WebURLPattern.Builder setScheme(@Nullable String scheme) {
-        this.scheme = scheme;
+    public WebURLPattern.Builder setSchemePattern(@Nullable String schemePattern) {
+        this.scheme = schemePattern;
         return this;
     }
 
-    /// Sets the username component.
+    /// Sets the username component pattern string.
     @Override
     @Contract("_ -> this")
-    public WebURLPattern.Builder setUsername(@Nullable String username) {
-        this.username = username;
+    public WebURLPattern.Builder setUsernamePattern(@Nullable String usernamePattern) {
+        this.username = usernamePattern;
         return this;
     }
 
-    /// Sets the password component.
+    /// Sets the password component pattern string.
     @Override
     @Contract("_ -> this")
-    public WebURLPattern.Builder setPassword(@Nullable String password) {
-        this.password = password;
+    public WebURLPattern.Builder setPasswordPattern(@Nullable String passwordPattern) {
+        this.password = passwordPattern;
         return this;
     }
 
-    /// Sets the hostname or host component.
+    /// Sets the host component pattern string.
     @Override
     @Contract("_ -> this")
-    public WebURLPattern.Builder setHost(@Nullable String host) {
-        this.host = host;
+    public WebURLPattern.Builder setHostPattern(@Nullable String hostPattern) {
+        this.host = hostPattern;
         return this;
     }
 
-    /// Sets the port component.
+    /// Sets the port component pattern string.
     @Override
     @Contract("_ -> this")
-    public WebURLPattern.Builder setPort(@Nullable String port) {
-        this.port = port;
+    public WebURLPattern.Builder setPortPattern(@Nullable String portPattern) {
+        this.port = portPattern;
         return this;
     }
 
-    /// Sets the pathname or path component.
+    /// Sets the path component pattern string.
     @Override
     @Contract("_ -> this")
-    public WebURLPattern.Builder setPath(@Nullable String path) {
-        this.path = path;
+    public WebURLPattern.Builder setPathPattern(@Nullable String pathPattern) {
+        this.path = pathPattern;
         return this;
     }
 
-    /// Sets the search or query component.
+    /// Sets the query component pattern string.
     @Override
     @Contract("_ -> this")
-    public WebURLPattern.Builder setQuery(@Nullable String query) {
-        this.query = query;
+    public WebURLPattern.Builder setQueryPattern(@Nullable String queryPattern) {
+        this.query = queryPattern;
         return this;
     }
 
-    /// Sets the hash or fragment component.
+    /// Sets the fragment component pattern string.
     @Override
     @Contract("_ -> this")
-    public WebURLPattern.Builder setFragment(@Nullable String fragment) {
-        this.fragment = fragment;
+    public WebURLPattern.Builder setFragmentPattern(@Nullable String fragmentPattern) {
+        this.fragment = fragmentPattern;
         return this;
     }
 
