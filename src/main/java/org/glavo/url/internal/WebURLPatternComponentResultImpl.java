@@ -61,35 +61,35 @@ public final class WebURLPatternComponentResultImpl implements WebURLPatternComp
     @Override
     @Contract(pure = true)
     public int start() {
-        return start(0);
+        return IndexRanges.start(range);
     }
 
     /// Returns the start index of one Java-style capture group.
     @Override
     @Contract(pure = true)
     public int start(int group) {
-        return group == 0 ? IndexRanges.start(range) : groupRangeStart(group - 1);
+        return group == 0 ? start() : groupRangeStart(group - 1);
     }
 
     /// Returns the end index of the whole component match.
     @Override
     @Contract(pure = true)
     public int end() {
-        return end(0);
+        return IndexRanges.end(range);
     }
 
     /// Returns the end index of one Java-style capture group.
     @Override
     @Contract(pure = true)
     public int end(int group) {
-        return group == 0 ? IndexRanges.end(range) : groupRangeEnd(group - 1);
+        return group == 0 ? end() : groupRangeEnd(group - 1);
     }
 
     /// Returns the whole component match.
     @Override
     @Contract(pure = true)
     public String group() {
-        return group(0);
+        return IndexRanges.substring(input, range);
     }
 
     /// Returns one Java-style capture group.
@@ -97,7 +97,7 @@ public final class WebURLPatternComponentResultImpl implements WebURLPatternComp
     @Contract(pure = true)
     public @Nullable String group(int group) {
         if (group == 0) {
-            return IndexRanges.substring(input, range);
+            return group();
         }
         return groupValue(matchResultGroupIndex(group));
     }
