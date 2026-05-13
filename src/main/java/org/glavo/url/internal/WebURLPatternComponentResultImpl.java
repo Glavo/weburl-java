@@ -41,12 +41,13 @@ public final class WebURLPatternComponentResultImpl implements WebURLPatternComp
     private final @IndexRange("input") long @Unmodifiable [] groupRanges;
     /// Public group keys mapped to `groupRanges` indexes.
     private final @Unmodifiable Map<String, Integer> groupIndexes;
+    /// These caches may be rebuilt concurrently; correctness does not depend on preserving writes.
     /// Cached whole component match.
-    private volatile @Nullable String match;
+    private @Nullable String match;
     /// Cached capture group values indexed by `groupRanges`.
-    private volatile String @Nullable [] groupValues;
+    private String @Nullable [] groupValues;
     /// Cached URLPattern groups object view.
-    private volatile @Nullable @Unmodifiable Map<String, @Nullable String> webGroups;
+    private @Nullable @Unmodifiable Map<String, @Nullable String> webGroups;
 
     /// Creates a component result.
     ///
