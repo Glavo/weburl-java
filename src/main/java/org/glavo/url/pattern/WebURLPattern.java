@@ -17,16 +17,10 @@ package org.glavo.url.pattern;
 
 import org.glavo.url.WebURL;
 import org.glavo.url.internal.WebURLPatternBuilderImpl;
-import org.glavo.url.internal.WebURLPatternComponentResultImpl;
 import org.glavo.url.internal.WebURLPatternImpl;
-import org.glavo.url.internal.WebURLPatternResultImpl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.Map;
-import java.util.regex.MatchResult;
 
 /// An immutable, precompiled matcher for WHATWG URL Pattern syntax.
 ///
@@ -144,7 +138,7 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// @param input the URL input string
     /// @return the match result, or `null` when the input does not match or is not a valid URL
     @Contract(pure = true)
-    @Nullable Result exec(String input);
+    @Nullable WebURLPatternResult exec(String input);
 
     /// Executes this pattern against a URL string with a base URL.
     ///
@@ -152,21 +146,21 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// @param baseURL the base URL used for relative input
     /// @return the match result, or `null` when the input does not match or cannot be parsed
     @Contract(pure = true)
-    @Nullable Result exec(String input, String baseURL);
+    @Nullable WebURLPatternResult exec(String input, String baseURL);
 
     /// Executes this pattern against a parsed URL.
     ///
     /// @param input the URL input value
     /// @return the match result, or `null` when the input does not match
     @Contract(pure = true)
-    @Nullable Result exec(WebURL input);
+    @Nullable WebURLPatternResult exec(WebURL input);
 
     /// Executes this pattern against component input.
     ///
     /// @param input the component input builder
     /// @return the match result, or `null` when the input does not match or cannot be canonicalized
     @Contract(pure = true)
-    @Nullable Result exec(Builder input);
+    @Nullable WebURLPatternResult exec(Builder input);
 
     /// Returns the scheme component pattern string without a trailing colon.
     @Contract(pure = true)
@@ -283,167 +277,4 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
         Builder setBaseURL(@Nullable String baseURL);
     }
 
-    /// Result for one matched URLPattern component.
-    @NotNullByDefault
-    sealed interface ComponentResult extends MatchResult permits WebURLPatternComponentResultImpl {
-        /// Returns the start index of the whole component match.
-        ///
-        /// The index is relative to the component input represented by this result.
-        ///
-        /// @return the start index of the whole component match
-        @Override
-        @Contract(pure = true)
-        int start();
-
-        /// Returns the start index of a Java-style capture group.
-        ///
-        /// Group `0` is the whole component match. Groups `1` through [#groupCount()] are URLPattern
-        /// capture groups in matching order. If the requested group exists but did not match, this
-        /// method returns `-1`.
-        ///
-        /// @param group the Java-style capture group index
-        /// @return the start index of the group, or `-1` when the group did not match
-        /// @throws IndexOutOfBoundsException when `group` is negative or greater than [#groupCount()]
-        @Override
-        @Contract(pure = true)
-        int start(int group);
-
-        /// Returns the end index of the whole component match.
-        ///
-        /// The index is relative to the component input represented by this result.
-        ///
-        /// @return the end index of the whole component match
-        @Override
-        @Contract(pure = true)
-        int end();
-
-        /// Returns the end index of a Java-style capture group.
-        ///
-        /// Group `0` is the whole component match. Groups `1` through [#groupCount()] are URLPattern
-        /// capture groups in matching order. If the requested group exists but did not match, this
-        /// method returns `-1`.
-        ///
-        /// @param group the Java-style capture group index
-        /// @return the end index of the group, or `-1` when the group did not match
-        /// @throws IndexOutOfBoundsException when `group` is negative or greater than [#groupCount()]
-        @Override
-        @Contract(pure = true)
-        int end(int group);
-
-        /// Returns the whole component match.
-        ///
-        /// This is equivalent to `group(0)`.
-        ///
-        /// @return the whole component match
-        @Override
-        @Contract(pure = true)
-        String group();
-
-        /// Returns a Java-style capture group.
-        ///
-        /// Group `0` is the whole component match. Groups `1` through [#groupCount()] are URLPattern
-        /// capture groups in matching order. If the requested group exists but did not match, this
-        /// method returns `null`.
-        ///
-        /// @param group the Java-style capture group index
-        /// @return the group value, or `null` when the group did not match
-        /// @throws IndexOutOfBoundsException when `group` is negative or greater than [#groupCount()]
-        @Override
-        @Contract(pure = true)
-        @Nullable String group(int group);
-
-        /// Returns the number of Java-style capture groups.
-        ///
-        /// The returned value excludes group `0`, which is always the whole component match.
-        ///
-        /// @return the number of capture groups
-        @Override
-        @Contract(pure = true)
-        int groupCount();
-
-        /// Returns URLPattern named and numeric capture groups.
-        ///
-        /// Unmatched optional groups are represented by `null` values.
-        ///
-        /// This map follows URLPattern groups object semantics. Numeric keys such as `"0"` refer to
-        /// anonymous URLPattern groups, while [#group(int)] follows `java.util.regex.MatchResult`
-        /// semantics where group `0` is the whole component match.
-        ///
-        /// @return immutable URLPattern capture groups
-        @Contract(pure = true)
-        @Unmodifiable Map<String, @Nullable String> getWebGroups();
-
-        /// Returns a named URLPattern capture group.
-        ///
-        /// This method returns `null` when the group is absent or when the group is present but did not match.
-        ///
-        /// @param name the group name
-        /// @return the group value, or `null` when absent or unmatched
-        @Contract(pure = true)
-        @Nullable String getWebGroup(String name);
-
-        /// Returns a numeric URLPattern capture group.
-        ///
-        /// URLPattern numeric groups are exposed with decimal string keys such as `"0"` and `"1"`.
-        /// Unlike [#group(int)], index `0` means URLPattern's first anonymous capture group, not the
-        /// entire component match.
-        ///
-        /// @param index the numeric URLPattern capture group index
-        /// @return the group value, or `null` when absent or unmatched
-        /// @throws IndexOutOfBoundsException when `index` is negative
-        @Contract(pure = true)
-        @Nullable String getWebGroup(int index);
-    }
-
-    /// Result for a successful URLPattern match.
-    @NotNullByDefault
-    sealed interface Result permits WebURLPatternResultImpl {
-        /// Returns the protocol component result.
-        ///
-        /// @return the protocol component result
-        @Contract(pure = true)
-        ComponentResult protocol();
-
-        /// Returns the username component result.
-        ///
-        /// @return the username component result
-        @Contract(pure = true)
-        ComponentResult username();
-
-        /// Returns the password component result.
-        ///
-        /// @return the password component result
-        @Contract(pure = true)
-        ComponentResult password();
-
-        /// Returns the hostname component result.
-        ///
-        /// @return the hostname component result
-        @Contract(pure = true)
-        ComponentResult hostname();
-
-        /// Returns the port component result.
-        ///
-        /// @return the port component result
-        @Contract(pure = true)
-        ComponentResult port();
-
-        /// Returns the pathname component result.
-        ///
-        /// @return the pathname component result
-        @Contract(pure = true)
-        ComponentResult pathname();
-
-        /// Returns the search component result.
-        ///
-        /// @return the search component result
-        @Contract(pure = true)
-        ComponentResult search();
-
-        /// Returns the hash component result.
-        ///
-        /// @return the hash component result
-        @Contract(pure = true)
-        ComponentResult hash();
-    }
 }

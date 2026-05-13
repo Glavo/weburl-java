@@ -15,7 +15,7 @@
  */
 package org.glavo.url.internal;
 
-import org.glavo.url.pattern.WebURLPattern;
+import org.glavo.url.pattern.WebURLPatternComponentResult;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +26,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/// Internal immutable implementation of `WebURLPattern.ComponentResult`.
+/// Internal immutable implementation of `WebURLPatternComponentResult`.
 @NotNullByDefault
-public final class WebURLPatternComponentResultImpl implements WebURLPattern.ComponentResult {
+public final class WebURLPatternComponentResultImpl implements WebURLPatternComponentResult {
     /// Component input containing all matched ranges.
     private final String input;
     /// Range of the whole matched component input.
@@ -175,7 +175,7 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
     @Override
     @Contract(pure = true)
     public boolean equals(@Nullable Object obj) {
-        return obj instanceof WebURLPattern.ComponentResult other
+        return obj instanceof WebURLPatternComponentResult other
                 && group().equals(other.group())
                 && getWebGroups().equals(other.getWebGroups());
     }

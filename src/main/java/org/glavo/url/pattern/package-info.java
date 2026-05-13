@@ -38,6 +38,8 @@
 /// ```
 ///
 /// @see org.glavo.url.pattern.WebURLPattern
+/// @see org.glavo.url.pattern.WebURLPatternResult
+/// @see org.glavo.url.pattern.WebURLPatternComponentResult
 /// @see org.glavo.url.pattern.WebURLPatternParser
 /// @see org.glavo.url.pattern.WebURLPatternSyntaxException
 @NotNullByDefault

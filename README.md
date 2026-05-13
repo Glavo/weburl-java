@@ -177,6 +177,7 @@ WebURL next = docs.resolve("guide/");
 ```java
 import org.glavo.url.pattern.WebURLPattern;
 import org.glavo.url.pattern.WebURLPatternParser;
+import org.glavo.url.pattern.WebURLPatternResult;
 
 WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
         .setSchemePattern("https")
@@ -185,7 +186,7 @@ WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
 
 pattern.test("https://example.com/users/42"); // true
 
-WebURLPattern.Result result = pattern.exec("https://example.com/users/42");
+WebURLPatternResult result = pattern.exec("https://example.com/users/42");
 result.pathname().getWebGroup("id"); // "42"
 
 WebURLPattern ignoreCasePattern = WebURLPatternParser.getDefault().withIgnoreCase()

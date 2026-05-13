@@ -20,6 +20,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.glavo.url.pattern.WebURLPattern;
+import org.glavo.url.pattern.WebURLPatternComponentResult;
+import org.glavo.url.pattern.WebURLPatternResult;
 import org.glavo.url.pattern.WebURLPatternSyntaxException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +89,7 @@ public final class WebURLPatternWptTest {
             return;
         }
 
-        @Nullable WebURLPattern.Result result = exec(pattern, inputs);
+        @Nullable WebURLPatternResult result = exec(pattern, inputs);
         JsonElement expectedMatch = testCase.get("expected_match");
         if (expectedMatch == null || expectedMatch.isJsonNull()) {
             assertNull(result);
@@ -115,7 +117,7 @@ public final class WebURLPatternWptTest {
     }
 
     /// Executes a compiled pattern against the WPT `inputs` field.
-    private static @Nullable WebURLPattern.Result exec(WebURLPattern pattern, JsonArray inputs) {
+    private static @Nullable WebURLPatternResult exec(WebURLPattern pattern, JsonArray inputs) {
         JsonElement first = inputs.get(0);
         if (first.isJsonPrimitive()) {
             if (inputs.size() > 1 && inputs.get(1).isJsonPrimitive()) {
@@ -158,12 +160,12 @@ public final class WebURLPatternWptTest {
     }
 
     /// Asserts expected match fields.
-    private static void assertExpectedMatch(WebURLPattern.Result result, JsonObject expectedMatch) {
+    private static void assertExpectedMatch(WebURLPatternResult result, JsonObject expectedMatch) {
         for (Map.Entry<String, JsonElement> entry : expectedMatch.entrySet()) {
             if (entry.getKey().equals("inputs")) {
                 continue;
             }
-            WebURLPattern.ComponentResult actual = resultComponent(result, entry.getKey());
+            WebURLPatternComponentResult actual = resultComponent(result, entry.getKey());
             JsonObject expectedComponent = entry.getValue().getAsJsonObject();
             assertEquals(expectedComponent.get("input").getAsString(), actual.group(), entry.getKey());
 
@@ -191,7 +193,7 @@ public final class WebURLPatternWptTest {
     }
 
     /// Returns one component result.
-    private static WebURLPattern.ComponentResult resultComponent(WebURLPattern.Result result, String field) {
+    private static WebURLPatternComponentResult resultComponent(WebURLPatternResult result, String field) {
         return switch (field) {
             case "protocol" -> result.protocol();
             case "username" -> result.username();

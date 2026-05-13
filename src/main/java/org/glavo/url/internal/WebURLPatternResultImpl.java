@@ -15,32 +15,33 @@
  */
 package org.glavo.url.internal;
 
-import org.glavo.url.pattern.WebURLPattern;
+import org.glavo.url.pattern.WebURLPatternComponentResult;
+import org.glavo.url.pattern.WebURLPatternResult;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/// Internal immutable implementation of `WebURLPattern.Result`.
+/// Internal immutable implementation of `WebURLPatternResult`.
 @NotNullByDefault
-public final class WebURLPatternResultImpl implements WebURLPattern.Result {
+public final class WebURLPatternResultImpl implements WebURLPatternResult {
     /// Protocol component result.
-    private final WebURLPattern.ComponentResult protocol;
+    private final WebURLPatternComponentResult protocol;
     /// Username component result.
-    private final WebURLPattern.ComponentResult username;
+    private final WebURLPatternComponentResult username;
     /// Password component result.
-    private final WebURLPattern.ComponentResult password;
+    private final WebURLPatternComponentResult password;
     /// Hostname component result.
-    private final WebURLPattern.ComponentResult hostname;
+    private final WebURLPatternComponentResult hostname;
     /// Port component result.
-    private final WebURLPattern.ComponentResult port;
+    private final WebURLPatternComponentResult port;
     /// Pathname component result.
-    private final WebURLPattern.ComponentResult pathname;
+    private final WebURLPatternComponentResult pathname;
     /// Search component result.
-    private final WebURLPattern.ComponentResult search;
+    private final WebURLPatternComponentResult search;
     /// Hash component result.
-    private final WebURLPattern.ComponentResult hash;
+    private final WebURLPatternComponentResult hash;
 
     /// Creates a URLPattern result.
     ///
@@ -53,14 +54,14 @@ public final class WebURLPatternResultImpl implements WebURLPattern.Result {
     /// @param search search component result
     /// @param hash hash component result
     public WebURLPatternResultImpl(
-            WebURLPattern.ComponentResult protocol,
-            WebURLPattern.ComponentResult username,
-            WebURLPattern.ComponentResult password,
-            WebURLPattern.ComponentResult hostname,
-            WebURLPattern.ComponentResult port,
-            WebURLPattern.ComponentResult pathname,
-            WebURLPattern.ComponentResult search,
-            WebURLPattern.ComponentResult hash
+            WebURLPatternComponentResult protocol,
+            WebURLPatternComponentResult username,
+            WebURLPatternComponentResult password,
+            WebURLPatternComponentResult hostname,
+            WebURLPatternComponentResult port,
+            WebURLPatternComponentResult pathname,
+            WebURLPatternComponentResult search,
+            WebURLPatternComponentResult hash
     ) {
         this.protocol = Objects.requireNonNull(protocol, "protocol");
         this.username = Objects.requireNonNull(username, "username");
@@ -75,56 +76,56 @@ public final class WebURLPatternResultImpl implements WebURLPattern.Result {
     /// Returns the protocol component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult protocol() {
+    public WebURLPatternComponentResult protocol() {
         return protocol;
     }
 
     /// Returns the username component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult username() {
+    public WebURLPatternComponentResult username() {
         return username;
     }
 
     /// Returns the password component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult password() {
+    public WebURLPatternComponentResult password() {
         return password;
     }
 
     /// Returns the hostname component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult hostname() {
+    public WebURLPatternComponentResult hostname() {
         return hostname;
     }
 
     /// Returns the port component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult port() {
+    public WebURLPatternComponentResult port() {
         return port;
     }
 
     /// Returns the pathname component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult pathname() {
+    public WebURLPatternComponentResult pathname() {
         return pathname;
     }
 
     /// Returns the search component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult search() {
+    public WebURLPatternComponentResult search() {
         return search;
     }
 
     /// Returns the hash component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult hash() {
+    public WebURLPatternComponentResult hash() {
         return hash;
     }
 
@@ -132,7 +133,7 @@ public final class WebURLPatternResultImpl implements WebURLPattern.Result {
     @Override
     @Contract(pure = true)
     public boolean equals(@Nullable Object obj) {
-        return obj instanceof WebURLPattern.Result other
+        return obj instanceof WebURLPatternResult other
                 && protocol.equals(other.protocol())
                 && username.equals(other.username())
                 && password.equals(other.password())
