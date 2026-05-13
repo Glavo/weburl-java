@@ -196,7 +196,8 @@ public final class WebURLPatternImpl implements WebURLPattern {
 
     /// Converts an internal component result.
     private static WebURLPattern.ComponentResult toComponentResult(WebURLPatternEngine.ComponentMatch result) {
-        return new WebURLPatternComponentResultImpl(result.input(), result.groups());
+        return new WebURLPatternComponentResultImpl(result.input(), result.range(), result.groupRanges(),
+                result.groupIndexes());
     }
 
     /// Casts a public builder to its internal implementation.

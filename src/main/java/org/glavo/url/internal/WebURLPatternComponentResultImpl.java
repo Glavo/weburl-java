@@ -29,40 +29,62 @@ import java.util.Objects;
 /// Internal immutable implementation of `WebURLPattern.ComponentResult`.
 @NotNullByDefault
 public final class WebURLPatternComponentResultImpl implements WebURLPattern.ComponentResult {
-    /// Matched component input.
+    /// Component input containing all matched ranges.
     private final String input;
-    /// Immutable capture group map.
-    private final @Unmodifiable Map<String, @Nullable String> groups;
+    /// Range of the whole matched component input.
+    private final @IndexRange("input") long range;
+    /// Capture group ranges indexed by `groupIndexes` values.
+    private final @IndexRange("input") long @Unmodifiable [] groupRanges;
+    /// Public group keys mapped to `groupRanges` indexes.
+    private final @Unmodifiable Map<String, Integer> groupIndexes;
 
     /// Creates a component result.
     ///
-    /// @param input the matched component input
-    /// @param groups named and numeric capture groups
-    public WebURLPatternComponentResultImpl(String input, Map<String, @Nullable String> groups) {
+    /// @param input the component input containing all matched ranges
+    /// @param range the range of the matched component input
+    /// @param groupRanges capture group ranges
+    /// @param groupIndexes public group keys mapped to `groupRanges` indexes
+    public WebURLPatternComponentResultImpl(
+            String input,
+            @IndexRange("input") long range,
+            @IndexRange("input") long[] groupRanges,
+            Map<String, Integer> groupIndexes
+    ) {
         this.input = Objects.requireNonNull(input, "input");
-        Objects.requireNonNull(groups, "groups");
-        this.groups = Collections.unmodifiableMap(new LinkedHashMap<>(groups));
+        this.range = range;
+        this.groupRanges = Objects.requireNonNull(groupRanges, "groupRanges").clone();
+        this.groupIndexes = Collections.unmodifiableMap(new LinkedHashMap<>(
+                Objects.requireNonNull(groupIndexes, "groupIndexes")));
     }
 
     /// Returns the matched component input.
     @Override
     @Contract(pure = true)
     public String getInput() {
-        return input;
+        return IndexRanges.substring(input, range);
     }
 
     /// Returns named and numeric capture groups.
     @Override
     @Contract(pure = true)
     public @Unmodifiable Map<String, @Nullable String> getGroups() {
-        return groups;
+        if (groupIndexes.isEmpty()) {
+            return Map.of();
+        }
+
+        LinkedHashMap<String, @Nullable String> groups = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : groupIndexes.entrySet()) {
+            groups.put(entry.getKey(), groupValue(entry.getValue()));
+        }
+        return Collections.unmodifiableMap(groups);
     }
 
     /// Returns a named capture group.
     @Override
     @Contract(pure = true)
     public @Nullable String getGroup(String name) {
-        return groups.get(Objects.requireNonNull(name, "name"));
+        Integer index = groupIndexes.get(Objects.requireNonNull(name, "name"));
+        return index == null ? null : groupValue(index);
     }
 
     /// Returns a numeric capture group.
@@ -72,7 +94,16 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
         if (index < 0) {
             throw new IndexOutOfBoundsException("index: " + index);
         }
-        return groups.get(Integer.toString(index));
+        return getGroup(Integer.toString(index));
+    }
+
+    /// Returns the group value for the given capture group index.
+    private @Nullable String groupValue(int index) {
+        if (index < 0 || index >= groupRanges.length) {
+            return null;
+        }
+        @IndexRange("input") long groupRange = groupRanges[index];
+        return IndexRanges.isAbsent(groupRange) ? null : IndexRanges.substring(input, groupRange);
     }
 
     /// Compares this component result with another object.
@@ -80,21 +111,21 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
     @Contract(pure = true)
     public boolean equals(@Nullable Object obj) {
         return obj instanceof WebURLPattern.ComponentResult other
-                && input.equals(other.getInput())
-                && groups.equals(other.getGroups());
+                && getInput().equals(other.getInput())
+                && getGroups().equals(other.getGroups());
     }
 
     /// Returns the hash code of this component result.
     @Override
     @Contract(pure = true)
     public int hashCode() {
-        return 31 * input.hashCode() + groups.hashCode();
+        return 31 * getInput().hashCode() + getGroups().hashCode();
     }
 
     /// Returns a string representation of this component result.
     @Override
     @Contract(pure = true)
     public String toString() {
-        return "ComponentResult[input=" + input + ", groups=" + groups + "]";
+        return "ComponentResult[input=" + getInput() + ", groups=" + getGroups() + "]";
     }
 }

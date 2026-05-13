@@ -164,6 +164,17 @@ public final class WebURLPatternTest {
         assertEquals("z", result.pathname().getGroup("c"));
     }
 
+    /// Tests named groups and numeric wildcard groups together.
+    @Test
+    public void mapsNamedAndNumericCaptureGroups() {
+        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/:name/*"));
+        WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
+
+        assertEquals("x", result.pathname().getGroup("name"));
+        assertEquals("y/z", result.pathname().getGroup(0));
+        assertEquals(Map.of("name", "x", "0", "y/z"), result.pathname().getGroups());
+    }
+
     /// Tests `hasRegExpGroups` without custom regular-expression support.
     ///
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L339-L393

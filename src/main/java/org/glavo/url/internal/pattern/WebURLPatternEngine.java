@@ -16,10 +16,17 @@
 package org.glavo.url.internal.pattern;
 
 import org.glavo.url.WebURL;
+import org.glavo.url.internal.IndexRange;
 import org.glavo.url.internal.UrlParser;
 import org.glavo.url.pattern.WebURLPatternSyntaxException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /// Internal immutable URLPattern matcher.
 @NotNullByDefault
@@ -348,7 +355,23 @@ public final class WebURLPatternEngine {
     /// Internal component match result.
     public record ComponentMatch(
             String input,
-            java.util.LinkedHashMap<String, @Nullable String> groups
+            @IndexRange("input") long range,
+            @IndexRange("input") long @Unmodifiable [] groupRanges,
+            @Unmodifiable Map<String, Integer> groupIndexes
     ) {
+        /// Creates an immutable component match result.
+        public ComponentMatch {
+            Objects.requireNonNull(input, "input");
+            Objects.requireNonNull(groupRanges, "groupRanges");
+            Objects.requireNonNull(groupIndexes, "groupIndexes");
+            groupRanges = groupRanges.clone();
+            groupIndexes = Collections.unmodifiableMap(new LinkedHashMap<>(groupIndexes));
+        }
+
+        /// Returns a copy of the capture group ranges.
+        @Override
+        public @IndexRange("input") long @Unmodifiable [] groupRanges() {
+            return groupRanges.clone();
+        }
     }
 }

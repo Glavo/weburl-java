@@ -15,13 +15,18 @@
  */
 package org.glavo.url.internal.pattern;
 
+import org.glavo.url.internal.IndexRange;
+import org.glavo.url.internal.IndexRanges;
 import org.glavo.url.pattern.WebURLPatternSyntaxException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,12 +35,17 @@ import java.util.regex.PatternSyntaxException;
 /// A compiled URLPattern component matcher.
 @NotNullByDefault
 final class PatternComponent {
+    /// Empty group range array shared by components without captures.
+    private static final @IndexRange long @Unmodifiable [] EMPTY_GROUP_RANGES = new long[0];
+
     /// Serialized component pattern string.
     private final String pattern;
     /// Java regular expression for complex components, or `null` for fast-path components.
     private final @Nullable Pattern regexp;
     /// Capture group names in regular-expression order.
     private final List<String> groupNames;
+    /// Public group keys mapped to indexes in `groupRanges`.
+    private final @Unmodifiable Map<String, Integer> groupIndexes;
     /// Whether the component contains a custom regular-expression group.
     private final boolean hasRegExpGroups;
     /// Fast-path component type.
@@ -54,6 +64,7 @@ final class PatternComponent {
         this.pattern = pattern;
         this.regexp = regexp;
         this.groupNames = List.copyOf(groupNames);
+        this.groupIndexes = groupIndexes(groupNames);
         this.hasRegExpGroups = hasRegExpGroups;
         this.type = type;
         this.exactMatchValue = exactMatchValue;
@@ -143,16 +154,19 @@ final class PatternComponent {
     @Nullable WebURLPatternEngine.ComponentMatch match(String input) {
         return switch (type) {
             case FULL_WILDCARD -> {
-                LinkedHashMap<String, @Nullable String> groups = new LinkedHashMap<>();
-                if (!groupNames.isEmpty()) {
-                    groups.put(groupNames.get(0), input);
-                }
-                yield new WebURLPatternEngine.ComponentMatch(input, groups);
+                @IndexRange("input") long range = IndexRanges.of(0, input.length());
+                @IndexRange("input") long @Unmodifiable [] groupRanges =
+                        groupNames.isEmpty() ? EMPTY_GROUP_RANGES : new long[]{range};
+                yield new WebURLPatternEngine.ComponentMatch(input, range, groupRanges, groupIndexes);
             }
             case EXACT_MATCH -> input.equals(exactMatchValue)
-                    ? new WebURLPatternEngine.ComponentMatch(input, new LinkedHashMap<>())
+                    ? new WebURLPatternEngine.ComponentMatch(input, IndexRanges.of(0, input.length()),
+                    EMPTY_GROUP_RANGES, groupIndexes)
                     : null;
-            case EMPTY -> input.isEmpty() ? new WebURLPatternEngine.ComponentMatch(input, new LinkedHashMap<>()) : null;
+            case EMPTY -> input.isEmpty()
+                    ? new WebURLPatternEngine.ComponentMatch(input, IndexRanges.of(0, 0),
+                    EMPTY_GROUP_RANGES, groupIndexes)
+                    : null;
             case REGEXP -> regexpMatch(input);
         };
     }
@@ -172,12 +186,33 @@ final class PatternComponent {
         if (!matcher.matches()) {
             return null;
         }
-        LinkedHashMap<String, @Nullable String> groups = new LinkedHashMap<>();
-        int count = Math.min(matcher.groupCount(), groupNames.size());
-        for (int i = 0; i < count; i++) {
-            groups.put(groupNames.get(i), matcher.group(i + 1));
+
+        @IndexRange("input") long @Unmodifiable [] groupRanges = new long[groupNames.size()];
+        int count = Math.min(matcher.groupCount(), groupRanges.length);
+        for (int i = 0; i < groupRanges.length; i++) {
+            groupRanges[i] = IndexRanges.ABSENT;
         }
-        return new WebURLPatternEngine.ComponentMatch(input, groups);
+        for (int i = 0; i < count; i++) {
+            int start = matcher.start(i + 1);
+            if (start >= 0) {
+                groupRanges[i] = IndexRanges.of(start, matcher.end(i + 1));
+            }
+        }
+        return new WebURLPatternEngine.ComponentMatch(input, IndexRanges.of(0, input.length()),
+                groupRanges, groupIndexes);
+    }
+
+    /// Creates a group key-to-index map.
+    private static @Unmodifiable Map<String, Integer> groupIndexes(List<String> groupNames) {
+        if (groupNames.isEmpty()) {
+            return Map.of();
+        }
+
+        LinkedHashMap<String, Integer> indexes = new LinkedHashMap<>();
+        for (int i = 0; i < groupNames.size(); i++) {
+            indexes.put(groupNames.get(i), i);
+        }
+        return Collections.unmodifiableMap(indexes);
     }
 
     /// Fast-path component kinds.
