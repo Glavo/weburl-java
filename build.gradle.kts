@@ -184,16 +184,22 @@ tasks.named<ProcessResources>("processTestResources") {
 }
 
 val wptCommit = "ebf8e3069ec4ac6498826bf9066419e46b0f4ac5"
-val wptResources = listOf(
-    "IdnaTestV2",
-    "toascii",
-    "urltestdata"
+data class WptResource(
+    val name: String,
+    val path: String,
 )
 
-val wptDownloadTasks = wptResources.map {
-    tasks.register<de.undercouch.gradle.tasks.download.Download>("downloadWpt-$it") {
-        src("https://raw.githubusercontent.com/web-platform-tests/wpt/$wptCommit/url/resources/$it.json")
-        dest(downloadDir.map { dir -> dir.file("wpt/$it.json") })
+val wptResources = listOf(
+    WptResource("IdnaTestV2", "url/resources/IdnaTestV2.json"),
+    WptResource("toascii", "url/resources/toascii.json"),
+    WptResource("urltestdata", "url/resources/urltestdata.json"),
+    WptResource("urlpatterntestdata", "urlpattern/resources/urlpatterntestdata.json"),
+)
+
+val wptDownloadTasks = wptResources.map { resource ->
+    tasks.register<de.undercouch.gradle.tasks.download.Download>("downloadWpt-${resource.name}") {
+        src("https://raw.githubusercontent.com/web-platform-tests/wpt/$wptCommit/${resource.path}")
+        dest(downloadDir.map { dir -> dir.file("wpt/${resource.name}.json") })
         overwrite(false)
         connectTimeout(30_000)
         readTimeout(180_000)
@@ -201,32 +207,14 @@ val wptDownloadTasks = wptResources.map {
     }
 }
 
-val adaUrlPatternWptCommit = "d53b80614100a4f7ac40ae0ec3c1644185bb2f6d"
-val downloadAdaUrlPatternWptData = tasks.register<de.undercouch.gradle.tasks.download.Download>(
-    "downloadAda-urlpatterntestdata"
-) {
-    src("https://raw.githubusercontent.com/ada-url/ada/$adaUrlPatternWptCommit/tests/wpt/urlpatterntestdata.json")
-    dest(downloadDir.map { dir -> dir.file("ada/urlpatterntestdata.json") })
-    overwrite(false)
-    connectTimeout(30_000)
-    readTimeout(180_000)
-    retries(3)
-}
-
 tasks.register("downloadWptResources") {
     dependsOn(wptDownloadTasks)
-    dependsOn(downloadAdaUrlPatternWptData)
 }
 
 tasks.test {
     dependsOn("downloadWptResources")
     inputs.dir(downloadDir.map { it.dir("wpt") })
-    inputs.file(downloadDir.map { it.file("ada/urlpatterntestdata.json") })
     systemProperty("org.glavo.url.wpt.resources", downloadDir.map { it.dir("wpt") }.get().asFile.absolutePath)
-    systemProperty(
-        "org.glavo.url.ada.urlpattern.wpt.resources",
-        downloadDir.map { it.dir("ada") }.get().asFile.absolutePath
-    )
 }
 
 tasks.jacocoTestReport {

@@ -39,12 +39,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 /// Selected WPT URLPattern data tests.
 ///
-/// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt/urlpatterntestdata.json
+/// Source: https://github.com/web-platform-tests/wpt/blob/ebf8e3069ec4ac6498826bf9066419e46b0f4ac5/urlpattern/resources/urlpatterntestdata.json
 @NotNullByDefault
 public final class WebURLPatternWptTest {
-    /// System property pointing to downloaded Ada URLPattern WPT resource JSON files.
-    private static final String ADA_URL_PATTERN_WPT_RESOURCES_PROPERTY =
-            "org.glavo.url.ada.urlpattern.wpt.resources";
+    /// System property pointing to downloaded WPT resource JSON files.
+    private static final String WPT_RESOURCES_PROPERTY = "org.glavo.url.wpt.resources";
 
     /// Test indexes selected to cover literal, wildcard, base URL, and named group behavior.
     /// Cases outside the supported regular-expression subset are skipped until more regex semantics are available.
@@ -203,7 +202,7 @@ public final class WebURLPatternWptTest {
         };
     }
 
-    /// Reads Ada's vendored WPT data.
+    /// Reads WPT URLPattern data.
     private static JsonArray readData() throws IOException {
         try (Reader reader = Files.newBufferedReader(resourcePath("urlpatterntestdata.json"),
                 StandardCharsets.UTF_8)) {
@@ -211,11 +210,11 @@ public final class WebURLPatternWptTest {
         }
     }
 
-    /// Resolves a downloaded Ada URLPattern WPT resource path.
+    /// Resolves a downloaded WPT resource path.
     private static Path resourcePath(String resourceName) {
-        String resources = System.getProperty(ADA_URL_PATTERN_WPT_RESOURCES_PROPERTY);
+        String resources = System.getProperty(WPT_RESOURCES_PROPERTY);
         if (resources == null || resources.isEmpty()) {
-            throw new IllegalStateException("Missing system property: " + ADA_URL_PATTERN_WPT_RESOURCES_PROPERTY);
+            throw new IllegalStateException("Missing system property: " + WPT_RESOURCES_PROPERTY);
         }
         return Path.of(resources, resourceName);
     }
