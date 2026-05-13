@@ -18,8 +18,6 @@ package org.glavo.url.internal;
 import org.glavo.url.WebURL;
 import org.glavo.url.internal.pattern.WebURLPatternEngine;
 import org.glavo.url.pattern.WebURLPattern;
-import org.glavo.url.pattern.WebURLPatternComponentResult;
-import org.glavo.url.pattern.WebURLPatternResult;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +77,7 @@ public final class WebURLPatternImpl implements WebURLPattern {
     /// Executes this pattern against a URL string.
     @Override
     @Contract(pure = true)
-    public @Nullable WebURLPatternResult exec(String input) {
+    public @Nullable WebURLPattern.Result exec(String input) {
         Objects.requireNonNull(input, "input");
         return toResult(engine.match(input, null));
     }
@@ -87,7 +85,7 @@ public final class WebURLPatternImpl implements WebURLPattern {
     /// Executes this pattern against a URL string with a base URL.
     @Override
     @Contract(pure = true)
-    public @Nullable WebURLPatternResult exec(String input, String baseURL) {
+    public @Nullable WebURLPattern.Result exec(String input, String baseURL) {
         Objects.requireNonNull(input, "input");
         Objects.requireNonNull(baseURL, "baseURL");
         return toResult(engine.match(input, baseURL));
@@ -96,7 +94,7 @@ public final class WebURLPatternImpl implements WebURLPattern {
     /// Executes this pattern against a parsed URL.
     @Override
     @Contract(pure = true)
-    public @Nullable WebURLPatternResult exec(WebURL input) {
+    public @Nullable WebURLPattern.Result exec(WebURL input) {
         Objects.requireNonNull(input, "input");
         return toResult(engine.match(input));
     }
@@ -104,7 +102,7 @@ public final class WebURLPatternImpl implements WebURLPattern {
     /// Executes this pattern against component input.
     @Override
     @Contract(pure = true)
-    public @Nullable WebURLPatternResult exec(WebURLPattern.Builder input) {
+    public @Nullable WebURLPattern.Result exec(WebURLPattern.Builder input) {
         WebURLPatternBuilderImpl implementation = implementation(Objects.requireNonNull(input, "input"));
         return toResult(engine.match(implementation.toPatternInit()));
     }
@@ -180,7 +178,7 @@ public final class WebURLPatternImpl implements WebURLPattern {
     }
 
     /// Converts an internal result into the public result type.
-    private static @Nullable WebURLPatternResult toResult(@Nullable WebURLPatternEngine.MatchResult result) {
+    private static @Nullable WebURLPattern.Result toResult(@Nullable WebURLPatternEngine.MatchResult result) {
         if (result == null) {
             return null;
         }
@@ -197,7 +195,7 @@ public final class WebURLPatternImpl implements WebURLPattern {
     }
 
     /// Converts an internal component result.
-    private static WebURLPatternComponentResult toComponentResult(WebURLPatternEngine.ComponentMatch result) {
+    private static WebURLPattern.ComponentResult toComponentResult(WebURLPatternEngine.ComponentMatch result) {
         return new WebURLPatternComponentResultImpl(result.input(), result.range(), result.groupRanges(),
                 result.groupIndexes());
     }

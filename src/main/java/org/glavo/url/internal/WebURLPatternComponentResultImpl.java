@@ -15,7 +15,7 @@
  */
 package org.glavo.url.internal;
 
-import org.glavo.url.pattern.WebURLPatternComponentResult;
+import org.glavo.url.pattern.WebURLPattern;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +26,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/// Internal immutable implementation of `WebURLPatternComponentResult`.
+/// Internal immutable implementation of `WebURLPattern.ComponentResult`.
 @NotNullByDefault
-public final class WebURLPatternComponentResultImpl implements WebURLPatternComponentResult {
+public final class WebURLPatternComponentResultImpl implements WebURLPattern.ComponentResult {
     /// Sentinel value stored in group caches for unmatched capture groups.
     @SuppressWarnings("StringOperationCanBeSimplified")
     private static final String UNMATCHED_GROUP = new String();
@@ -219,7 +219,7 @@ public final class WebURLPatternComponentResultImpl implements WebURLPatternComp
     @Override
     @Contract(pure = true)
     public boolean equals(@Nullable Object obj) {
-        return obj instanceof WebURLPatternComponentResult other
+        return obj instanceof WebURLPattern.ComponentResult other
                 && group().equals(other.group())
                 && getWebGroups().equals(other.getWebGroups());
     }

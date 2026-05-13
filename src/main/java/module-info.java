@@ -37,8 +37,6 @@
 /// | [org.glavo.url.WebURLParser] | Reusable parser with configurable validation policy |
 /// | [org.glavo.url.WebURLParseException] | Unchecked exception carrying structured parse-error details |
 /// | [org.glavo.url.pattern.WebURLPattern] | Immutable WHATWG URLPattern matcher interface |
-/// | [org.glavo.url.pattern.WebURLPatternResult] | Result for a successful URLPattern match |
-/// | [org.glavo.url.pattern.WebURLPatternComponentResult] | Result for one matched URLPattern component |
 /// | [org.glavo.url.pattern.WebURLPatternParser] | Reusable URLPattern compiler with configurable compilation policy |
 /// | [org.glavo.url.pattern.WebURLPatternSyntaxException] | Unchecked exception for URLPattern compilation failures |
 ///
