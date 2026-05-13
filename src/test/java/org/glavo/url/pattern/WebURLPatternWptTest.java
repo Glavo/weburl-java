@@ -23,10 +23,13 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.MediaType;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.TestReporter;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,10 +50,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public final class WebURLPatternWptTest {
     /// System property pointing to downloaded WPT resource JSON files.
     private static final String WPT_RESOURCES_PROPERTY = "org.glavo.url.wpt.resources";
+    /// Source URL for WPT URLPattern test data.
+    private static final String WPT_SOURCE_URL =
+            "https://github.com/web-platform-tests/wpt/blob/"
+                    + "ebf8e3069ec4ac6498826bf9066419e46b0f4ac5/"
+                    + "urlpattern/resources/urlpatterntestdata.json";
 
     /// Runs WPT URLPattern cases.
     @TestFactory
-    public List<DynamicTest> urlPatternWptCases() throws IOException {
+    public List<DynamicTest> urlPatternWptCases(TestReporter reporter) throws IOException {
         JsonArray data = readData();
         List<DynamicTest> tests = new ArrayList<>();
         for (int index = 0; index < data.size(); index++) {
@@ -58,16 +66,18 @@ public final class WebURLPatternWptTest {
             if (!element.isJsonObject()) {
                 continue;
             }
+            int testIndex = index;
             JsonObject testCase = element.getAsJsonObject();
-            tests.add(DynamicTest.dynamicTest("urlpatterntestdata.json[" + index + "]",
-                    () -> assertCase(testCase)));
+            tests.add(DynamicTest.dynamicTest("urlpatterntestdata.json[" + testIndex + "]",
+                    sourceUri(testIndex), () -> assertCase(testIndex, testCase, reporter)));
         }
         return tests;
     }
 
     /// Asserts one WPT case.
-    private static void assertCase(JsonObject testCase) {
+    private static void assertCase(int index, JsonObject testCase, TestReporter reporter) {
         @Nullable String unsupportedReason = unsupportedReason(testCase);
+        publishMetadata(index, testCase, reporter, unsupportedReason);
         Assumptions.assumeTrue(unsupportedReason == null, unsupportedReason);
         @Nullable WebURLPattern pattern = compilePattern(testCase.getAsJsonArray("pattern"));
         JsonElement expectedObject = testCase.get("expected_obj");
@@ -221,6 +231,54 @@ public final class WebURLPatternWptTest {
     private static boolean booleanValue(JsonObject object, String name) {
         JsonElement element = object.get(name);
         return element != null && !element.isJsonNull() && element.getAsBoolean();
+    }
+
+    /// Publishes metadata for one WPT case.
+    private static void publishMetadata(
+            int index,
+            JsonObject testCase,
+            TestReporter reporter,
+            @Nullable String unsupportedReason
+    ) {
+        if (unsupportedReason == null) {
+            reporter.publishEntry(Map.of(
+                    "wpt.index", Integer.toString(index),
+                    "wpt.source", sourceUri(index).toString()
+            ));
+        } else {
+            reporter.publishEntry(Map.of(
+                    "wpt.index", Integer.toString(index),
+                    "wpt.source", sourceUri(index).toString(),
+                    "wpt.unsupportedReason", unsupportedReason
+            ));
+        }
+        reporter.publishFile("urlpatterntestdata-" + index + ".json", MediaType.APPLICATION_JSON,
+                path -> Files.writeString(path, asciiJson(testCase), StandardCharsets.UTF_8));
+    }
+
+    /// Returns the source URI for one WPT case.
+    private static URI sourceUri(int index) {
+        return URI.create(WPT_SOURCE_URL + "#case-" + index);
+    }
+
+    /// Returns an ASCII-only JSON representation suitable for test report attachments.
+    private static String asciiJson(JsonElement element) {
+        String json = element.toString();
+        StringBuilder builder = new StringBuilder(json.length());
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c >= 0x20 && c <= 0x7e) {
+                builder.append(c);
+            } else {
+                builder.append("\\u");
+                String hex = Integer.toHexString(c);
+                for (int j = hex.length(); j < 4; j++) {
+                    builder.append('0');
+                }
+                builder.append(hex);
+            }
+        }
+        return builder.toString();
     }
 
     /// Returns the reason why this WPT case is not supported.
