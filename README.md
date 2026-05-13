@@ -186,7 +186,7 @@ WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
 pattern.test("https://example.com/users/42"); // true
 
 WebURLPattern.Result result = pattern.exec("https://example.com/users/42");
-result.pathname().getWebGroup("id"); // "42"
+result.getPath().getWebGroup("id"); // "42"
 
 WebURLPattern ignoreCasePattern = WebURLPatternParser.getDefault().withIgnoreCase()
         .compile("https://example.com/users/:id");

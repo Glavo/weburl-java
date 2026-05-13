@@ -92,9 +92,9 @@ public final class WebURLPatternTest {
 
         WebURLPattern.Result stringResult = requireMatch(
                 pattern.exec("https://example.com/books/42?q=java#ignored"));
-        assertEquals("42", stringResult.pathname().getWebGroup("id"));
-        assertEquals("java", stringResult.search().getWebGroup("term"));
-        assertEquals("ignored", stringResult.hash().getWebGroup(0));
+        assertEquals("42", stringResult.getPath().getWebGroup("id"));
+        assertEquals("java", stringResult.getQuery().getWebGroup("term"));
+        assertEquals("ignored", stringResult.getFragment().getWebGroup(0));
 
         assertTrue(pattern.test(WebURL.parse("https://example.com/books/7?q=url")));
 
@@ -103,8 +103,8 @@ public final class WebURLPatternTest {
                 .setHostPattern("example.com")
                 .setPathPattern("/books/99")
                 .setQueryPattern("q=patterns")));
-        assertEquals("99", componentResult.pathname().getWebGroup("id"));
-        assertEquals("patterns", componentResult.search().getWebGroup("term"));
+        assertEquals("99", componentResult.getPath().getWebGroup("id"));
+        assertEquals("patterns", componentResult.getQuery().getWebGroup("term"));
     }
 
     /// Tests default wildcard components and wildcard group `0`.
@@ -115,32 +115,32 @@ public final class WebURLPatternTest {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo/bar"));
         WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPathPattern("/foo/bar")));
 
-        assertEquals("", result.protocol().group());
-        assertEquals("", result.protocol().group(0));
-        assertEquals(1, result.protocol().groupCount());
-        assertEquals("", result.protocol().group(1));
-        assertEquals(0, result.protocol().start());
-        assertEquals(0, result.protocol().end());
-        assertEquals(Map.of("0", ""), result.protocol().getWebGroups());
-        assertEquals("", result.protocol().getWebGroup(0));
-        assertEquals("", result.username().group());
-        assertEquals(Map.of("0", ""), result.username().getWebGroups());
-        assertEquals("", result.password().group());
-        assertEquals(Map.of("0", ""), result.password().getWebGroups());
-        assertEquals("", result.hostname().group());
-        assertEquals(Map.of("0", ""), result.hostname().getWebGroups());
-        assertEquals("", result.port().group());
-        assertEquals(Map.of("0", ""), result.port().getWebGroups());
-        assertEquals("/foo/bar", result.pathname().group());
-        assertEquals(0, result.pathname().groupCount());
-        assertEquals(Map.of(), result.pathname().getWebGroups());
-        assertThrows(IndexOutOfBoundsException.class, () -> result.pathname().group(1));
-        assertNull(result.pathname().getWebGroup(0));
-        assertThrows(IndexOutOfBoundsException.class, () -> result.pathname().getWebGroup(-1));
-        assertEquals("", result.search().group());
-        assertEquals(Map.of("0", ""), result.search().getWebGroups());
-        assertEquals("", result.hash().group());
-        assertEquals(Map.of("0", ""), result.hash().getWebGroups());
+        assertEquals("", result.getScheme().group());
+        assertEquals("", result.getScheme().group(0));
+        assertEquals(1, result.getScheme().groupCount());
+        assertEquals("", result.getScheme().group(1));
+        assertEquals(0, result.getScheme().start());
+        assertEquals(0, result.getScheme().end());
+        assertEquals(Map.of("0", ""), result.getScheme().getWebGroups());
+        assertEquals("", result.getScheme().getWebGroup(0));
+        assertEquals("", result.getUsername().group());
+        assertEquals(Map.of("0", ""), result.getUsername().getWebGroups());
+        assertEquals("", result.getPassword().group());
+        assertEquals(Map.of("0", ""), result.getPassword().getWebGroups());
+        assertEquals("", result.getHost().group());
+        assertEquals(Map.of("0", ""), result.getHost().getWebGroups());
+        assertEquals("", result.getPort().group());
+        assertEquals(Map.of("0", ""), result.getPort().getWebGroups());
+        assertEquals("/foo/bar", result.getPath().group());
+        assertEquals(0, result.getPath().groupCount());
+        assertEquals(Map.of(), result.getPath().getWebGroups());
+        assertThrows(IndexOutOfBoundsException.class, () -> result.getPath().group(1));
+        assertNull(result.getPath().getWebGroup(0));
+        assertThrows(IndexOutOfBoundsException.class, () -> result.getPath().getWebGroup(-1));
+        assertEquals("", result.getQuery().group());
+        assertEquals(Map.of("0", ""), result.getQuery().getWebGroups());
+        assertEquals("", result.getFragment().group());
+        assertEquals(Map.of("0", ""), result.getFragment().getWebGroups());
     }
 
     /// Tests wildcard captures with a complete URL string.
@@ -151,12 +151,12 @@ public final class WebURLPatternTest {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo/bar"));
         WebURLPattern.Result result = requireMatch(pattern.exec("https://example.com/foo/bar"));
 
-        assertEquals("https", result.protocol().group());
-        assertEquals(Map.of("0", "https"), result.protocol().getWebGroups());
-        assertEquals("https", result.protocol().getWebGroup(0));
-        assertEquals("https", result.protocol().group(1));
-        assertEquals("example.com", result.hostname().group());
-        assertEquals(Map.of("0", "example.com"), result.hostname().getWebGroups());
+        assertEquals("https", result.getScheme().group());
+        assertEquals(Map.of("0", "https"), result.getScheme().getWebGroups());
+        assertEquals("https", result.getScheme().getWebGroup(0));
+        assertEquals("https", result.getScheme().group(1));
+        assertEquals("example.com", result.getHost().group());
+        assertEquals(Map.of("0", "example.com"), result.getHost().getWebGroups());
     }
 
     /// Tests multiple named groups.
@@ -167,13 +167,13 @@ public final class WebURLPatternTest {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/:a/:b/:c"));
         WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
 
-        assertEquals("x", result.pathname().getWebGroup("a"));
-        assertEquals("y", result.pathname().getWebGroup("b"));
-        assertEquals("z", result.pathname().getWebGroup("c"));
-        assertEquals("/x/y/z", result.pathname().group());
-        assertEquals("x", result.pathname().group(1));
-        assertEquals("y", result.pathname().group(2));
-        assertEquals("z", result.pathname().group(3));
+        assertEquals("x", result.getPath().getWebGroup("a"));
+        assertEquals("y", result.getPath().getWebGroup("b"));
+        assertEquals("z", result.getPath().getWebGroup("c"));
+        assertEquals("/x/y/z", result.getPath().group());
+        assertEquals("x", result.getPath().group(1));
+        assertEquals("y", result.getPath().group(2));
+        assertEquals("z", result.getPath().group(3));
     }
 
     /// Tests named groups and numeric wildcard groups together.
@@ -182,11 +182,11 @@ public final class WebURLPatternTest {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/:name/*"));
         WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
 
-        assertEquals("x", result.pathname().getWebGroup("name"));
-        assertEquals("y/z", result.pathname().getWebGroup(0));
-        assertEquals("x", result.pathname().group(1));
-        assertEquals("y/z", result.pathname().group(2));
-        assertEquals(Map.of("name", "x", "0", "y/z"), result.pathname().getWebGroups());
+        assertEquals("x", result.getPath().getWebGroup("name"));
+        assertEquals("y/z", result.getPath().getWebGroup(0));
+        assertEquals("x", result.getPath().group(1));
+        assertEquals("y/z", result.getPath().group(2));
+        assertEquals(Map.of("name", "x", "0", "y/z"), result.getPath().getWebGroups());
     }
 
     /// Tests `hasRegExpGroups` without custom regular-expression support.

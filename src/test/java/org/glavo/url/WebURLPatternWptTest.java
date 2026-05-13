@@ -193,14 +193,14 @@ public final class WebURLPatternWptTest {
     /// Returns one component result.
     private static WebURLPattern.ComponentResult resultComponent(WebURLPattern.Result result, String field) {
         return switch (field) {
-            case "protocol" -> result.protocol();
-            case "username" -> result.username();
-            case "password" -> result.password();
-            case "hostname" -> result.hostname();
-            case "port" -> result.port();
-            case "pathname" -> result.pathname();
-            case "search" -> result.search();
-            case "hash" -> result.hash();
+            case "protocol" -> result.getScheme();
+            case "username" -> result.getUsername();
+            case "password" -> result.getPassword();
+            case "hostname" -> result.getHost();
+            case "port" -> result.getPort();
+            case "pathname" -> result.getPath();
+            case "search" -> result.getQuery();
+            case "hash" -> result.getFragment();
             default -> throw new AssertionError("Unsupported URLPattern match field: " + field);
         };
     }

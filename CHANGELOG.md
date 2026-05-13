@@ -23,7 +23,8 @@
   `getSchemePattern()` and builder setters such as `setSchemePattern()` instead of a separate
   WHATWG-style getter view. `WebURLPattern.ComponentResult` extends `java.util.regex.MatchResult` for Java-style
   group semantics and exposes URLPattern groups object semantics through `getWebGroups()` and
-  `getWebGroup(...)`. `WebURLPattern`, `WebURLPattern.Result`, and `WebURLPattern.ComponentResult`
+  `getWebGroup(...)`. `WebURLPattern.Result` exposes Java-style component getters such as
+  `getScheme()` and `getPath()`. `WebURLPattern`, `WebURLPattern.Result`, and `WebURLPattern.ComponentResult`
   are exposed as interfaces with internal immutable implementations, matching the `WebURL` API shape. The URLPattern
   API lives in the separate `org.glavo.url.pattern` package.
 

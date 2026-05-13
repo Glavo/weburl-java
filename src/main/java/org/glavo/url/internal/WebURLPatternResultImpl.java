@@ -25,107 +25,107 @@ import java.util.Objects;
 /// Internal immutable implementation of `WebURLPattern.Result`.
 @NotNullByDefault
 public final class WebURLPatternResultImpl implements WebURLPattern.Result {
-    /// Protocol component result.
-    private final WebURLPattern.ComponentResult protocol;
+    /// Scheme component result.
+    private final WebURLPattern.ComponentResult scheme;
     /// Username component result.
     private final WebURLPattern.ComponentResult username;
     /// Password component result.
     private final WebURLPattern.ComponentResult password;
-    /// Hostname component result.
-    private final WebURLPattern.ComponentResult hostname;
+    /// Host component result.
+    private final WebURLPattern.ComponentResult host;
     /// Port component result.
     private final WebURLPattern.ComponentResult port;
-    /// Pathname component result.
-    private final WebURLPattern.ComponentResult pathname;
-    /// Search component result.
-    private final WebURLPattern.ComponentResult search;
-    /// Hash component result.
-    private final WebURLPattern.ComponentResult hash;
+    /// Path component result.
+    private final WebURLPattern.ComponentResult path;
+    /// Query component result.
+    private final WebURLPattern.ComponentResult query;
+    /// Fragment component result.
+    private final WebURLPattern.ComponentResult fragment;
 
     /// Creates a URLPattern result.
     ///
-    /// @param protocol protocol component result
+    /// @param scheme scheme component result
     /// @param username username component result
     /// @param password password component result
-    /// @param hostname hostname component result
+    /// @param host host component result
     /// @param port port component result
-    /// @param pathname pathname component result
-    /// @param search search component result
-    /// @param hash hash component result
+    /// @param path path component result
+    /// @param query query component result
+    /// @param fragment fragment component result
     public WebURLPatternResultImpl(
-            WebURLPattern.ComponentResult protocol,
+            WebURLPattern.ComponentResult scheme,
             WebURLPattern.ComponentResult username,
             WebURLPattern.ComponentResult password,
-            WebURLPattern.ComponentResult hostname,
+            WebURLPattern.ComponentResult host,
             WebURLPattern.ComponentResult port,
-            WebURLPattern.ComponentResult pathname,
-            WebURLPattern.ComponentResult search,
-            WebURLPattern.ComponentResult hash
+            WebURLPattern.ComponentResult path,
+            WebURLPattern.ComponentResult query,
+            WebURLPattern.ComponentResult fragment
     ) {
-        this.protocol = Objects.requireNonNull(protocol, "protocol");
+        this.scheme = Objects.requireNonNull(scheme, "scheme");
         this.username = Objects.requireNonNull(username, "username");
         this.password = Objects.requireNonNull(password, "password");
-        this.hostname = Objects.requireNonNull(hostname, "hostname");
+        this.host = Objects.requireNonNull(host, "host");
         this.port = Objects.requireNonNull(port, "port");
-        this.pathname = Objects.requireNonNull(pathname, "pathname");
-        this.search = Objects.requireNonNull(search, "search");
-        this.hash = Objects.requireNonNull(hash, "hash");
+        this.path = Objects.requireNonNull(path, "path");
+        this.query = Objects.requireNonNull(query, "query");
+        this.fragment = Objects.requireNonNull(fragment, "fragment");
     }
 
-    /// Returns the protocol component result.
+    /// Returns the scheme component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult protocol() {
-        return protocol;
+    public WebURLPattern.ComponentResult getScheme() {
+        return scheme;
     }
 
     /// Returns the username component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult username() {
+    public WebURLPattern.ComponentResult getUsername() {
         return username;
     }
 
     /// Returns the password component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult password() {
+    public WebURLPattern.ComponentResult getPassword() {
         return password;
     }
 
-    /// Returns the hostname component result.
+    /// Returns the host component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult hostname() {
-        return hostname;
+    public WebURLPattern.ComponentResult getHost() {
+        return host;
     }
 
     /// Returns the port component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult port() {
+    public WebURLPattern.ComponentResult getPort() {
         return port;
     }
 
-    /// Returns the pathname component result.
+    /// Returns the path component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult pathname() {
-        return pathname;
+    public WebURLPattern.ComponentResult getPath() {
+        return path;
     }
 
-    /// Returns the search component result.
+    /// Returns the query component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult search() {
-        return search;
+    public WebURLPattern.ComponentResult getQuery() {
+        return query;
     }
 
-    /// Returns the hash component result.
+    /// Returns the fragment component result.
     @Override
     @Contract(pure = true)
-    public WebURLPattern.ComponentResult hash() {
-        return hash;
+    public WebURLPattern.ComponentResult getFragment() {
+        return fragment;
     }
 
     /// Compares this result with another object.
@@ -133,28 +133,28 @@ public final class WebURLPatternResultImpl implements WebURLPattern.Result {
     @Contract(pure = true)
     public boolean equals(@Nullable Object obj) {
         return obj instanceof WebURLPattern.Result other
-                && protocol.equals(other.protocol())
-                && username.equals(other.username())
-                && password.equals(other.password())
-                && hostname.equals(other.hostname())
-                && port.equals(other.port())
-                && pathname.equals(other.pathname())
-                && search.equals(other.search())
-                && hash.equals(other.hash());
+                && scheme.equals(other.getScheme())
+                && username.equals(other.getUsername())
+                && password.equals(other.getPassword())
+                && host.equals(other.getHost())
+                && port.equals(other.getPort())
+                && path.equals(other.getPath())
+                && query.equals(other.getQuery())
+                && fragment.equals(other.getFragment());
     }
 
     /// Returns the hash code of this result.
     @Override
     @Contract(pure = true)
     public int hashCode() {
-        int result = protocol.hashCode();
+        int result = scheme.hashCode();
         result = 31 * result + username.hashCode();
         result = 31 * result + password.hashCode();
-        result = 31 * result + hostname.hashCode();
+        result = 31 * result + host.hashCode();
         result = 31 * result + port.hashCode();
-        result = 31 * result + pathname.hashCode();
-        result = 31 * result + search.hashCode();
-        result = 31 * result + hash.hashCode();
+        result = 31 * result + path.hashCode();
+        result = 31 * result + query.hashCode();
+        result = 31 * result + fragment.hashCode();
         return result;
     }
 
@@ -162,14 +162,14 @@ public final class WebURLPatternResultImpl implements WebURLPattern.Result {
     @Override
     @Contract(pure = true)
     public String toString() {
-        return "Result[protocol=" + protocol
+        return "Result[scheme=" + scheme
                 + ", username=" + username
                 + ", password=" + password
-                + ", hostname=" + hostname
+                + ", host=" + host
                 + ", port=" + port
-                + ", pathname=" + pathname
-                + ", search=" + search
-                + ", hash=" + hash
+                + ", path=" + path
+                + ", query=" + query
+                + ", fragment=" + fragment
                 + "]";
     }
 }

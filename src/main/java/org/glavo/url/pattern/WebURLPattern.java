@@ -405,52 +405,52 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// semantics through [ComponentResult#getWebGroups()].
     @NotNullByDefault
     sealed interface Result permits WebURLPatternResultImpl {
-        /// Returns the protocol component result.
+        /// Returns the scheme component result.
         ///
-        /// @return the protocol component result
+        /// @return the scheme component result
         @Contract(pure = true)
-        ComponentResult protocol();
+        ComponentResult getScheme();
 
         /// Returns the username component result.
         ///
         /// @return the username component result
         @Contract(pure = true)
-        ComponentResult username();
+        ComponentResult getUsername();
 
         /// Returns the password component result.
         ///
         /// @return the password component result
         @Contract(pure = true)
-        ComponentResult password();
+        ComponentResult getPassword();
 
-        /// Returns the hostname component result.
+        /// Returns the host component result.
         ///
-        /// @return the hostname component result
+        /// @return the host component result
         @Contract(pure = true)
-        ComponentResult hostname();
+        ComponentResult getHost();
 
         /// Returns the port component result.
         ///
         /// @return the port component result
         @Contract(pure = true)
-        ComponentResult port();
+        ComponentResult getPort();
 
-        /// Returns the pathname component result.
+        /// Returns the path component result.
         ///
-        /// @return the pathname component result
+        /// @return the path component result
         @Contract(pure = true)
-        ComponentResult pathname();
+        ComponentResult getPath();
 
-        /// Returns the search component result.
+        /// Returns the query component result.
         ///
-        /// @return the search component result
+        /// @return the query component result
         @Contract(pure = true)
-        ComponentResult search();
+        ComponentResult getQuery();
 
-        /// Returns the hash component result.
+        /// Returns the fragment component result.
         ///
-        /// @return the hash component result
+        /// @return the fragment component result
         @Contract(pure = true)
-        ComponentResult hash();
+        ComponentResult getFragment();
     }
 }
