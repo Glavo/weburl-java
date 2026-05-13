@@ -18,6 +18,7 @@ package org.glavo.url.internal.pattern;
 import org.glavo.url.WebURL;
 import org.glavo.url.internal.IndexRange;
 import org.glavo.url.internal.UrlParser;
+import org.glavo.url.pattern.WebURLPatternParser;
 import org.glavo.url.pattern.WebURLPatternSyntaxException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -74,23 +75,34 @@ public final class WebURLPatternEngine {
     }
 
     /// Compiles a shorthand constructor string.
-    public static WebURLPatternEngine compile(String input, @Nullable String baseURL, boolean ignoreCase) {
+    public static WebURLPatternEngine compile(
+            String input,
+            @Nullable String baseURL,
+            boolean ignoreCase,
+            WebURLPatternParser.RegExpPolicy regExpPolicy
+    ) {
         URLPatternInit init = ConstructorStringParser.parse(input);
         if (baseURL == null && init.protocol == null) {
             throw new WebURLPatternSyntaxException("URLPattern string input requires a protocol or base URL");
         }
         init.baseURL = baseURL;
-        return compile(init, ignoreCase);
+        return compile(init, ignoreCase, regExpPolicy);
     }
 
     /// Compiles a component URLPattern init.
-    public static WebURLPatternEngine compile(URLPatternInit input, boolean ignoreCase) {
+    public static WebURLPatternEngine compile(
+            URLPatternInit input,
+            boolean ignoreCase,
+            WebURLPatternParser.RegExpPolicy regExpPolicy
+    ) {
         URLPatternInit processed = URLPatternInit.process(input, URLPatternInit.ProcessType.PATTERN,
                 null, null, null, null, null, null, null, null);
         fillDefaults(processed);
         normalizeDefaultPort(processed);
 
-        PatternOptions defaultOptions = PatternOptions.DEFAULT.withIgnoreCase(ignoreCase);
+        PatternOptions defaultOptions = PatternOptions.DEFAULT
+                .withIgnoreCase(ignoreCase)
+                .withRegExpPolicy(regExpPolicy);
         PatternComponent protocol = PatternComponent.compile(require(processed.protocol),
                 URLPatternCanonicalizer::canonicalizeProtocol, defaultOptions);
         PatternComponent username = PatternComponent.compile(require(processed.username),
@@ -101,12 +113,13 @@ public final class WebURLPatternEngine {
         PatternComponent hostname = isIpv6Address(hostnameValue)
                 ? PatternComponent.exact(URLPatternCanonicalizer.canonicalizeIpv6Hostname(hostnameValue))
                 : PatternComponent.compile(hostnameValue, URLPatternCanonicalizer::canonicalizeHostname,
-                PatternOptions.HOSTNAME.withIgnoreCase(ignoreCase));
+                PatternOptions.HOSTNAME.withIgnoreCase(ignoreCase).withRegExpPolicy(regExpPolicy));
         PatternComponent port = PatternComponent.compile(require(processed.port),
                 URLPatternCanonicalizer::canonicalizePort, defaultOptions);
         PatternComponent pathname = protocol.matchesSpecialScheme()
                 ? PatternComponent.compile(require(processed.pathname),
-                URLPatternCanonicalizer::canonicalizePathname, PatternOptions.PATHNAME.withIgnoreCase(ignoreCase))
+                URLPatternCanonicalizer::canonicalizePathname,
+                PatternOptions.PATHNAME.withIgnoreCase(ignoreCase).withRegExpPolicy(regExpPolicy))
                 : PatternComponent.compile(require(processed.pathname),
                 URLPatternCanonicalizer::canonicalizeOpaquePathname, defaultOptions);
         PatternComponent search = PatternComponent.compile(require(processed.search),

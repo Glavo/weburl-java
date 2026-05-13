@@ -49,7 +49,7 @@ public final class WebURLPatternWptTest {
             "org.glavo.url.ada.urlpattern.wpt.resources";
 
     /// Test indexes selected to cover literal, wildcard, base URL, and named group behavior.
-    /// Cases with custom regular-expression groups are skipped until standard-compatible regex semantics are available.
+    /// Cases outside the supported regular-expression subset are skipped until more regex semantics are available.
     private static final int[] SELECTED_INDEXES = {
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
             12, 13, 14, 15, 16, 17, 18, 19,

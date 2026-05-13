@@ -15,11 +15,10 @@
   `getWebSearch()`, and `getWebHash()`.
 - Added `org.glavo.url.pattern.WebURLPattern`, `WebURLPatternParser`, and `WebURLPatternSyntaxException` for precompiled WHATWG URLPattern-style
   matching with component builders, shorthand string patterns, base URL handling, `test`, `exec`,
-  capture groups, `ignoreCase`, and `hasRegExpGroups()`. Custom regular-expression groups are not
-  supported yet because URLPattern uses ECMAScript `v` / `vi` regex behavior, which is not equivalent
-  to Java regular expressions.
+  capture groups, `ignoreCase`, and `hasRegExpGroups()`.
   `WebURLPatternParser` owns compilation policy; derive case-insensitive parsers with
-  `withIgnoreCase()`. `WebURLPattern` exposes component pattern getters such as
+  `withIgnoreCase()`, and configure user-written regular-expression elements with `RegExpPolicy.SUPPORTED`,
+  `REJECT`, or explicit non-standard `JAVA` semantics. `WebURLPattern` exposes component pattern getters such as
   `getSchemePattern()` and builder setters such as `setSchemePattern()` instead of a separate
   WHATWG-style getter view. `WebURLPattern.ComponentResult` extends `java.util.regex.MatchResult` for Java-style
   group semantics and exposes URLPattern groups object semantics through `getWebGroups()` and

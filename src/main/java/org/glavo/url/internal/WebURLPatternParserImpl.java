@@ -28,19 +28,25 @@ import java.util.Objects;
 @NotNullByDefault
 public final class WebURLPatternParserImpl implements WebURLPatternParser {
     /// The default case-sensitive parser.
-    public static final WebURLPatternParserImpl DEFAULT = new WebURLPatternParserImpl(false);
+    public static final WebURLPatternParserImpl DEFAULT =
+            new WebURLPatternParserImpl(false, RegExpPolicy.SUPPORTED);
 
-    /// The case-insensitive parser.
-    private static final WebURLPatternParserImpl IGNORE_CASE = new WebURLPatternParserImpl(true);
+    /// The case-insensitive parser with default regular-expression policy.
+    private static final WebURLPatternParserImpl IGNORE_CASE =
+            new WebURLPatternParserImpl(true, RegExpPolicy.SUPPORTED);
 
     /// Whether compiled patterns use case-insensitive matching.
     private final boolean ignoreCase;
+    /// How user-written regular-expression elements are handled.
+    private final RegExpPolicy regExpPolicy;
 
     /// Creates a URLPattern parser implementation.
     ///
     /// @param ignoreCase whether compiled patterns should use case-insensitive matching
-    private WebURLPatternParserImpl(boolean ignoreCase) {
+    /// @param regExpPolicy regular-expression element policy
+    private WebURLPatternParserImpl(boolean ignoreCase, RegExpPolicy regExpPolicy) {
         this.ignoreCase = ignoreCase;
+        this.regExpPolicy = Objects.requireNonNull(regExpPolicy, "regExpPolicy");
     }
 
     /// Returns whether this parser compiles case-insensitive patterns.
@@ -61,7 +67,21 @@ public final class WebURLPatternParserImpl implements WebURLPatternParser {
     @Override
     @Contract(pure = true)
     public WebURLPatternParser withIgnoreCase(boolean ignoreCase) {
-        return ignoreCase ? IGNORE_CASE : DEFAULT;
+        return withOptions(ignoreCase, regExpPolicy);
+    }
+
+    /// Returns a parser with the specified regular-expression element policy.
+    @Override
+    @Contract(pure = true)
+    public WebURLPatternParser withRegExpPolicy(RegExpPolicy policy) {
+        return withOptions(ignoreCase, Objects.requireNonNull(policy, "policy"));
+    }
+
+    /// Returns how this parser handles user-written regular-expression elements.
+    @Override
+    @Contract(pure = true)
+    public RegExpPolicy getRegExpPolicy() {
+        return regExpPolicy;
     }
 
     /// Compiles a shorthand URLPattern string.
@@ -76,7 +96,7 @@ public final class WebURLPatternParserImpl implements WebURLPatternParser {
     @Contract("_, _ -> new")
     public WebURLPattern compile(String input, @Nullable String baseURL) {
         Objects.requireNonNull(input, "input");
-        return WebURLPatternImpl.compile(input, baseURL, ignoreCase);
+        return WebURLPatternImpl.compile(input, baseURL, ignoreCase, regExpPolicy);
     }
 
     /// Compiles a component URLPattern builder.
@@ -84,7 +104,7 @@ public final class WebURLPatternParserImpl implements WebURLPatternParser {
     @Contract("_ -> new")
     public WebURLPattern compile(WebURLPattern.Builder builder) {
         Objects.requireNonNull(builder, "builder");
-        return WebURLPatternImpl.compile(builder, ignoreCase);
+        return WebURLPatternImpl.compile(builder, ignoreCase, regExpPolicy);
     }
 
     /// Tries to compile a shorthand URLPattern string.
@@ -117,20 +137,36 @@ public final class WebURLPatternParserImpl implements WebURLPatternParser {
     @Override
     @Contract(pure = true)
     public boolean equals(@Nullable Object obj) {
-        return this == obj || obj instanceof WebURLPatternParser other && ignoreCase == other.isIgnoreCase();
+        return this == obj || obj instanceof WebURLPatternParser other
+                && ignoreCase == other.isIgnoreCase()
+                && regExpPolicy == other.getRegExpPolicy();
     }
 
     /// Returns the hash code of this parser.
     @Override
     @Contract(pure = true)
     public int hashCode() {
-        return Boolean.hashCode(ignoreCase);
+        return 31 * Boolean.hashCode(ignoreCase) + regExpPolicy.hashCode();
     }
 
     /// Returns a string representation of this parser.
     @Override
     @Contract(pure = true)
     public String toString() {
-        return ignoreCase ? "WebURLPatternParser[ignoreCase=true]" : "WebURLPatternParser.DEFAULT";
+        if (!ignoreCase && regExpPolicy == RegExpPolicy.SUPPORTED) {
+            return "WebURLPatternParser.DEFAULT";
+        }
+        return "WebURLPatternParser[ignoreCase=" + ignoreCase + ", regExpPolicy=" + regExpPolicy + "]";
+    }
+
+    /// Returns a parser with the given options.
+    private WebURLPatternParser withOptions(boolean ignoreCase, RegExpPolicy regExpPolicy) {
+        if (this.ignoreCase == ignoreCase && this.regExpPolicy == regExpPolicy) {
+            return this;
+        }
+        if (regExpPolicy == RegExpPolicy.SUPPORTED) {
+            return ignoreCase ? IGNORE_CASE : DEFAULT;
+        }
+        return new WebURLPatternParserImpl(ignoreCase, regExpPolicy);
     }
 }

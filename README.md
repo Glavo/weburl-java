@@ -201,9 +201,9 @@ Java-style match groups, and `getWebGroup(...)` for URLPattern groups object sem
 
 The URLPattern API lives in `org.glavo.url.pattern`. Use
 `WebURLPatternParser.getDefault().withIgnoreCase()` when compiled patterns should match case-insensitively.
-Custom regular-expression groups are not supported yet because
-URLPattern uses ECMAScript `v` / `vi` regular-expression semantics, which are not equivalent to Java regular
-expressions. Pattern strings containing custom regular-expression groups are rejected during compilation.
+By default, user-written regular-expression elements use the supported standard-compatible JavaScript subset;
+unsupported syntax is rejected during compilation. Use `withRegExpPolicy(WebURLPatternParser.RegExpPolicy.REJECT)`
+to forbid them, or `RegExpPolicy.JAVA` to explicitly use non-standard Java `Pattern` semantics.
 
 ### URL Components
 

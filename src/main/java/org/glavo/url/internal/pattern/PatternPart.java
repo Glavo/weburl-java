@@ -49,6 +49,11 @@ record PatternPart(
         return type == Type.REGEXP;
     }
 
+    /// Returns a copy with a different value.
+    PatternPart withValue(String newValue) {
+        return new PatternPart(type, newValue, modifier, name, prefix, suffix);
+    }
+
     /// URLPattern part kinds.
     enum Type {
         /// A literal text part.

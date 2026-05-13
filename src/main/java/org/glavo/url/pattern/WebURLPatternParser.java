@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /// `WebURLPatternParser` encapsulates URLPattern compilation policy. The static convenience methods
 /// on [WebURLPattern] use [#getDefault()]. Callers that need case-insensitive matching can derive a
 /// parser with [#withIgnoreCase()] or [#withIgnoreCase(boolean)] instead of passing per-call option objects.
+/// User-written regular-expression elements are controlled by [RegExpPolicy].
 ///
 /// # Thread Safety and Reuse
 ///
@@ -45,12 +46,33 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
     /// Returns the default URLPattern parser.
     ///
-    /// This parser compiles patterns for case-sensitive matching.
+    /// This parser compiles patterns for case-sensitive matching and uses [RegExpPolicy#SUPPORTED]
+    /// for user-written regular-expression elements.
     ///
     /// @return the default parser
     @Contract(pure = true)
     static WebURLPatternParser getDefault() {
         return WebURLPatternParserImpl.DEFAULT;
+    }
+
+    /// URLPattern regular-expression element handling policy.
+    ///
+    /// This policy controls only user-written `( ... )` regular-expression elements in URLPattern
+    /// component patterns. It does not disable the internal matching expressions used to implement
+    /// wildcards and named segment groups.
+    enum RegExpPolicy {
+        /// Accepts the currently implemented standard-compatible JavaScript regular-expression subset.
+        ///
+        /// Unsupported syntax is rejected during compilation. This is the default policy.
+        SUPPORTED,
+
+        /// Rejects every user-written regular-expression element during compilation.
+        REJECT,
+
+        /// Compiles user-written regular-expression elements with `java.util.regex.Pattern`.
+        ///
+        /// This policy is not WHATWG-compatible and must be requested explicitly.
+        JAVA
     }
 
     /// Returns a parser with case-insensitive matching enabled.
@@ -70,11 +92,26 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
     @Contract(pure = true)
     WebURLPatternParser withIgnoreCase(boolean ignoreCase);
 
+    /// Returns a parser with the specified regular-expression element policy.
+    ///
+    /// If this parser already uses the requested policy, this method may return this parser.
+    ///
+    /// @param policy regular-expression element policy
+    /// @return a parser that uses the specified regular-expression element policy
+    @Contract(pure = true)
+    WebURLPatternParser withRegExpPolicy(RegExpPolicy policy);
+
     /// Returns whether patterns compiled by this parser use case-insensitive matching.
     ///
     /// @return `true` when this parser compiles case-insensitive patterns
     @Contract(pure = true)
     boolean isIgnoreCase();
+
+    /// Returns how this parser handles user-written regular-expression elements.
+    ///
+    /// @return the regular-expression element policy
+    @Contract(pure = true)
+    RegExpPolicy getRegExpPolicy();
 
     /// Compiles a shorthand URLPattern string.
     ///

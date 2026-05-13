@@ -189,21 +189,75 @@ public final class WebURLPatternTest {
         assertEquals(Map.of("name", "x", "0", "y/z"), result.getPath().getWebGroups());
     }
 
-    /// Tests `hasRegExpGroups` without custom regular-expression support.
+    /// Tests `hasRegExpGroups`.
     ///
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L339-L393
     @Test
     public void reportsRegExpGroups() {
         assertFalse(WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz?/b/*"))
                 .hasRegExpGroups());
+        assertTrue(WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo([0-9]+)/b"))
+                .hasRegExpGroups());
     }
 
-    /// Tests that custom regular-expression groups are rejected until standard-compatible semantics are available.
+    /// Tests the default supported regular-expression subset.
     @Test
-    public void rejectsCustomRegularExpressionGroups() {
+    public void supportsDefaultRegularExpressionSubset() {
+        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/books/:id([0-9]+)"));
+        WebURLPattern.Result result = requireMatch(
+                pattern.exec(WebURLPattern.newBuilder().setPathPattern("/books/42")));
+
+        assertEquals("42", result.getPath().getWebGroup("id"));
+        assertEquals("42", result.getPath().group(1));
+        assertTrue(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/123")));
+        assertFalse(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/abc")));
+        assertNull(WebURLPattern.tryCompile(WebURLPattern.newBuilder().setPathPattern("/books/:id(a(?:b))")));
+    }
+
+    /// Tests the reject regular-expression policy.
+    @Test
+    public void rejectsCustomRegularExpressionGroupsWithRejectPolicy() {
+        WebURLPatternParser parser = WebURLPatternParser.getDefault()
+                .withRegExpPolicy(WebURLPatternParser.RegExpPolicy.REJECT);
+
         assertThrows(WebURLPatternSyntaxException.class,
-                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*")));
-        assertNull(WebURLPattern.tryCompile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*")));
+                () -> parser.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*")));
+        assertNull(parser.tryCompile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*")));
+        assertFalse(parser.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz?/b/*"))
+                .hasRegExpGroups());
+    }
+
+    /// Tests the Java regular-expression policy.
+    @Test
+    public void supportsJavaRegularExpressionPolicy() {
+        WebURLPatternParser parser = WebURLPatternParser.getDefault()
+                .withRegExpPolicy(WebURLPatternParser.RegExpPolicy.JAVA);
+        WebURLPattern pattern = parser.compile(WebURLPattern.newBuilder().setPathPattern("/books/:id([0-9]++)"));
+
+        assertTrue(pattern.hasRegExpGroups());
+        assertTrue(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/42")));
+        assertFalse(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/abc")));
+        assertThrows(WebURLPatternSyntaxException.class,
+                () -> parser.compile(WebURLPattern.newBuilder().setPathPattern("/books/:id([)")));
+        assertNull(parser.tryCompile(WebURLPattern.newBuilder().setPathPattern("/books/:id([)")));
+    }
+
+    /// Tests parser regular-expression policy configuration.
+    @Test
+    public void configuresRegularExpressionPolicy() {
+        WebURLPatternParser javaParser = WebURLPatternParser.getDefault()
+                .withRegExpPolicy(WebURLPatternParser.RegExpPolicy.JAVA);
+        WebURLPatternParser insensitiveJavaParser = javaParser.withIgnoreCase();
+
+        assertEquals(WebURLPatternParser.RegExpPolicy.SUPPORTED,
+                WebURLPatternParser.getDefault().getRegExpPolicy());
+        assertEquals(WebURLPatternParser.RegExpPolicy.JAVA, javaParser.getRegExpPolicy());
+        assertFalse(javaParser.isIgnoreCase());
+        assertTrue(insensitiveJavaParser.isIgnoreCase());
+        assertEquals(WebURLPatternParser.RegExpPolicy.JAVA, insensitiveJavaParser.getRegExpPolicy());
+        assertEquals(insensitiveJavaParser, WebURLPatternParser.getDefault()
+                .withIgnoreCase()
+                .withRegExpPolicy(WebURLPatternParser.RegExpPolicy.JAVA));
     }
 
     /// Tests case-insensitive matching.

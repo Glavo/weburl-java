@@ -15,22 +15,36 @@
  */
 package org.glavo.url.internal.pattern;
 
+import org.glavo.url.pattern.WebURLPatternParser;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /// Component compilation options from the URLPattern Standard.
 @NotNullByDefault
-record PatternOptions(String delimiter, String prefix, boolean ignoreCase) {
+record PatternOptions(
+        String delimiter,
+        String prefix,
+        boolean ignoreCase,
+        WebURLPatternParser.RegExpPolicy regExpPolicy
+) {
     /// Default component options.
-    static final PatternOptions DEFAULT = new PatternOptions("", "", false);
+    static final PatternOptions DEFAULT =
+            new PatternOptions("", "", false, WebURLPatternParser.RegExpPolicy.SUPPORTED);
 
     /// Hostname component options.
-    static final PatternOptions HOSTNAME = new PatternOptions(".", "", false);
+    static final PatternOptions HOSTNAME =
+            new PatternOptions(".", "", false, WebURLPatternParser.RegExpPolicy.SUPPORTED);
 
     /// Pathname component options.
-    static final PatternOptions PATHNAME = new PatternOptions("/", "/", false);
+    static final PatternOptions PATHNAME =
+            new PatternOptions("/", "/", false, WebURLPatternParser.RegExpPolicy.SUPPORTED);
 
     /// Returns a copy with a different ignore-case flag.
     PatternOptions withIgnoreCase(boolean value) {
-        return new PatternOptions(delimiter, prefix, value);
+        return new PatternOptions(delimiter, prefix, value, regExpPolicy);
+    }
+
+    /// Returns a copy with a different regular-expression element policy.
+    PatternOptions withRegExpPolicy(WebURLPatternParser.RegExpPolicy value) {
+        return new PatternOptions(delimiter, prefix, ignoreCase, value);
     }
 }

@@ -17,6 +17,7 @@ package org.glavo.url.internal.pattern;
 
 import org.glavo.url.internal.IndexRange;
 import org.glavo.url.internal.IndexRanges;
+import org.glavo.url.pattern.WebURLPatternParser;
 import org.glavo.url.pattern.WebURLPatternSyntaxException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -72,11 +73,13 @@ final class PatternComponent {
 
     /// Compiles a component pattern.
     static PatternComponent compile(String input, Function<String, String> encodingCallback, PatternOptions options) {
-        List<PatternPart> parts = PatternParser.parsePatternString(input, options, encodingCallback);
+        List<PatternPart> parts = processRegExpParts(PatternParser.parsePatternString(input, options, encodingCallback),
+                options.regExpPolicy());
+        boolean hasRegExpGroups = false;
         for (PatternPart part : parts) {
             if (part.isRegExp()) {
-                throw new WebURLPatternSyntaxException(
-                        "Custom URLPattern regular expressions are not supported");
+                hasRegExpGroups = true;
+                break;
             }
         }
 
@@ -105,18 +108,45 @@ final class PatternComponent {
             if (type == Type.FULL_WILDCARD && !parts.isEmpty()) {
                 names.add(parts.get(0).name());
             }
-            return new PatternComponent(patternString, null, names, false, type, exactMatchValue);
+            return new PatternComponent(patternString, null, names, hasRegExpGroups, type, exactMatchValue);
         }
 
         PatternParser.GeneratedRegExp generated = PatternParser.generateRegularExpressionAndNameList(parts, options);
         int flags = options.ignoreCase() ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
         try {
             return new PatternComponent(patternString, Pattern.compile(generated.regexp(), flags),
-                    generated.names(), false, type, exactMatchValue);
+                    generated.names(), hasRegExpGroups, type, exactMatchValue);
         } catch (PatternSyntaxException exception) {
             throw new WebURLPatternSyntaxException("Invalid Java regular expression generated for URLPattern",
                     exception);
         }
+    }
+
+    /// Processes user-written regular-expression elements.
+    private static List<PatternPart> processRegExpParts(
+            List<PatternPart> parts,
+            WebURLPatternParser.RegExpPolicy regExpPolicy
+    ) {
+        RegExpElementProcessor processor = RegExpElementProcessor.forPolicy(regExpPolicy);
+        @Nullable ArrayList<PatternPart> processed = null;
+        for (int i = 0; i < parts.size(); i++) {
+            PatternPart part = parts.get(i);
+            if (!part.isRegExp()) {
+                if (processed != null) {
+                    processed.add(part);
+                }
+                continue;
+            }
+
+            String value = processor.process(part.value());
+            PatternPart processedPart = value.equals(part.value()) ? part : part.withValue(value);
+            if (processed == null) {
+                processed = new ArrayList<>(parts.size());
+                processed.addAll(parts.subList(0, i));
+            }
+            processed.add(processedPart);
+        }
+        return processed == null ? parts : processed;
     }
 
     /// Creates a literal exact-match component from an already canonicalized value.

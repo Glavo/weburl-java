@@ -39,9 +39,9 @@ import java.util.regex.MatchResult;
 /// [#getSchemePattern()] use the `Pattern` suffix to avoid confusing component pattern strings with
 /// parsed URL component values.
 ///
-/// Custom regular-expression groups are not supported yet because URLPattern uses ECMAScript
-/// `v` / `vi` regular-expression semantics, which are not equivalent to Java regular expressions.
-/// Pattern strings containing custom regular-expression groups are rejected during compilation.
+/// User-written regular-expression elements are handled by [WebURLPatternParser.RegExpPolicy].
+/// The default parser accepts the currently supported standard-compatible subset and rejects
+/// unsupported syntax during compilation.
 ///
 /// @since 0.3.0
 @NotNullByDefault
@@ -204,10 +204,9 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     @Contract(pure = true)
     boolean isIgnoreCase();
 
-    /// Returns whether any component contains custom regular-expression groups.
+    /// Returns whether any component contains a user-written regular-expression element.
     ///
-    /// This currently returns `false` for every successfully compiled pattern because custom
-    /// regular-expression groups are rejected during compilation.
+    /// @return `true` when any component contains a user-written regular-expression element
     @Contract(pure = true)
     boolean hasRegExpGroups();
 

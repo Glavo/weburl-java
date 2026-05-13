@@ -18,6 +18,7 @@ package org.glavo.url.internal;
 import org.glavo.url.WebURL;
 import org.glavo.url.internal.pattern.WebURLPatternEngine;
 import org.glavo.url.pattern.WebURLPattern;
+import org.glavo.url.pattern.WebURLPatternParser;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -36,14 +37,24 @@ public final class WebURLPatternImpl implements WebURLPattern {
     }
 
     /// Compiles a shorthand constructor string.
-    public static WebURLPattern compile(String input, @Nullable String baseURL, boolean ignoreCase) {
-        return new WebURLPatternImpl(WebURLPatternEngine.compile(input, baseURL, ignoreCase));
+    public static WebURLPattern compile(
+            String input,
+            @Nullable String baseURL,
+            boolean ignoreCase,
+            WebURLPatternParser.RegExpPolicy regExpPolicy
+    ) {
+        return new WebURLPatternImpl(WebURLPatternEngine.compile(input, baseURL, ignoreCase, regExpPolicy));
     }
 
     /// Compiles a component builder.
-    public static WebURLPattern compile(WebURLPattern.Builder builder, boolean ignoreCase) {
+    public static WebURLPattern compile(
+            WebURLPattern.Builder builder,
+            boolean ignoreCase,
+            WebURLPatternParser.RegExpPolicy regExpPolicy
+    ) {
         WebURLPatternBuilderImpl implementation = implementation(Objects.requireNonNull(builder, "builder"));
-        return new WebURLPatternImpl(WebURLPatternEngine.compile(implementation.toPatternInit(), ignoreCase));
+        return new WebURLPatternImpl(WebURLPatternEngine.compile(implementation.toPatternInit(), ignoreCase,
+                regExpPolicy));
     }
 
     /// Tests a URL string.
