@@ -25,8 +25,33 @@
     "search",
     "hash"
   ];
+  const javaFieldNames = [
+    "serialized-url",
+    "display-string",
+    "rfc2396-string",
+    "scheme",
+    "raw-authority",
+    "decoded-authority",
+    "raw-user-info",
+    "decoded-user-info",
+    "raw-username",
+    "decoded-username",
+    "raw-password",
+    "decoded-password",
+    "host",
+    "port",
+    "raw-port",
+    "raw-path",
+    "decoded-path",
+    "raw-query",
+    "decoded-query",
+    "raw-fragment",
+    "decoded-fragment"
+  ];
   const browserValues = new Map();
   const weburlValues = new Map();
+  const weburlJavaValues = new Map();
+  const uriJavaValues = new Map();
 
   function byId(id) {
     return document.getElementById(id);
@@ -104,23 +129,84 @@
     }
   }
 
+  function javaFieldFromId(id) {
+    if (id.startsWith("weburl-java-")) {
+      return { side: "weburl", name: id.slice("weburl-java-".length) };
+    }
+    if (id.startsWith("uri-java-")) {
+      return { side: "uri", name: id.slice("uri-java-".length) };
+    }
+    return null;
+  }
+
   function setJavaValue(id, value) {
-    setText(id, value);
-    setValueState(id, value === "(empty)" || value === "null" ? "empty" : "value");
+    const field = javaFieldFromId(id);
+    const text = value == null ? "" : value;
+    if (!field || !javaFieldNames.includes(field.name)) {
+      setText(id, text);
+      setValueState(id, text === "(empty)" || text === "null" || text === "(unsupported)" ? "empty" : "value");
+      return;
+    }
+
+    if (field.side === "weburl") {
+      weburlJavaValues.set(field.name, text);
+    } else {
+      uriJavaValues.set(field.name, text);
+    }
+    setText(id, text);
+    updateJavaComparisonStates();
+  }
+
+  function updateJavaComparisonStates() {
+    for (const name of javaFieldNames) {
+      setValueState(
+        `weburl-java-${name}`,
+        javaComparisonState(weburlJavaValues.get(name), weburlJavaValues.has(name), uriJavaValues.get(name), uriJavaValues.has(name))
+      );
+      setValueState(
+        `uri-java-${name}`,
+        javaComparisonState(uriJavaValues.get(name), uriJavaValues.has(name), weburlJavaValues.get(name), weburlJavaValues.has(name))
+      );
+    }
+  }
+
+  function javaComparisonState(value, hasValue, counterpart, hasCounterpart) {
+    if (!hasValue) {
+      return "";
+    }
+    if (value === "(unsupported)") {
+      return "unsupported";
+    }
+    if (value === "(empty)" || value === "null") {
+      return "empty";
+    }
+    if (!hasCounterpart || counterpart === "(unsupported)") {
+      return "value";
+    }
+    return value === counterpart ? "match" : "mismatch";
   }
 
   function clearValue(id) {
     const browserName = componentNameFromId(id, "browser-");
     const weburlName = componentNameFromId(id, "weburl-");
+    const javaField = javaFieldFromId(id);
     if (componentNames.includes(browserName)) {
       browserValues.delete(browserName);
     }
     if (componentNames.includes(weburlName)) {
       weburlValues.delete(weburlName);
     }
+    if (javaField && javaFieldNames.includes(javaField.name)) {
+      if (javaField.side === "weburl") {
+        weburlJavaValues.delete(javaField.name);
+      } else {
+        uriJavaValues.delete(javaField.name);
+      }
+    }
     setText(id, "");
     setValueState(id, "");
     updateComparisonStates();
+    updateJavaComparisonStates();
   }
 
   function setState(id, state) {

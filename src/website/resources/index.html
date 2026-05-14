@@ -87,33 +87,122 @@
       </article>
     </section>
 
-    <section class="java-view" aria-label="Java-style WebURL components">
+    <section class="java-view" aria-label="Java-style WebURL and java.net.URI component comparison">
       <div class="section-heading">
-        <h2>WebURL Java-style components</h2>
+        <h2>Java-style component comparison</h2>
       </div>
-      <dl class="component-table dense-table">
-        <div><dt>serialized URL</dt><dd id="weburl-serialized-url"></dd></div>
-        <div><dt>display string</dt><dd id="weburl-display-string"></dd></div>
-        <div><dt>RFC 2396 string</dt><dd id="weburl-rfc2396-string"></dd></div>
-        <div><dt>scheme</dt><dd id="weburl-scheme"></dd></div>
-        <div><dt>raw authority</dt><dd id="weburl-raw-authority"></dd></div>
-        <div><dt>decoded authority</dt><dd id="weburl-decoded-authority"></dd></div>
-        <div><dt>raw user info</dt><dd id="weburl-raw-user-info"></dd></div>
-        <div><dt>decoded user info</dt><dd id="weburl-decoded-user-info"></dd></div>
-        <div><dt>raw username</dt><dd id="weburl-raw-username"></dd></div>
-        <div><dt>decoded username</dt><dd id="weburl-decoded-username"></dd></div>
-        <div><dt>raw password</dt><dd id="weburl-raw-password"></dd></div>
-        <div><dt>decoded password</dt><dd id="weburl-decoded-password"></dd></div>
-        <div><dt>host</dt><dd id="weburl-java-host"></dd></div>
-        <div><dt>port</dt><dd id="weburl-java-port"></dd></div>
-        <div><dt>raw port</dt><dd id="weburl-raw-port"></dd></div>
-        <div><dt>raw path</dt><dd id="weburl-raw-path"></dd></div>
-        <div><dt>decoded path</dt><dd id="weburl-decoded-path"></dd></div>
-        <div><dt>raw query</dt><dd id="weburl-raw-query"></dd></div>
-        <div><dt>decoded query</dt><dd id="weburl-decoded-query"></dd></div>
-        <div><dt>raw fragment</dt><dd id="weburl-raw-fragment"></dd></div>
-        <div><dt>decoded fragment</dt><dd id="weburl-decoded-fragment"></dd></div>
-      </dl>
+      <div class="java-comparison-table" role="table">
+        <div class="java-comparison-row java-comparison-header" role="row">
+          <div role="columnheader">component</div>
+          <div role="columnheader">WebURL</div>
+          <div role="columnheader">java.net.URI</div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">serialized URL</div>
+          <div id="weburl-java-serialized-url" class="component-value" role="cell"></div>
+          <div id="uri-java-serialized-url" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">display string</div>
+          <div id="weburl-java-display-string" class="component-value" role="cell"></div>
+          <div id="uri-java-display-string" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">RFC 2396 string</div>
+          <div id="weburl-java-rfc2396-string" class="component-value" role="cell"></div>
+          <div id="uri-java-rfc2396-string" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">scheme</div>
+          <div id="weburl-java-scheme" class="component-value" role="cell"></div>
+          <div id="uri-java-scheme" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">raw authority</div>
+          <div id="weburl-java-raw-authority" class="component-value" role="cell"></div>
+          <div id="uri-java-raw-authority" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">decoded authority</div>
+          <div id="weburl-java-decoded-authority" class="component-value" role="cell"></div>
+          <div id="uri-java-decoded-authority" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">raw user info</div>
+          <div id="weburl-java-raw-user-info" class="component-value" role="cell"></div>
+          <div id="uri-java-raw-user-info" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">decoded user info</div>
+          <div id="weburl-java-decoded-user-info" class="component-value" role="cell"></div>
+          <div id="uri-java-decoded-user-info" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">raw username</div>
+          <div id="weburl-java-raw-username" class="component-value" role="cell"></div>
+          <div id="uri-java-raw-username" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">decoded username</div>
+          <div id="weburl-java-decoded-username" class="component-value" role="cell"></div>
+          <div id="uri-java-decoded-username" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">raw password</div>
+          <div id="weburl-java-raw-password" class="component-value" role="cell"></div>
+          <div id="uri-java-raw-password" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">decoded password</div>
+          <div id="weburl-java-decoded-password" class="component-value" role="cell"></div>
+          <div id="uri-java-decoded-password" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">host</div>
+          <div id="weburl-java-host" class="component-value" role="cell"></div>
+          <div id="uri-java-host" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">port</div>
+          <div id="weburl-java-port" class="component-value" role="cell"></div>
+          <div id="uri-java-port" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">raw port</div>
+          <div id="weburl-java-raw-port" class="component-value" role="cell"></div>
+          <div id="uri-java-raw-port" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">raw path</div>
+          <div id="weburl-java-raw-path" class="component-value" role="cell"></div>
+          <div id="uri-java-raw-path" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">decoded path</div>
+          <div id="weburl-java-decoded-path" class="component-value" role="cell"></div>
+          <div id="uri-java-decoded-path" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">raw query</div>
+          <div id="weburl-java-raw-query" class="component-value" role="cell"></div>
+          <div id="uri-java-raw-query" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">decoded query</div>
+          <div id="weburl-java-decoded-query" class="component-value" role="cell"></div>
+          <div id="uri-java-decoded-query" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">raw fragment</div>
+          <div id="weburl-java-raw-fragment" class="component-value" role="cell"></div>
+          <div id="uri-java-raw-fragment" class="component-value" role="cell"></div>
+        </div>
+        <div class="java-comparison-row" role="row">
+          <div class="component-name" role="rowheader">decoded fragment</div>
+          <div id="weburl-java-decoded-fragment" class="component-value" role="cell"></div>
+          <div id="uri-java-decoded-fragment" class="component-value" role="cell"></div>
+        </div>
+      </div>
     </section>
   </main>
 </body>

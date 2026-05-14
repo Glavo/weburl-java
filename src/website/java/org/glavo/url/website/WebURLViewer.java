@@ -26,9 +26,15 @@ import org.teavm.jso.JSBody;
 import org.teavm.jso.JSFunctor;
 import org.teavm.jso.JSObject;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /// TeaVM entry point for the website's live URL viewer.
 @NotNullByDefault
 public final class WebURLViewer {
+    /// Display text for a java.net.URI component that has no corresponding API.
+    private static final String UNSUPPORTED = "(unsupported)";
+
     /// HTML ids for fields populated from the WebURL result.
     private static final String @Unmodifiable [] WEBURL_FIELD_IDS = {
             "weburl-href",
@@ -42,27 +48,48 @@ public final class WebURLViewer {
             "weburl-pathname",
             "weburl-search",
             "weburl-hash",
-            "weburl-serialized-url",
-            "weburl-display-string",
-            "weburl-rfc2396-string",
-            "weburl-scheme",
-            "weburl-raw-authority",
-            "weburl-decoded-authority",
-            "weburl-raw-user-info",
-            "weburl-decoded-user-info",
-            "weburl-raw-username",
-            "weburl-decoded-username",
-            "weburl-raw-password",
-            "weburl-decoded-password",
+            "weburl-java-serialized-url",
+            "weburl-java-display-string",
+            "weburl-java-rfc2396-string",
+            "weburl-java-scheme",
+            "weburl-java-raw-authority",
+            "weburl-java-decoded-authority",
+            "weburl-java-raw-user-info",
+            "weburl-java-decoded-user-info",
+            "weburl-java-raw-username",
+            "weburl-java-decoded-username",
+            "weburl-java-raw-password",
+            "weburl-java-decoded-password",
             "weburl-java-host",
             "weburl-java-port",
-            "weburl-raw-port",
-            "weburl-raw-path",
-            "weburl-decoded-path",
-            "weburl-raw-query",
-            "weburl-decoded-query",
-            "weburl-raw-fragment",
-            "weburl-decoded-fragment",
+            "weburl-java-raw-port",
+            "weburl-java-raw-path",
+            "weburl-java-decoded-path",
+            "weburl-java-raw-query",
+            "weburl-java-decoded-query",
+            "weburl-java-raw-fragment",
+            "weburl-java-decoded-fragment",
+            "uri-java-serialized-url",
+            "uri-java-display-string",
+            "uri-java-rfc2396-string",
+            "uri-java-scheme",
+            "uri-java-raw-authority",
+            "uri-java-decoded-authority",
+            "uri-java-raw-user-info",
+            "uri-java-decoded-user-info",
+            "uri-java-raw-username",
+            "uri-java-decoded-username",
+            "uri-java-raw-password",
+            "uri-java-decoded-password",
+            "uri-java-host",
+            "uri-java-port",
+            "uri-java-raw-port",
+            "uri-java-raw-path",
+            "uri-java-decoded-path",
+            "uri-java-raw-query",
+            "uri-java-decoded-query",
+            "uri-java-raw-fragment",
+            "uri-java-decoded-fragment",
     };
 
     /// Parser mode value for the default parser.
@@ -154,27 +181,87 @@ public final class WebURLViewer {
         setComparedValue("weburl-pathname", url.getWebPathname());
         setComparedValue("weburl-search", url.getWebSearch());
         setComparedValue("weburl-hash", url.getWebHash());
-        setJavaValue("weburl-serialized-url", display(url.toString()));
-        setJavaValue("weburl-display-string", display(url.toDisplayString()));
-        setJavaValue("weburl-rfc2396-string", display(url.toRFC2396String()));
-        setJavaValue("weburl-scheme", display(url.getScheme()));
-        setJavaValue("weburl-raw-authority", displayNullable(url.getRawAuthority()));
-        setJavaValue("weburl-decoded-authority", displayNullable(url.getAuthority()));
-        setJavaValue("weburl-raw-user-info", displayNullable(url.getRawUserInfo()));
-        setJavaValue("weburl-decoded-user-info", displayNullable(url.getUserInfo()));
-        setJavaValue("weburl-raw-username", displayNullable(url.getRawUsername()));
-        setJavaValue("weburl-decoded-username", displayNullable(url.getUsername()));
-        setJavaValue("weburl-raw-password", displayNullable(url.getRawPassword()));
-        setJavaValue("weburl-decoded-password", displayNullable(url.getPassword()));
+        setJavaValue("weburl-java-serialized-url", display(url.toString()));
+        setJavaValue("weburl-java-display-string", display(url.toDisplayString()));
+        setJavaValue("weburl-java-rfc2396-string", display(url.toRFC2396String()));
+        setJavaValue("weburl-java-scheme", display(url.getScheme()));
+        setJavaValue("weburl-java-raw-authority", displayNullable(url.getRawAuthority()));
+        setJavaValue("weburl-java-decoded-authority", displayNullable(url.getAuthority()));
+        setJavaValue("weburl-java-raw-user-info", displayNullable(url.getRawUserInfo()));
+        setJavaValue("weburl-java-decoded-user-info", displayNullable(url.getUserInfo()));
+        setJavaValue("weburl-java-raw-username", displayNullable(url.getRawUsername()));
+        setJavaValue("weburl-java-decoded-username", displayNullable(url.getUsername()));
+        setJavaValue("weburl-java-raw-password", displayNullable(url.getRawPassword()));
+        setJavaValue("weburl-java-decoded-password", displayNullable(url.getPassword()));
         setJavaValue("weburl-java-host", displayNullable(url.getHost()));
         setJavaValue("weburl-java-port", Integer.toString(url.getPort()));
-        setJavaValue("weburl-raw-port", displayNullable(url.getRawPort()));
-        setJavaValue("weburl-raw-path", display(url.getRawPath()));
-        setJavaValue("weburl-decoded-path", display(url.getPath()));
-        setJavaValue("weburl-raw-query", displayNullable(url.getRawQuery()));
-        setJavaValue("weburl-decoded-query", displayNullable(url.getQuery()));
-        setJavaValue("weburl-raw-fragment", displayNullable(url.getRawFragment()));
-        setJavaValue("weburl-decoded-fragment", displayNullable(url.getFragment()));
+        setJavaValue("weburl-java-raw-port", displayNullable(url.getRawPort()));
+        setJavaValue("weburl-java-raw-path", display(url.getRawPath()));
+        setJavaValue("weburl-java-decoded-path", display(url.getPath()));
+        setJavaValue("weburl-java-raw-query", displayNullable(url.getRawQuery()));
+        setJavaValue("weburl-java-decoded-query", displayNullable(url.getQuery()));
+        setJavaValue("weburl-java-raw-fragment", displayNullable(url.getRawFragment()));
+        setJavaValue("weburl-java-decoded-fragment", displayNullable(url.getFragment()));
+        renderURIFields(url);
+    }
+
+    /// Renders the java.net.URI comparison fields for the parsed WebURL.
+    ///
+    /// @param url the parsed URL
+    private static void renderURIFields(WebURL url) {
+        try {
+            URI uri = url.toURI();
+            setJavaValue("uri-java-serialized-url", display(uri.toString()));
+            setJavaValue("uri-java-display-string", UNSUPPORTED);
+            setJavaValue("uri-java-rfc2396-string", display(uri.toString()));
+            setJavaValue("uri-java-scheme", displayNullable(uri.getScheme()));
+            setJavaValue("uri-java-raw-authority", displayNullable(uri.getRawAuthority()));
+            setJavaValue("uri-java-decoded-authority", displayNullable(uri.getAuthority()));
+            setJavaValue("uri-java-raw-user-info", displayNullable(uri.getRawUserInfo()));
+            setJavaValue("uri-java-decoded-user-info", displayNullable(uri.getUserInfo()));
+            setJavaValue("uri-java-raw-username", UNSUPPORTED);
+            setJavaValue("uri-java-decoded-username", UNSUPPORTED);
+            setJavaValue("uri-java-raw-password", UNSUPPORTED);
+            setJavaValue("uri-java-decoded-password", UNSUPPORTED);
+            setJavaValue("uri-java-host", displayNullable(uri.getHost()));
+            setJavaValue("uri-java-port", Integer.toString(uri.getPort()));
+            setJavaValue("uri-java-raw-port", UNSUPPORTED);
+            setJavaValue("uri-java-raw-path", displayNullable(uri.getRawPath()));
+            setJavaValue("uri-java-decoded-path", displayNullable(uri.getPath()));
+            setJavaValue("uri-java-raw-query", displayNullable(uri.getRawQuery()));
+            setJavaValue("uri-java-decoded-query", displayNullable(uri.getQuery()));
+            setJavaValue("uri-java-raw-fragment", displayNullable(uri.getRawFragment()));
+            setJavaValue("uri-java-decoded-fragment", displayNullable(uri.getFragment()));
+        } catch (URISyntaxException e) {
+            renderUnavailableURIFields(e);
+        }
+    }
+
+    /// Renders java.net.URI fields when the WebURL cannot be represented as a Java URI.
+    ///
+    /// @param exception the conversion failure
+    private static void renderUnavailableURIFields(URISyntaxException exception) {
+        setJavaValue("uri-java-serialized-url", "conversion failed: " + exception.getReason());
+        setJavaValue("uri-java-display-string", UNSUPPORTED);
+        setJavaValue("uri-java-rfc2396-string", UNSUPPORTED);
+        setJavaValue("uri-java-scheme", UNSUPPORTED);
+        setJavaValue("uri-java-raw-authority", UNSUPPORTED);
+        setJavaValue("uri-java-decoded-authority", UNSUPPORTED);
+        setJavaValue("uri-java-raw-user-info", UNSUPPORTED);
+        setJavaValue("uri-java-decoded-user-info", UNSUPPORTED);
+        setJavaValue("uri-java-raw-username", UNSUPPORTED);
+        setJavaValue("uri-java-decoded-username", UNSUPPORTED);
+        setJavaValue("uri-java-raw-password", UNSUPPORTED);
+        setJavaValue("uri-java-decoded-password", UNSUPPORTED);
+        setJavaValue("uri-java-host", UNSUPPORTED);
+        setJavaValue("uri-java-port", UNSUPPORTED);
+        setJavaValue("uri-java-raw-port", UNSUPPORTED);
+        setJavaValue("uri-java-raw-path", UNSUPPORTED);
+        setJavaValue("uri-java-decoded-path", UNSUPPORTED);
+        setJavaValue("uri-java-raw-query", UNSUPPORTED);
+        setJavaValue("uri-java-decoded-query", UNSUPPORTED);
+        setJavaValue("uri-java-raw-fragment", UNSUPPORTED);
+        setJavaValue("uri-java-decoded-fragment", UNSUPPORTED);
     }
 
     /// Clears a list of result fields.

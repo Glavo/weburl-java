@@ -232,7 +232,8 @@ dt {
   font-weight: 700;
 }
 
-dd {
+dd,
+.component-value {
   margin: 0;
   min-width: 0;
   color: var(--code);
@@ -242,15 +243,20 @@ dd {
 }
 
 dd[data-value-state="match"],
-dd[data-value-state="value"] {
+dd[data-value-state="value"],
+.component-value[data-value-state="match"],
+.component-value[data-value-state="value"] {
   color: var(--match);
 }
 
-dd[data-value-state="mismatch"] {
+dd[data-value-state="mismatch"],
+.component-value[data-value-state="mismatch"] {
   color: var(--mismatch);
 }
 
-dd[data-value-state="empty"] {
+dd[data-value-state="empty"],
+.component-value[data-value-state="empty"],
+.component-value[data-value-state="unsupported"] {
   color: var(--placeholder);
 }
 
@@ -259,12 +265,36 @@ dd[data-value-state="empty"] {
   overflow: hidden;
 }
 
-.dense-table {
-  grid-template-columns: 1fr;
+.java-comparison-table {
+  display: grid;
+  padding: 8px 0 12px;
 }
 
-.dense-table div {
-  grid-template-columns: 160px minmax(0, 1fr);
+.java-comparison-row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  min-height: 34px;
+  padding: 7px 16px;
+  border-bottom: 1px solid rgba(217, 224, 232, 0.72);
+}
+
+.java-comparison-row:last-child {
+  border-bottom: 0;
+}
+
+.java-comparison-header {
+  min-height: 30px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.component-name {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 @media (max-width: 920px) {
@@ -279,8 +309,7 @@ dd[data-value-state="empty"] {
   }
 
   .input-band,
-  .comparison-grid,
-  .dense-table {
+  .comparison-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -296,8 +325,29 @@ dd[data-value-state="empty"] {
   }
 
   .component-table div,
-  .dense-table div {
+  .java-comparison-row {
     grid-template-columns: 1fr;
     gap: 3px;
+  }
+
+  .java-comparison-header {
+    display: none;
+  }
+
+  .component-value[id^="weburl-java-"]::before,
+  .component-value[id^="uri-java-"]::before {
+    display: block;
+    color: var(--muted);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .component-value[id^="weburl-java-"]::before {
+    content: "WebURL";
+  }
+
+  .component-value[id^="uri-java-"]::before {
+    content: "java.net.URI";
   }
 }
