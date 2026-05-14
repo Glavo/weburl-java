@@ -84,6 +84,13 @@ public final class WebURLPatternParserImpl implements WebURLPatternParser {
         return regExpPolicy;
     }
 
+    /// Creates a component builder bound to this parser.
+    @Override
+    @Contract("-> new")
+    public WebURLPattern.Builder newBuilder() {
+        return new WebURLPatternBuilderImpl(this);
+    }
+
     /// Compiles a shorthand URLPattern string.
     @Override
     @Contract("_ -> new")

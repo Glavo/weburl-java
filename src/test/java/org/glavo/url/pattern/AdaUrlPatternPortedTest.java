@@ -67,7 +67,7 @@ public final class AdaUrlPatternPortedTest {
             """)
     public void rejectsNestedParenthesesPatterns(String pathPattern) {
         assertThrows(WebURLPatternSyntaxException.class,
-                () -> WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern(pathPattern)));
+                () -> WebURLPattern.newBuilder().setPathPattern(pathPattern).build());
     }
 
     /// Tests Ada's wildcard group regression for empty component inputs.
@@ -75,7 +75,7 @@ public final class AdaUrlPatternPortedTest {
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L179-L276
     @Test
     public void capturesEmptyWildcardGroups() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo/bar"));
+        WebURLPattern pattern = WebURLPattern.newBuilder().setPathPattern("/foo/bar").build();
         WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern("/foo/bar")));
 
         assertWildcardComponent(result.getScheme(), "");
@@ -93,7 +93,7 @@ public final class AdaUrlPatternPortedTest {
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L280-L303
     @Test
     public void capturesNonEmptyWildcardGroups() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo/bar"));
+        WebURLPattern pattern = WebURLPattern.newBuilder().setPathPattern("/foo/bar").build();
         WebURLPattern.Result result = requireMatch(pattern.match("https://example.com/foo/bar"));
 
         assertWildcardComponent(result.getScheme(), "https");
@@ -106,7 +106,7 @@ public final class AdaUrlPatternPortedTest {
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L321-L334
     @Test
     public void compilesBasicPathnamePattern() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/books"));
+        WebURLPattern pattern = WebURLPattern.newBuilder().setPathPattern("/books").build();
 
         assertEquals("*", pattern.getSchemePattern());
         assertEquals("*", pattern.getHostPattern());
@@ -151,15 +151,15 @@ public final class AdaUrlPatternPortedTest {
     /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L385-L391
     @Test
     public void reportsRegExpGroupsForCompositePathPatterns() {
-        assertFalse(WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz?/b/*"))
+        assertFalse(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz?/b/*").build()
                 .hasRegExpGroups());
-        assertTrue(WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*"))
+        assertTrue(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*").build()
                 .hasRegExpGroups());
     }
 
     /// Creates a pattern with one component.
     private static WebURLPattern patternWith(String component, String pattern) {
-        return WebURLPattern.compile(builderWith(component, pattern));
+        return builderWith(component, pattern).build();
     }
 
     /// Creates a builder with one component.
@@ -181,7 +181,7 @@ public final class AdaUrlPatternPortedTest {
 
     /// Asserts ordered path capture groups.
     private static void assertPathGroups(String patternText, String input, String... expectedPairs) {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern(patternText));
+        WebURLPattern pattern = WebURLPattern.newBuilder().setPathPattern(patternText).build();
         WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern(input)));
 
         WebURLPattern.ComponentResult path = result.getPath();

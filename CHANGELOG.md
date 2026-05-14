@@ -25,6 +25,8 @@
   `getWebGroup(...)`. `WebURLPattern.Result` exposes Java-style component getters such as
   `getScheme()` and `getPath()`. `WebURLPattern`, `WebURLPattern.Result`, and `WebURLPattern.ComponentResult`
   are exposed as interfaces with internal immutable implementations, matching the `WebURL` API shape.
+  `WebURLPatternParser.newBuilder()` creates component builders bound to a parser, and
+  `WebURLPattern.Builder.build()` compiles with that parser's policy.
   `WebURLPattern.isStandardCompatible()` reports whether a compiled pattern still preserves URLPattern
   standard-compatible regular-expression semantics. The URLPattern API lives in the separate
   `org.glavo.url.pattern` package.

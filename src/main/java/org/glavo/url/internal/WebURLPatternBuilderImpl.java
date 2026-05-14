@@ -17,13 +17,18 @@ package org.glavo.url.internal;
 
 import org.glavo.url.internal.pattern.URLPatternInit;
 import org.glavo.url.pattern.WebURLPattern;
+import org.glavo.url.pattern.WebURLPatternParser;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /// Internal mutable implementation of `WebURLPattern.Builder`.
 @NotNullByDefault
 public final class WebURLPatternBuilderImpl implements WebURLPattern.Builder {
+    /// Parser used by `build()`.
+    private final WebURLPatternParser parser;
     /// Protocol or scheme component.
     private @Nullable String scheme;
     /// Username component.
@@ -45,6 +50,14 @@ public final class WebURLPatternBuilderImpl implements WebURLPattern.Builder {
 
     /// Creates an empty builder.
     public WebURLPatternBuilderImpl() {
+        this(WebURLPatternParser.getDefault());
+    }
+
+    /// Creates an empty builder bound to the given parser.
+    ///
+    /// @param parser the parser used by `build()`
+    public WebURLPatternBuilderImpl(WebURLPatternParser parser) {
+        this.parser = Objects.requireNonNull(parser, "parser");
     }
 
     /// Sets the scheme component pattern string.
@@ -117,6 +130,13 @@ public final class WebURLPatternBuilderImpl implements WebURLPattern.Builder {
     public WebURLPattern.Builder setBaseURL(@Nullable String baseURL) {
         this.baseURL = baseURL;
         return this;
+    }
+
+    /// Builds an immutable URLPattern with this builder's parser.
+    @Override
+    @Contract("-> new")
+    public WebURLPattern build() {
+        return parser.compile(this);
     }
 
     /// Converts this builder to the internal URLPattern init value.

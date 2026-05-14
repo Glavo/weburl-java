@@ -111,7 +111,7 @@ public final class WebURLPatternWptTest {
     private static @Nullable WebURLPattern compilePattern(JsonArray patternArguments) {
         WebURLPatternParser parser = parser(patternOptions(patternArguments));
         if (patternArguments.isEmpty()) {
-            return parser.compile(WebURLPattern.newBuilder());
+            return parser.newBuilder().build();
         }
 
         JsonElement first = patternArguments.get(0);

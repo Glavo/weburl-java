@@ -32,8 +32,8 @@ import java.util.regex.MatchResult;
 ///
 /// `WebURLPattern` follows the core URLPattern model from the
 /// [WHATWG URL Pattern Standard](https://urlpattern.spec.whatwg.org/). It can be created from
-/// a shorthand pattern string or from component patterns via [Builder], and it can match URL
-/// strings, [WebURL] values, or component inputs.
+/// a shorthand pattern string or from component patterns via [Builder#build()], and it can match
+/// URL strings, [WebURL] values, or component inputs.
 ///
 /// Builder setters and component pattern getters such as [Builder#setSchemePattern(String)] and
 /// [#getSchemePattern()] use the `Pattern` suffix to avoid confusing component pattern strings with
@@ -69,6 +69,10 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
 
     /// Compiles a component URLPattern builder.
     ///
+    /// This convenience method uses [WebURLPatternParser#getDefault()]. For component construction,
+    /// prefer [#newBuilder()] followed by [Builder#build()], or [WebURLPatternParser#newBuilder()]
+    /// when a custom parser policy is needed.
+    ///
     /// @param builder the component pattern builder
     /// @return the compiled URL pattern
     /// @throws WebURLPatternSyntaxException when the components cannot be compiled
@@ -96,6 +100,10 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
 
     /// Tries to compile a component URLPattern builder.
     ///
+    /// This convenience method uses [WebURLPatternParser#getDefault()]. For component construction,
+    /// prefer [#newBuilder()] followed by [Builder#build()], or [WebURLPatternParser#newBuilder()]
+    /// when a custom parser policy is needed.
+    ///
     /// @param builder the component pattern builder
     /// @return the compiled URL pattern, or `null` when compilation fails
     static @Nullable WebURLPattern tryCompile(Builder builder) {
@@ -107,7 +115,7 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// @return a new builder
     @Contract("-> new")
     static Builder newBuilder() {
-        return new WebURLPatternBuilderImpl();
+        return WebURLPatternParser.getDefault().newBuilder();
     }
 
     /// Tests a URL string.
@@ -290,6 +298,17 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
         /// @return this builder
         @Contract("_ -> this")
         Builder setBaseURL(@Nullable String baseURL);
+
+        /// Builds an immutable URLPattern using the parser that created this builder.
+        ///
+        /// Builders returned by [WebURLPattern#newBuilder()] use [WebURLPatternParser#getDefault()].
+        /// Builders returned by [WebURLPatternParser#newBuilder()] use that parser's matching and
+        /// regular-expression policy.
+        ///
+        /// @return the compiled URL pattern
+        /// @throws WebURLPatternSyntaxException when the components cannot be compiled
+        @Contract("-> new")
+        WebURLPattern build();
     }
 
     /// Result for one matched URLPattern component.

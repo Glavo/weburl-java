@@ -37,6 +37,10 @@ import org.jetbrains.annotations.Nullable;
 /// WebURLPatternParser parser = WebURLPatternParser.getDefault().withIgnoreCase();
 /// WebURLPattern pattern = parser.compile("https://example.com/users/:id");
 /// pattern.test("https://example.com/Users/42"); // true
+///
+/// WebURLPattern componentPattern = parser.newBuilder()
+///         .setPathPattern("/users/:id")
+///         .build();
 /// ```
 ///
 /// @see WebURLPattern
@@ -139,6 +143,15 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
     /// @return the regular-expression element policy
     @Contract(pure = true)
     RegExpPolicy getRegExpPolicy();
+
+    /// Creates a new mutable URLPattern component builder bound to this parser.
+    ///
+    /// Calling [WebURLPattern.Builder#build()] on the returned builder compiles with this parser's
+    /// case-sensitivity and regular-expression policy.
+    ///
+    /// @return a new builder bound to this parser
+    @Contract("-> new")
+    WebURLPattern.Builder newBuilder();
 
     /// Compiles a shorthand URLPattern string.
     ///

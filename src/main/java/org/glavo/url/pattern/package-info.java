@@ -27,14 +27,19 @@
 /// # Quick Start
 ///
 /// ```java
-/// WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder()
+/// WebURLPattern pattern = WebURLPattern.newBuilder()
 ///         .setSchemePattern("https")
 ///         .setHostPattern("example.com")
-///         .setPathPattern("/users/:id"));
+///         .setPathPattern("/users/:id")
+///         .build();
 /// pattern.test("https://example.com/users/42"); // true
 ///
 /// WebURLPattern ignoreCasePattern = WebURLPatternParser.getDefault().withIgnoreCase()
-///         .compile("https://example.com/users/:id");
+///         .newBuilder()
+///         .setSchemePattern("https")
+///         .setHostPattern("example.com")
+///         .setPathPattern("/users/:id")
+///         .build();
 /// ignoreCasePattern.test("https://example.com/Users/42"); // true
 /// ```
 ///
