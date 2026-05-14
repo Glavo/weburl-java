@@ -31,7 +31,7 @@ import java.net.URISyntaxException;
 /// TeaVM entry point for the website's live URL viewer.
 @NotNullByDefault
 public final class WebURLViewer {
-    /// Display text for a JavaURI component that has no corresponding API.
+    /// Display text for a java.net.URI component that has no corresponding API.
     private static final String UNSUPPORTED = "(unsupported)";
 
     /// HTML ids for fields populated from the WebURL result.
@@ -68,27 +68,6 @@ public final class WebURLViewer {
             "weburl-java-decoded-query",
             "weburl-java-raw-fragment",
             "weburl-java-decoded-fragment",
-            "uri-java-serialized-url",
-            "uri-java-display-string",
-            "uri-java-rfc2396-string",
-            "uri-java-scheme",
-            "uri-java-raw-authority",
-            "uri-java-decoded-authority",
-            "uri-java-raw-user-info",
-            "uri-java-decoded-user-info",
-            "uri-java-raw-username",
-            "uri-java-decoded-username",
-            "uri-java-raw-password",
-            "uri-java-decoded-password",
-            "uri-java-host",
-            "uri-java-port",
-            "uri-java-raw-port",
-            "uri-java-raw-path",
-            "uri-java-decoded-path",
-            "uri-java-raw-query",
-            "uri-java-decoded-query",
-            "uri-java-raw-fragment",
-            "uri-java-decoded-fragment",
     };
 
     /// Parser mode value for the default parser.
@@ -122,6 +101,7 @@ public final class WebURLViewer {
         String mode = readValue("parser-mode");
 
         renderBrowserURL(input, base);
+        renderJavaURIFields(input);
         renderWebURL(input, base, mode);
     }
 
@@ -201,15 +181,14 @@ public final class WebURLViewer {
         setJavaValue("weburl-java-decoded-query", displayNullable(url.getQuery()));
         setJavaValue("weburl-java-raw-fragment", displayNullable(url.getRawFragment()));
         setJavaValue("weburl-java-decoded-fragment", displayNullable(url.getFragment()));
-        renderJavaURIFields(url);
     }
 
-    /// Renders the JavaURI comparison fields for the parsed WebURL.
+    /// Renders the java.net.URI comparison fields for the original input.
     ///
-    /// @param url the parsed URL
-    private static void renderJavaURIFields(WebURL url) {
+    /// @param input the original URL input text
+    private static void renderJavaURIFields(String input) {
         try {
-            JavaURI uri = new JavaURI(url.toRFC2396String());
+            JavaURI uri = new JavaURI(input);
             setJavaValue("uri-java-serialized-url", display(uri.toString()));
             setJavaValue("uri-java-display-string", UNSUPPORTED);
             setJavaValue("uri-java-rfc2396-string", display(uri.toASCIIString()));
@@ -236,7 +215,7 @@ public final class WebURLViewer {
         }
     }
 
-    /// Renders JavaURI fields when the WebURL cannot be represented as a Java URI.
+    /// Renders java.net.URI fields when the original input cannot be represented as a Java URI.
     ///
     /// @param exception the conversion failure
     private static void renderUnavailableURIFields(URISyntaxException exception) {
