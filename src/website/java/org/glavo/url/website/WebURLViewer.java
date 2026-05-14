@@ -191,7 +191,7 @@ public final class WebURLViewer {
             JavaURI uri = new JavaURI(input);
             setJavaValue("uri-java-serialized-url", display(uri.toString()));
             setJavaValue("uri-java-display-string", UNSUPPORTED);
-            setJavaValue("uri-java-rfc2396-string", display(uri.toASCIIString()));
+            setJavaValue("uri-java-rfc2396-string", display(uri.toString()));
             setJavaValue("uri-java-scheme", displayNullable(uri.getScheme()));
             setJavaValue("uri-java-raw-authority", displayNullable(uri.getRawAuthority()));
             setJavaValue("uri-java-decoded-authority", displayNullable(uri.getAuthority()));
