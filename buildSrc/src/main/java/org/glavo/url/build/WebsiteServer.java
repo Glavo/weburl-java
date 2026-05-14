@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /// Undertow-backed HTTP server used by the website preview Gradle task.
 @NotNullByDefault
@@ -64,11 +66,27 @@ public final class WebsiteServer {
                 .setHandler(handler)
                 .build();
 
-        server.start();
-        Runtime.getRuntime().addShutdownHook(new Thread(server::stop, "website-preview-shutdown"));
-
-        System.out.println("Serving " + rootPath + " at http://127.0.0.1:" + port + "/");
-        System.out.println("Press Ctrl+C to stop the preview server.");
-        Thread.currentThread().join();
+        AtomicBoolean stopped = new AtomicBoolean();
+        Runnable stopServer = () -> {
+            if (stopped.compareAndSet(false, true)) {
+                server.stop();
+            }
+        };
+        Thread shutdownHook = new Thread(stopServer, "website-preview-shutdown");
+        Runtime runtime = Runtime.getRuntime();
+        runtime.addShutdownHook(shutdownHook);
+        try {
+            server.start();
+            System.out.println("Serving " + rootPath + " at http://127.0.0.1:" + port + "/");
+            System.out.println("Press Ctrl+C to stop the preview server.");
+            new CountDownLatch(1).await();
+        } finally {
+            try {
+                runtime.removeShutdownHook(shutdownHook);
+            } catch (IllegalStateException ignored) {
+                // The JVM is already shutting down, so the hook is already being handled.
+            }
+            stopServer.run();
+        }
     }
 }
