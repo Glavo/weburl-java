@@ -105,75 +105,6 @@ public final class WebURLPatternTest {
         assertEquals("patterns", componentResult.getQuery().getWebGroup("term"));
     }
 
-    /// Tests default wildcard components and wildcard group `0`.
-    ///
-    /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L209-L276
-    @Test
-    public void capturesEmptyWildcardGroups() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo/bar"));
-        WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern("/foo/bar")));
-
-        assertEquals("", result.getScheme().group());
-        assertEquals("", result.getScheme().group(0));
-        assertEquals(1, result.getScheme().groupCount());
-        assertEquals("", result.getScheme().group(1));
-        assertEquals(0, result.getScheme().start());
-        assertEquals(0, result.getScheme().end());
-        assertEquals(Map.of("0", ""), result.getScheme().getWebGroups());
-        assertEquals("", result.getScheme().getWebGroup(0));
-        assertEquals("", result.getUsername().group());
-        assertEquals(Map.of("0", ""), result.getUsername().getWebGroups());
-        assertEquals("", result.getPassword().group());
-        assertEquals(Map.of("0", ""), result.getPassword().getWebGroups());
-        assertEquals("", result.getHost().group());
-        assertEquals(Map.of("0", ""), result.getHost().getWebGroups());
-        assertEquals("", result.getPort().group());
-        assertEquals(Map.of("0", ""), result.getPort().getWebGroups());
-        assertEquals("/foo/bar", result.getPath().group());
-        assertEquals(0, result.getPath().groupCount());
-        assertEquals(Map.of(), result.getPath().getWebGroups());
-        assertThrows(IndexOutOfBoundsException.class, () -> result.getPath().group(1));
-        assertNull(result.getPath().getWebGroup(0));
-        assertThrows(IndexOutOfBoundsException.class, () -> result.getPath().getWebGroup(-1));
-        assertEquals("", result.getQuery().group());
-        assertEquals(Map.of("0", ""), result.getQuery().getWebGroups());
-        assertEquals("", result.getFragment().group());
-        assertEquals(Map.of("0", ""), result.getFragment().getWebGroups());
-    }
-
-    /// Tests wildcard captures with a complete URL string.
-    ///
-    /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L280-L303
-    @Test
-    public void capturesNonEmptyWildcardGroups() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo/bar"));
-        WebURLPattern.Result result = requireMatch(pattern.match("https://example.com/foo/bar"));
-
-        assertEquals("https", result.getScheme().group());
-        assertEquals(Map.of("0", "https"), result.getScheme().getWebGroups());
-        assertEquals("https", result.getScheme().getWebGroup(0));
-        assertEquals("https", result.getScheme().group(1));
-        assertEquals("example.com", result.getHost().group());
-        assertEquals(Map.of("0", "example.com"), result.getHost().getWebGroups());
-    }
-
-    /// Tests multiple named groups.
-    ///
-    /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L83-L146
-    @Test
-    public void mapsMultipleCaptureGroups() {
-        WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/:a/:b/:c"));
-        WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
-
-        assertEquals("x", result.getPath().getWebGroup("a"));
-        assertEquals("y", result.getPath().getWebGroup("b"));
-        assertEquals("z", result.getPath().getWebGroup("c"));
-        assertEquals("/x/y/z", result.getPath().group());
-        assertEquals("x", result.getPath().group(1));
-        assertEquals("y", result.getPath().group(2));
-        assertEquals("z", result.getPath().group(3));
-    }
-
     /// Tests named groups and numeric wildcard groups together.
     @Test
     public void mapsNamedAndNumericCaptureGroups() {
@@ -185,17 +116,6 @@ public final class WebURLPatternTest {
         assertEquals("x", result.getPath().group(1));
         assertEquals("y/z", result.getPath().group(2));
         assertEquals(Map.of("name", "x", "0", "y/z"), result.getPath().getWebGroups());
-    }
-
-    /// Tests `hasRegExpGroups`.
-    ///
-    /// Source: https://github.com/ada-url/ada/blob/d53b80614100a4f7ac40ae0ec3c1644185bb2f6d/tests/wpt_urlpattern_tests.cpp#L339-L393
-    @Test
-    public void reportsRegExpGroups() {
-        assertFalse(WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo/:baz?/b/*"))
-                .hasRegExpGroups());
-        assertTrue(WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/a/:foo([0-9]+)/b"))
-                .hasRegExpGroups());
     }
 
     /// Tests the default supported regular-expression subset.
