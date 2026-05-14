@@ -96,22 +96,6 @@ Shared helpers:
 - Unique fixed-commit Test262 source links: 806
 - Runtime-generated Unicode property escape dynamic tests: 3520
 
-Latest porting increment:
-
-- Enabled the ported Test262 cases covered by the newly supported ECMAScript whitespace and
-  non-whitespace escapes, NUL/control/hex/Unicode escapes, vertical-tab escape, empty character
-  classes, empty negated character classes, backspace escapes inside character classes, and
-  ampersand literals inside character classes.
-- Enabled the ported Test262 cases covered by positive and negative lookahead assertions when they do
-  not require unsupported capture-group or backreference behavior.
-- Enabled the ported Test262 cases covered by ECMAScript word-boundary assertions.
-- Replaced the generated `RegExp/property-escapes/generated/*.js` and
-  `RegExp/property-escapes/generated/strings/*.js` Java ports with runtime dynamic tests that read
-  `external/unicode-property-escapes-tests/output`.
-- The dynamic tests parse the generated JavaScript files and attach fixed GitHub source URIs for the
-  corresponding `unicode-property-escapes-tests` templates instead of linking to copied test262
-  generated output files.
-
 ## Semantic Port Audit
 
 - Dynamically covered from `unicode-property-escapes-tests`:
