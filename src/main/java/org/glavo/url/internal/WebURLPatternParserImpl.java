@@ -106,14 +106,6 @@ public final class WebURLPatternParserImpl implements WebURLPatternParser {
         return WebURLPatternImpl.compile(input, baseURL, ignoreCase, regExpPolicy);
     }
 
-    /// Compiles a component URLPattern builder.
-    @Override
-    @Contract("_ -> new")
-    public WebURLPattern compile(WebURLPattern.Builder builder) {
-        Objects.requireNonNull(builder, "builder");
-        return WebURLPatternImpl.compile(builder, ignoreCase, regExpPolicy);
-    }
-
     /// Tries to compile a shorthand URLPattern string.
     @Override
     public @Nullable WebURLPattern tryCompile(String input) {
@@ -125,16 +117,6 @@ public final class WebURLPatternParserImpl implements WebURLPatternParser {
     public @Nullable WebURLPattern tryCompile(String input, @Nullable String baseURL) {
         try {
             return compile(input, baseURL);
-        } catch (WebURLPatternSyntaxException ignored) {
-            return null;
-        }
-    }
-
-    /// Tries to compile a component URLPattern builder.
-    @Override
-    public @Nullable WebURLPattern tryCompile(WebURLPattern.Builder builder) {
-        try {
-            return compile(builder);
         } catch (WebURLPatternSyntaxException ignored) {
             return null;
         }

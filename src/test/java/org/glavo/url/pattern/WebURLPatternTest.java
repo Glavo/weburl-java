@@ -160,7 +160,7 @@ public final class WebURLPatternTest {
 
         assertThrows(WebURLPatternSyntaxException.class,
                 () -> parser.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*").build());
-        assertNull(parser.tryCompile(parser.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*")));
+        assertNull(tryBuild(parser.newBuilder().setPathPattern("/a/:foo/:baz([a-z]+)?/b/*")));
         assertFalse(parser.newBuilder().setPathPattern("/a/:foo/:baz?/b/*").build()
                 .hasRegExpGroups());
     }
@@ -180,7 +180,7 @@ public final class WebURLPatternTest {
                 .isStandardCompatible());
         assertThrows(WebURLPatternSyntaxException.class,
                 () -> parser.newBuilder().setPathPattern("/books/:id([)").build());
-        assertNull(parser.tryCompile(parser.newBuilder().setPathPattern("/books/:id([)")));
+        assertNull(tryBuild(parser.newBuilder().setPathPattern("/books/:id([)")));
     }
 
     /// Tests parser regular-expression policy configuration.
@@ -286,7 +286,7 @@ public final class WebURLPatternTest {
                 () -> WebURLPattern.newBuilder().setSchemePattern("1bad").build());
         assertThrows(WebURLPatternSyntaxException.class,
                 () -> WebURLPattern.newBuilder().setPathPattern("/:id([)").build());
-        assertNull(WebURLPattern.tryCompile(WebURLPattern.newBuilder().setPathPattern("/:id((.))")));
+        assertNull(tryBuild(WebURLPattern.newBuilder().setPathPattern("/:id((.))")));
     }
 
     /// Tests invalid match input handling.
@@ -304,5 +304,14 @@ public final class WebURLPatternTest {
     private static WebURLPattern.Result requireMatch(@Nullable WebURLPattern.Result result) {
         assertNotNull(result);
         return result;
+    }
+
+    /// Tries to build a URLPattern from a component builder.
+    private static @Nullable WebURLPattern tryBuild(WebURLPattern.Builder builder) {
+        try {
+            return builder.build();
+        } catch (WebURLPatternSyntaxException ignored) {
+            return null;
+        }
     }
 }

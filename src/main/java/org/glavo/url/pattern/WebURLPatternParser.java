@@ -170,14 +170,6 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
     @Contract("_, _ -> new")
     WebURLPattern compile(String input, @Nullable String baseURL);
 
-    /// Compiles a component URLPattern builder.
-    ///
-    /// @param builder the component pattern builder
-    /// @return the compiled URL pattern
-    /// @throws WebURLPatternSyntaxException when the components cannot be compiled
-    @Contract("_ -> new")
-    WebURLPattern compile(WebURLPattern.Builder builder);
-
     /// Tries to compile a shorthand URLPattern string.
     ///
     /// @param input the shorthand pattern string
@@ -191,9 +183,4 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
     /// @return the compiled URL pattern, or `null` when compilation fails
     @Nullable WebURLPattern tryCompile(String input, @Nullable String baseURL);
 
-    /// Tries to compile a component URLPattern builder.
-    ///
-    /// @param builder the component pattern builder
-    /// @return the compiled URL pattern, or `null` when compilation fails
-    @Nullable WebURLPattern tryCompile(WebURLPattern.Builder builder);
 }

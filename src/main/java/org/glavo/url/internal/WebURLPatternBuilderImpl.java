@@ -27,8 +27,10 @@ import java.util.Objects;
 /// Internal mutable implementation of `WebURLPattern.Builder`.
 @NotNullByDefault
 public final class WebURLPatternBuilderImpl implements WebURLPattern.Builder {
-    /// Parser used by `build()`.
-    private final WebURLPatternParser parser;
+    /// Whether compiled patterns use case-insensitive matching.
+    private final boolean ignoreCase;
+    /// How user-written regular-expression elements are handled.
+    private final WebURLPatternParser.RegExpPolicy regExpPolicy;
     /// Protocol or scheme component.
     private @Nullable String scheme;
     /// Username component.
@@ -57,7 +59,9 @@ public final class WebURLPatternBuilderImpl implements WebURLPattern.Builder {
     ///
     /// @param parser the parser used by `build()`
     public WebURLPatternBuilderImpl(WebURLPatternParser parser) {
-        this.parser = Objects.requireNonNull(parser, "parser");
+        WebURLPatternParser value = Objects.requireNonNull(parser, "parser");
+        this.ignoreCase = value.isIgnoreCase();
+        this.regExpPolicy = value.getRegExpPolicy();
     }
 
     /// Sets the scheme component pattern string.
@@ -136,7 +140,7 @@ public final class WebURLPatternBuilderImpl implements WebURLPattern.Builder {
     @Override
     @Contract("-> new")
     public WebURLPattern build() {
-        return parser.compile(this);
+        return WebURLPatternImpl.fromBuilder(this, ignoreCase, regExpPolicy);
     }
 
     /// Converts this builder to the internal URLPattern init value.

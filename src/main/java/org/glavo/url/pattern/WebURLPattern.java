@@ -67,20 +67,6 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
         return WebURLPatternParser.getDefault().compile(input, baseURL);
     }
 
-    /// Compiles a component URLPattern builder.
-    ///
-    /// This convenience method uses [WebURLPatternParser#getDefault()]. For component construction,
-    /// prefer [#newBuilder()] followed by [Builder#build()], or [WebURLPatternParser#newBuilder()]
-    /// when a custom parser policy is needed.
-    ///
-    /// @param builder the component pattern builder
-    /// @return the compiled URL pattern
-    /// @throws WebURLPatternSyntaxException when the components cannot be compiled
-    @Contract("_ -> new")
-    static WebURLPattern compile(Builder builder) {
-        return WebURLPatternParser.getDefault().compile(builder);
-    }
-
     /// Tries to compile a shorthand URLPattern string.
     ///
     /// @param input the shorthand pattern string
@@ -96,18 +82,6 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// @return the compiled URL pattern, or `null` when compilation fails
     static @Nullable WebURLPattern tryCompile(String input, @Nullable String baseURL) {
         return WebURLPatternParser.getDefault().tryCompile(input, baseURL);
-    }
-
-    /// Tries to compile a component URLPattern builder.
-    ///
-    /// This convenience method uses [WebURLPatternParser#getDefault()]. For component construction,
-    /// prefer [#newBuilder()] followed by [Builder#build()], or [WebURLPatternParser#newBuilder()]
-    /// when a custom parser policy is needed.
-    ///
-    /// @param builder the component pattern builder
-    /// @return the compiled URL pattern, or `null` when compilation fails
-    static @Nullable WebURLPattern tryCompile(Builder builder) {
-        return WebURLPatternParser.getDefault().tryCompile(builder);
     }
 
     /// Creates a new mutable URLPattern component builder.

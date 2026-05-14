@@ -126,7 +126,7 @@ public final class WebURLPatternWptTest {
             if (patternArguments.size() > 1 && patternArguments.get(1).isJsonPrimitive()) {
                 throw new WebURLPatternSyntaxException("URLPattern init object cannot be compiled with a base URL");
             }
-            return parser.compile(builder(first.getAsJsonObject()));
+            return builder(first.getAsJsonObject(), parser).build();
         } catch (WebURLPatternSyntaxException ignored) {
             return null;
         }
@@ -152,7 +152,12 @@ public final class WebURLPatternWptTest {
 
     /// Converts a WPT init object into a builder.
     private static WebURLPattern.Builder builder(JsonObject object) {
-        WebURLPattern.Builder builder = WebURLPattern.newBuilder();
+        return builder(object, WebURLPatternParser.getDefault());
+    }
+
+    /// Converts a WPT init object into a builder bound to the given parser.
+    private static WebURLPattern.Builder builder(JsonObject object, WebURLPatternParser parser) {
+        WebURLPattern.Builder builder = parser.newBuilder();
         for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
             switch (entry.getKey()) {
                 case "protocol" -> builder.setSchemePattern(entry.getValue().getAsString());

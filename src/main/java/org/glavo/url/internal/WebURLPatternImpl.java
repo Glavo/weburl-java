@@ -46,8 +46,8 @@ public final class WebURLPatternImpl implements WebURLPattern {
         return new WebURLPatternImpl(WebURLPatternEngine.compile(input, baseURL, ignoreCase, regExpPolicy));
     }
 
-    /// Compiles a component builder.
-    public static WebURLPattern compile(
+    /// Creates a pattern from a component builder.
+    public static WebURLPattern fromBuilder(
             WebURLPattern.Builder builder,
             boolean ignoreCase,
             WebURLPatternParser.RegExpPolicy regExpPolicy
