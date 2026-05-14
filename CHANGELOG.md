@@ -13,32 +13,9 @@
 - Added WHATWG-style `WebURL` component getters: `getWebProtocol()`, `getWebUsername()`,
   `getWebPassword()`, `getWebHost()`, `getWebHostname()`, `getWebPort()`, `getWebPathname()`,
   `getWebSearch()`, and `getWebHash()`.
-- Added `org.glavo.url.pattern.WebURLPattern`, `WebURLPatternParser`, and `WebURLPatternSyntaxException` for precompiled WHATWG URLPattern-style
-  matching with component builders, shorthand string patterns, base URL handling, `test`, `match`,
-  capture groups, `ignoreCase`, and `hasRegExpGroups()`.
-  `WebURLPatternParser` owns compilation policy; derive case-insensitive parsers with
-  `withIgnoreCase()`, and configure user-written regular-expression elements with `RegExpPolicy.SUPPORTED`,
-  `REJECT`, or explicit non-standard `JAVA` semantics. `WebURLPattern` exposes component pattern getters such as
-  `getSchemePattern()` and builder setters such as `setSchemePattern()` instead of a separate
-  WHATWG-style getter view. `WebURLPattern.ComponentResult` extends `java.util.regex.MatchResult` for Java-style
-  group semantics and exposes URLPattern groups object semantics through `getWebGroups()` and
-  `getWebGroup(...)`. `WebURLPattern.Result` exposes Java-style component getters such as
-  `getScheme()` and `getPath()`. `WebURLPattern`, `WebURLPattern.Result`, and `WebURLPattern.ComponentResult`
-  are exposed as interfaces with internal immutable implementations, matching the `WebURL` API shape.
-  `WebURLPatternParser.newBuilder()` creates component builders bound to a parser, and
-  `WebURLPattern.Builder.build()` compiles with that parser's policy.
-  `WebURLPattern.isStandardCompatible()` reports whether a compiled pattern still preserves URLPattern
-  standard-compatible regular-expression semantics. The URLPattern API lives in the separate
-  `org.glavo.url.pattern` package.
-
-### Improvements
-
-- Expanded `WebURLPatternParser.RegExpPolicy.SUPPORTED` to handle additional ECMAScript regular-expression
-  syntax, including whitespace escapes, NUL/control/hex/Unicode escapes, empty character classes, empty
-  negated character classes, backspace escapes inside character classes, and ampersand literals inside
-  character classes. The supported subset also accepts positive and negative lookahead assertions when
-  they do not depend on unsupported capture-group or backreference behavior, start and end assertions,
-  positive and negative lookbehind assertions, plus ECMAScript word-boundary assertions.
+- Added `org.glavo.url.pattern.WebURLPattern`, `WebURLPatternParser`, and
+  `WebURLPatternSyntaxException` for precompiled WHATWG URLPattern-style matching from shorthand
+  strings or component builders.
 
 ## 0.2.0 (2026-05-12)
 
