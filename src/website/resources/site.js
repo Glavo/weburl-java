@@ -139,19 +139,29 @@
     return null;
   }
 
-  function setJavaValue(id, value) {
+  function javaValueRecord(text, kind) {
+    const normalizedKind = kind === "empty" || kind === "null" || kind === "unsupported" ? kind : "value";
+    const isEmptyLike = normalizedKind === "empty" || normalizedKind === "null";
+    return {
+      key: `${normalizedKind}\u0000${text}`,
+      state: normalizedKind === "unsupported" ? "unsupported" : isEmptyLike ? "empty" : "value"
+    };
+  }
+
+  function setJavaValue(id, value, kind) {
     const field = javaFieldFromId(id);
     const text = value == null ? "" : value;
+    const record = javaValueRecord(text, kind);
     if (!field || !javaFieldNames.includes(field.name)) {
       setText(id, text);
-      setValueState(id, text === "(empty)" || text === "null" || text === "(unsupported)" ? "empty" : "value");
+      setValueState(id, record.state);
       return;
     }
 
     if (field.side === "weburl") {
-      weburlJavaValues.set(field.name, text);
+      weburlJavaValues.set(field.name, record);
     } else {
-      uriJavaValues.set(field.name, text);
+      uriJavaValues.set(field.name, record);
     }
     setText(id, text);
     updateJavaComparisonStates();
@@ -174,16 +184,16 @@
     if (!hasValue) {
       return "";
     }
-    if (value === "(unsupported)") {
+    if (value.state === "unsupported") {
       return "unsupported";
     }
-    if (value === "(empty)" || value === "null") {
+    if (value.state === "empty") {
       return "empty";
     }
-    if (!hasCounterpart || counterpart === "(unsupported)") {
+    if (!hasCounterpart || counterpart.state === "unsupported") {
       return "value";
     }
-    return value === counterpart ? "match" : "mismatch";
+    return value.key === counterpart.key ? "match" : "mismatch";
   }
 
   function clearValue(id) {

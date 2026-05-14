@@ -34,6 +34,18 @@ public final class WebURLViewer {
     /// Display text for a java.net.URI component that has no corresponding API.
     private static final String UNSUPPORTED = "(unsupported)";
 
+    /// Java-style value kind for a normal non-empty string.
+    private static final String VALUE_KIND_VALUE = "value";
+
+    /// Java-style value kind for an empty string.
+    private static final String VALUE_KIND_EMPTY = "empty";
+
+    /// Java-style value kind for an absent nullable value.
+    private static final String VALUE_KIND_NULL = "null";
+
+    /// Java-style value kind for fields with no corresponding Java API.
+    private static final String VALUE_KIND_UNSUPPORTED = "unsupported";
+
     /// HTML ids for fields populated from the WebURL result.
     private static final String @Unmodifiable [] WEBURL_FIELD_IDS = {
             "weburl-href",
@@ -160,27 +172,27 @@ public final class WebURLViewer {
         setComparedValue("weburl-pathname", url.getWebPathname());
         setComparedValue("weburl-search", url.getWebSearch());
         setComparedValue("weburl-hash", url.getWebHash());
-        setJavaValue("weburl-java-serialized-url", display(url.toString()));
-        setJavaValue("weburl-java-display-string", display(url.toDisplayString()));
-        setJavaValue("weburl-java-rfc2396-string", display(url.toRFC2396String()));
-        setJavaValue("weburl-java-scheme", display(url.getScheme()));
-        setJavaValue("weburl-java-raw-authority", displayNullable(url.getRawAuthority()));
-        setJavaValue("weburl-java-decoded-authority", displayNullable(url.getAuthority()));
-        setJavaValue("weburl-java-raw-user-info", displayNullable(url.getRawUserInfo()));
-        setJavaValue("weburl-java-decoded-user-info", displayNullable(url.getUserInfo()));
-        setJavaValue("weburl-java-raw-username", displayNullable(url.getRawUsername()));
-        setJavaValue("weburl-java-decoded-username", displayNullable(url.getUsername()));
-        setJavaValue("weburl-java-raw-password", displayNullable(url.getRawPassword()));
-        setJavaValue("weburl-java-decoded-password", displayNullable(url.getPassword()));
-        setJavaValue("weburl-java-host", displayNullable(url.getHost()));
-        setJavaValue("weburl-java-port", Integer.toString(url.getPort()));
-        setJavaValue("weburl-java-raw-port", displayNullable(url.getRawPort()));
-        setJavaValue("weburl-java-raw-path", display(url.getRawPath()));
-        setJavaValue("weburl-java-decoded-path", display(url.getPath()));
-        setJavaValue("weburl-java-raw-query", displayNullable(url.getRawQuery()));
-        setJavaValue("weburl-java-decoded-query", displayNullable(url.getQuery()));
-        setJavaValue("weburl-java-raw-fragment", displayNullable(url.getRawFragment()));
-        setJavaValue("weburl-java-decoded-fragment", displayNullable(url.getFragment()));
+        setJavaStringValue("weburl-java-serialized-url", url.toString());
+        setJavaStringValue("weburl-java-display-string", url.toDisplayString());
+        setJavaStringValue("weburl-java-rfc2396-string", url.toRFC2396String());
+        setJavaStringValue("weburl-java-scheme", url.getScheme());
+        setJavaNullableValue("weburl-java-raw-authority", url.getRawAuthority());
+        setJavaNullableValue("weburl-java-decoded-authority", url.getAuthority());
+        setJavaNullableValue("weburl-java-raw-user-info", url.getRawUserInfo());
+        setJavaNullableValue("weburl-java-decoded-user-info", url.getUserInfo());
+        setJavaNullableValue("weburl-java-raw-username", url.getRawUsername());
+        setJavaNullableValue("weburl-java-decoded-username", url.getUsername());
+        setJavaNullableValue("weburl-java-raw-password", url.getRawPassword());
+        setJavaNullableValue("weburl-java-decoded-password", url.getPassword());
+        setJavaNullableValue("weburl-java-host", url.getHost());
+        setJavaStringValue("weburl-java-port", Integer.toString(url.getPort()));
+        setJavaNullableValue("weburl-java-raw-port", url.getRawPort());
+        setJavaStringValue("weburl-java-raw-path", url.getRawPath());
+        setJavaStringValue("weburl-java-decoded-path", url.getPath());
+        setJavaNullableValue("weburl-java-raw-query", url.getRawQuery());
+        setJavaNullableValue("weburl-java-decoded-query", url.getQuery());
+        setJavaNullableValue("weburl-java-raw-fragment", url.getRawFragment());
+        setJavaNullableValue("weburl-java-decoded-fragment", url.getFragment());
     }
 
     /// Renders the java.net.URI comparison fields for the original input.
@@ -189,27 +201,27 @@ public final class WebURLViewer {
     private static void renderJavaURIFields(String input) {
         try {
             JavaURI uri = new JavaURI(input);
-            setJavaValue("uri-java-serialized-url", display(uri.toString()));
-            setJavaValue("uri-java-display-string", UNSUPPORTED);
-            setJavaValue("uri-java-rfc2396-string", display(uri.toString()));
-            setJavaValue("uri-java-scheme", displayNullable(uri.getScheme()));
-            setJavaValue("uri-java-raw-authority", displayNullable(uri.getRawAuthority()));
-            setJavaValue("uri-java-decoded-authority", displayNullable(uri.getAuthority()));
-            setJavaValue("uri-java-raw-user-info", displayNullable(uri.getRawUserInfo()));
-            setJavaValue("uri-java-decoded-user-info", displayNullable(uri.getUserInfo()));
-            setJavaValue("uri-java-raw-username", UNSUPPORTED);
-            setJavaValue("uri-java-decoded-username", UNSUPPORTED);
-            setJavaValue("uri-java-raw-password", UNSUPPORTED);
-            setJavaValue("uri-java-decoded-password", UNSUPPORTED);
-            setJavaValue("uri-java-host", displayNullable(uri.getHost()));
-            setJavaValue("uri-java-port", Integer.toString(uri.getPort()));
-            setJavaValue("uri-java-raw-port", UNSUPPORTED);
-            setJavaValue("uri-java-raw-path", displayNullable(uri.getRawPath()));
-            setJavaValue("uri-java-decoded-path", displayNullable(uri.getPath()));
-            setJavaValue("uri-java-raw-query", displayNullable(uri.getRawQuery()));
-            setJavaValue("uri-java-decoded-query", displayNullable(uri.getQuery()));
-            setJavaValue("uri-java-raw-fragment", displayNullable(uri.getRawFragment()));
-            setJavaValue("uri-java-decoded-fragment", displayNullable(uri.getFragment()));
+            setJavaStringValue("uri-java-serialized-url", uri.toString());
+            setJavaUnsupportedValue("uri-java-display-string");
+            setJavaStringValue("uri-java-rfc2396-string", uri.toString());
+            setJavaNullableValue("uri-java-scheme", uri.getScheme());
+            setJavaNullableValue("uri-java-raw-authority", uri.getRawAuthority());
+            setJavaNullableValue("uri-java-decoded-authority", uri.getAuthority());
+            setJavaNullableValue("uri-java-raw-user-info", uri.getRawUserInfo());
+            setJavaNullableValue("uri-java-decoded-user-info", uri.getUserInfo());
+            setJavaUnsupportedValue("uri-java-raw-username");
+            setJavaUnsupportedValue("uri-java-decoded-username");
+            setJavaUnsupportedValue("uri-java-raw-password");
+            setJavaUnsupportedValue("uri-java-decoded-password");
+            setJavaNullableValue("uri-java-host", uri.getHost());
+            setJavaStringValue("uri-java-port", Integer.toString(uri.getPort()));
+            setJavaUnsupportedValue("uri-java-raw-port");
+            setJavaNullableValue("uri-java-raw-path", uri.getRawPath());
+            setJavaNullableValue("uri-java-decoded-path", uri.getPath());
+            setJavaNullableValue("uri-java-raw-query", uri.getRawQuery());
+            setJavaNullableValue("uri-java-decoded-query", uri.getQuery());
+            setJavaNullableValue("uri-java-raw-fragment", uri.getRawFragment());
+            setJavaNullableValue("uri-java-decoded-fragment", uri.getFragment());
         } catch (URISyntaxException e) {
             renderUnavailableURIFields(e);
         }
@@ -219,27 +231,27 @@ public final class WebURLViewer {
     ///
     /// @param exception the conversion failure
     private static void renderUnavailableURIFields(URISyntaxException exception) {
-        setJavaValue("uri-java-serialized-url", "conversion failed: " + exception.getReason());
-        setJavaValue("uri-java-display-string", UNSUPPORTED);
-        setJavaValue("uri-java-rfc2396-string", UNSUPPORTED);
-        setJavaValue("uri-java-scheme", UNSUPPORTED);
-        setJavaValue("uri-java-raw-authority", UNSUPPORTED);
-        setJavaValue("uri-java-decoded-authority", UNSUPPORTED);
-        setJavaValue("uri-java-raw-user-info", UNSUPPORTED);
-        setJavaValue("uri-java-decoded-user-info", UNSUPPORTED);
-        setJavaValue("uri-java-raw-username", UNSUPPORTED);
-        setJavaValue("uri-java-decoded-username", UNSUPPORTED);
-        setJavaValue("uri-java-raw-password", UNSUPPORTED);
-        setJavaValue("uri-java-decoded-password", UNSUPPORTED);
-        setJavaValue("uri-java-host", UNSUPPORTED);
-        setJavaValue("uri-java-port", UNSUPPORTED);
-        setJavaValue("uri-java-raw-port", UNSUPPORTED);
-        setJavaValue("uri-java-raw-path", UNSUPPORTED);
-        setJavaValue("uri-java-decoded-path", UNSUPPORTED);
-        setJavaValue("uri-java-raw-query", UNSUPPORTED);
-        setJavaValue("uri-java-decoded-query", UNSUPPORTED);
-        setJavaValue("uri-java-raw-fragment", UNSUPPORTED);
-        setJavaValue("uri-java-decoded-fragment", UNSUPPORTED);
+        setJavaStringValue("uri-java-serialized-url", "conversion failed: " + exception.getReason());
+        setJavaUnsupportedValue("uri-java-display-string");
+        setJavaUnsupportedValue("uri-java-rfc2396-string");
+        setJavaUnsupportedValue("uri-java-scheme");
+        setJavaUnsupportedValue("uri-java-raw-authority");
+        setJavaUnsupportedValue("uri-java-decoded-authority");
+        setJavaUnsupportedValue("uri-java-raw-user-info");
+        setJavaUnsupportedValue("uri-java-decoded-user-info");
+        setJavaUnsupportedValue("uri-java-raw-username");
+        setJavaUnsupportedValue("uri-java-decoded-username");
+        setJavaUnsupportedValue("uri-java-raw-password");
+        setJavaUnsupportedValue("uri-java-decoded-password");
+        setJavaUnsupportedValue("uri-java-host");
+        setJavaUnsupportedValue("uri-java-port");
+        setJavaUnsupportedValue("uri-java-raw-port");
+        setJavaUnsupportedValue("uri-java-raw-path");
+        setJavaUnsupportedValue("uri-java-decoded-path");
+        setJavaUnsupportedValue("uri-java-raw-query");
+        setJavaUnsupportedValue("uri-java-decoded-query");
+        setJavaUnsupportedValue("uri-java-raw-fragment");
+        setJavaUnsupportedValue("uri-java-decoded-fragment");
     }
 
     /// Clears a list of result fields.
@@ -259,12 +271,31 @@ public final class WebURLViewer {
         return value.isEmpty() ? "(empty)" : value;
     }
 
-    /// Converts a nullable string to its display value.
+    /// Sets a Java-style field from a non-null string while preserving its semantic kind.
     ///
-    /// @param value the value to display
-    /// @return the display text
-    private static String displayNullable(@Nullable String value) {
-        return value == null ? "null" : display(value);
+    /// @param id the element id
+    /// @param value the raw string value
+    private static void setJavaStringValue(String id, String value) {
+        setJavaValue(id, display(value), value.isEmpty() ? VALUE_KIND_EMPTY : VALUE_KIND_VALUE);
+    }
+
+    /// Sets a Java-style field from a nullable string while preserving null as a distinct semantic kind.
+    ///
+    /// @param id the element id
+    /// @param value the nullable raw string value
+    private static void setJavaNullableValue(String id, @Nullable String value) {
+        if (value == null) {
+            setJavaValue(id, "null", VALUE_KIND_NULL);
+        } else {
+            setJavaStringValue(id, value);
+        }
+    }
+
+    /// Sets a Java-style field for an unsupported Java API component.
+    ///
+    /// @param id the element id
+    private static void setJavaUnsupportedValue(String id) {
+        setJavaValue(id, UNSUPPORTED, VALUE_KIND_UNSUPPORTED);
     }
 
     /// Reads an input or select value from the page.
@@ -288,12 +319,13 @@ public final class WebURLViewer {
     @JSBody(params = {"id", "value"}, script = "window.WebURLViewer.setComparedValue(id, value);")
     private static native void setComparedValue(String id, String value);
 
-    /// Sets a Java-style WebURL component display value.
+    /// Sets a Java-style component display value and its semantic value kind.
     ///
     /// @param id the element id
     /// @param value the display value
-    @JSBody(params = {"id", "value"}, script = "window.WebURLViewer.setJavaValue(id, value);")
-    private static native void setJavaValue(String id, String value);
+    /// @param kind the semantic value kind used for comparison and styling
+    @JSBody(params = {"id", "value", "kind"}, script = "window.WebURLViewer.setJavaValue(id, value, kind);")
+    private static native void setJavaValue(String id, String value, String kind);
 
     /// Clears a result field and any attached value state.
     ///
