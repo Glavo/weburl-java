@@ -106,7 +106,7 @@
 
   function setJavaValue(id, value) {
     setText(id, value);
-    setValueState(id, value === "(empty)" || value === "(absent)" ? "empty" : "value");
+    setValueState(id, value === "(empty)" || value === "null" ? "empty" : "value");
   }
 
   function clearValue(id) {

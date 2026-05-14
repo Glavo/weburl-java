@@ -181,7 +181,7 @@ public final class WebURLViewer {
     /// @param value the value to display
     /// @return the display text
     private static String displayNullable(@Nullable String value) {
-        return value == null ? "(absent)" : display(value);
+        return value == null ? "null" : display(value);
     }
 
     /// Reads an input or select value from the page.
