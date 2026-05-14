@@ -75,6 +75,13 @@ h1 {
   font-size: 0.98rem;
 }
 
+.intro a {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
 h2 {
   font-size: 1rem;
   line-height: 1.2;
