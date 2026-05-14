@@ -1117,112 +1117,109 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A1_T1.js
-    @Disabled("Lookahead assertions are not supported")
+    @Disabled("Capturing groups inside lookahead assertions are not supported")
     @Test
     public void lookaheadAssertion() {
         assertFinds("(?=(a+))", "baaabac", "");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A1_T2.js
-    @Disabled("Lookahead assertions, capturing groups, and backreferences are not supported")
+    @Disabled("Capturing groups and backreferences around lookahead assertions are not supported")
     @Test
     public void lookaheadAssertionWithBackreference() {
         assertFinds("(?=(a+))a*b\\1", "baaabac", "aba");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A1_T3.js
-    @Disabled("Lookahead assertions and capturing groups are not supported")
+    @Disabled("Capturing groups around lookahead assertions are not supported")
     @Test
     public void lookaheadAssertionAfterOptionalCaptureMatchesJavascript() {
         assertFinds("[Jj]ava([Ss]cript)?(?=\\:)", "just Javascript: the way af jedi", "Javascript");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A1_T4.js
-    @Disabled("Lookahead assertions and capturing groups are not supported")
+    @Disabled("Capturing groups around lookahead assertions are not supported")
     @Test
     public void lookaheadAssertionAfterOptionalCaptureMatchesJava() {
         assertFinds("[Jj]ava([Ss]cript)?(?=\\:)", "taste of java: the cookbook ", "java");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A1_T5.js
-    @Disabled("Lookahead assertions and capturing groups are not supported")
+    @Disabled("Capturing groups around lookahead assertions are not supported")
     @Test
     public void lookaheadAssertionAfterOptionalCaptureRejectsMissingColon() {
         assertDoesNotFind("[Jj]ava([Ss]cript)?(?=\\:)", "rhino is JavaScript engine");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T1.js
-    @Disabled("Negative lookahead assertions, capturing groups, and backreferences are not supported")
+    @Disabled("Capturing groups and backreferences around negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAssertionWithBackreferences() {
         assertFinds("(.*?)a(?!(a+)b\\2c)\\2(.*)", "baaabaac", "baaabaac");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T2.js
-    @Disabled("Negative lookahead assertions and capturing groups are not supported")
+    @Disabled("Capturing groups around negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAssertionMatchesJavaBeans() {
         assertFinds("Java(?!Script)([A-Z]\\w*)", "using of JavaBeans technology", "JavaBeans");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T3.js
-    @Disabled("Negative lookahead assertions and capturing groups are not supported")
+    @Disabled("Capturing groups around negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAssertionRejectsMissingCapitalSuffix() {
         assertDoesNotFind("Java(?!Script)([A-Z]\\w*)", "using of Java language");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T4.js
-    @Disabled("Negative lookahead assertions and capturing groups are not supported")
+    @Disabled("Capturing groups around negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAssertionRejectsJavaScripter() {
         assertDoesNotFind("Java(?!Script)([A-Z]\\w*)", "i'm a JavaScripter ");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T5.js
-    @Disabled("Negative lookahead assertions and capturing groups are not supported")
+    @Disabled("Capturing groups around negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAssertionMatchesPartialJavaScr() {
         assertFinds("Java(?!Script)([A-Z]\\w*)", "JavaScr oops ipt ", "JavaScr");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T6.js
-    @Disabled("Negative lookahead assertions and capturing groups are not supported")
+    @Disabled("Capturing groups around negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAssertionMatchesNonComDot() {
         assertFinds("(\\.(?!com|org)|\\/)", "ah.info", ".");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T7.js
-    @Disabled("Negative lookahead assertions and capturing groups are not supported")
+    @Disabled("Capturing groups around negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAssertionMatchesSlashAlternative() {
         assertFinds("(\\.(?!com|org)|\\/)", "ah/info", "/");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T8.js
-    @Disabled("Negative lookahead assertions and capturing groups are not supported")
+    @Disabled("Capturing groups around negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAssertionRejectsComDot() {
         assertDoesNotFind("(\\.(?!com|org)|\\/)", "ah.com");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T9.js
-    @Disabled("Negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAlternativeMatchesEmptyInput() {
         assertFinds("(?!a|b)|c", "", "");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T10.js
-    @Disabled("Negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAlternativeMatchesAfterRejectedPrefix() {
         assertFinds("(?!a|b)|c", "bc", "");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.8_A2_T11.js
-    @Disabled("Negative lookahead assertions are not supported")
     @Test
     public void negativeLookaheadAlternativeMatchesOtherInput() {
         assertFinds("(?!a|b)|c", "d", "");
@@ -1274,7 +1271,6 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A4_T1.js
-    @Disabled("Word-boundary assertions are not supported")
     @Test
     public void wordBoundaryAssertion() {
         assertFinds("\\Bevil\\B", "devils arise\tfor\nevil", "evil");
@@ -1527,21 +1523,18 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A1_T3.js
-    @Disabled("Lookahead assertions and the whitespace class escape are not currently supported")
     @Test
     public void characterClassFollowedByLookahead() {
         assertFinds("q[ax-zb](?=\\s+)", "qYqy ", "qy");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A1_T4.js
-    @Disabled("Lookahead assertions and the whitespace class escape are not currently supported")
     @Test
     public void characterClassFollowedByLookaheadWithLaterMatch() {
         assertFinds("q[ax-zb](?=\\s+)", "tqaqy ", "qy");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A1_T5.js
-    @Disabled("Lookahead assertions and the whitespace class escape are not currently supported")
     @Test
     public void characterClassFollowedByLookaheadWithTabMatch() {
         assertFinds("q[ax-zb](?=\\s+)", "tqa\t  qy ", "qa");
@@ -1949,294 +1942,271 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A1_T1.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A1T1() {
         assertUnsupported("s$");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A1_T2.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A1T2() {
         assertUnsupported("e$");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A1_T3.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A1T3() {
         assertUnsupported("s$");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A1_T4.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A1T4() {
         assertUnsupported("[^e]$");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A1_T5.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A1T5() {
         assertUnsupported("es$");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T10.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T10() {
         assertUnsupported("^\\d+");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T2.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T2() {
         assertUnsupported("^m");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T3.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T3() {
         assertUnsupported("^p[a-z]");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T4.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T4() {
         assertUnsupported("^p[b-z]");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T5.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T5() {
         assertUnsupported("^[^p]");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T6.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T6() {
         assertUnsupported("^ab");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T7.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T7() {
         assertUnsupported("^..^e");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T8.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T8() {
         assertUnsupported("^xxx");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T9.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T9() {
         assertUnsupported("^\\^+");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T1.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T1() {
-        assertUnsupported("\\bp");
+        assertFinds("\\bp", "pilot\nsoviet robot\topenoffice", "p");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T10.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T10() {
-        assertUnsupported("\\brobot\\b");
+        assertFinds("\\brobot\\b", "pilot\nsoviet robot\topenoffice", "robot");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T11.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T11() {
-        assertUnsupported("\\b\\w{5}\\b");
+        assertFinds("\\b\\w{5}\\b", "pilot\nsoviet robot\topenoffice", "pilot");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T12.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T12() {
-        assertUnsupported("\\bop");
+        assertFinds("\\bop", "pilot\nsoviet robot\topenoffice", "op");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T13.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T13() {
-        assertUnsupported("op\\b");
+        assertDoesNotFind("op\\b", "pilot\nsoviet robot\topenoffice");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T14.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T14() {
-        assertUnsupported("e\\b");
+        assertFinds("e\\b", "pilot\nsoviet robot\topenoffic\u0065", "e");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T15.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T15() {
-        assertUnsupported("\\be");
+        assertDoesNotFind("\\be", "pilot\nsoviet robot\topenoffic\u0065");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T2.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T2() {
-        assertUnsupported("ot\\b");
+        assertFinds("ot\\b", "pilot\nsoviet robot\topenoffice", "ot");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T3.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T3() {
-        assertUnsupported("\\bot");
+        assertDoesNotFind("\\bot", "pilot\nsoviet robot\topenoffice");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T4.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T4() {
-        assertUnsupported("\\bso");
+        assertFinds("\\bso", "pilot\nsoviet robot\topenoffice", "so");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T5.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T5() {
-        assertUnsupported("so\\b");
+        assertDoesNotFind("so\\b", "pilot\nsoviet robot\topenoffice");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T6.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T6() {
-        assertUnsupported("[^o]t\\b");
+        assertFinds("[^o]t\\b", "pilOt\nsoviet robot\topenoffice", "Ot");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T7.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T7() {
-        assertUnsupported("[^o]t\\b");
+        assertFinds("[^o]t\\b", "pilOt\nsoviet robot\topenoffice", "et", Pattern.CASE_INSENSITIVE);
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T8.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T8() {
-        assertUnsupported("\\bro");
+        assertFinds("\\bro", "pilot\nsoviet robot\topenoffice", "ro");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T9.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A3T9() {
-        assertUnsupported("r\\b");
+        assertDoesNotFind("r\\b", "pilot\nsoviet robot\topenoffice");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A4_T2.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A4T2() {
-        assertUnsupported("[f-z]e\\B");
+        assertFinds("[f-z]e\\B", "devils arise\tfor\nrevil", "re");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A4_T3.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A4T3() {
-        assertUnsupported("\\Bo\\B");
+        assertFinds("\\Bo\\B", "devils arise\tfOr\nrevil", "O", Pattern.CASE_INSENSITIVE);
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A4_T4.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A4T4() {
-        assertUnsupported("\\B\\w\\B");
+        assertFinds("\\B\\w\\B", "devils arise\tfor\nrevil", "e");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A4_T5.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A4T5() {
-        assertUnsupported("\\w\\B");
+        assertFinds("\\w\\B", "devils arise\tfor\nrevil", "d");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A4_T6.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A4T6() {
-        assertUnsupported("\\B\\w");
+        assertFinds("\\B\\w", "devils arise\tfor\nrevil", "e");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A4_T7.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A4T7() {
-        assertUnsupported("\\B[^z]{4}\\B");
+        assertFinds("\\B[^z]{4}\\B", "devil arise\tforzzx\nevils", "il a");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A4_T8.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A4T8() {
-        assertUnsupported("\\B\\w{4}\\B");
+        assertFinds("\\B\\w{4}\\B", "devil arise\tforzzx\nevils", "orzz");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A5_T1.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A5T1() {
         assertUnsupported("^^^^^^^robot$$");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A5_T2.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
     public void test262S151026A5T2() {
-        assertUnsupported("\\B\\B\\B\\B\\B\\Bbot\\b\\b\\b\\b\\b\\b\\b");
+        assertFinds("\\B\\B\\B\\B\\B\\Bbot\\b\\b\\b\\b\\b\\b\\b", "robot wall-e", "bot");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A6_T1.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A6T1() {
         assertUnsupported("^.*?$");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A6_T2.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A6T2() {
         assertUnsupported("^.*?");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A6_T3.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A6T3() {
         assertUnsupported("^.*?(:|$)");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A6_T4.js
     @Test
-    @Disabled("Assertions such as anchors and word boundaries are not supported as standalone URLPattern component regexps")
+    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A6T4() {
         assertUnsupported("^.*(:|$)");
     }

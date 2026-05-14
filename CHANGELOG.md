@@ -34,7 +34,9 @@
 - Expanded `WebURLPatternParser.RegExpPolicy.SUPPORTED` to handle additional ECMAScript regular-expression
   syntax, including whitespace escapes, NUL/control/hex/Unicode escapes, empty character classes, empty
   negated character classes, backspace escapes inside character classes, and ampersand literals inside
-  character classes.
+  character classes. The supported subset also accepts positive and negative lookahead assertions when
+  they do not depend on unsupported capture-group or backreference behavior, plus ECMAScript
+  word-boundary assertions.
 
 ## 0.2.0 (2026-05-12)
 

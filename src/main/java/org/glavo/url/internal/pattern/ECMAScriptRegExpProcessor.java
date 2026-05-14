@@ -39,6 +39,19 @@ final class ECMAScriptRegExpProcessor {
     /// Java Pattern character class that matches any code unit.
     private static final String ANY_CODE_UNIT_CLASS = "[\\s\\S]";
 
+    /// Java Pattern character-class content for the ASCII ECMAScript word set.
+    private static final String ECMASCRIPT_WORD_CLASS_CONTENT = "A-Za-z0-9_";
+
+    /// Java Pattern assertion for ECMAScript `\b`.
+    private static final String ECMASCRIPT_WORD_BOUNDARY_ASSERTION =
+            "(?:(?<![" + ECMASCRIPT_WORD_CLASS_CONTENT + "])(?=[" + ECMASCRIPT_WORD_CLASS_CONTENT + "])"
+                    + "|(?<=[" + ECMASCRIPT_WORD_CLASS_CONTENT + "])(?![" + ECMASCRIPT_WORD_CLASS_CONTENT + "]))";
+
+    /// Java Pattern assertion for ECMAScript `\B`.
+    private static final String ECMASCRIPT_NON_WORD_BOUNDARY_ASSERTION =
+            "(?:(?<=[" + ECMASCRIPT_WORD_CLASS_CONTENT + "])(?=[" + ECMASCRIPT_WORD_CLASS_CONTENT + "])"
+                    + "|(?<![" + ECMASCRIPT_WORD_CLASS_CONTENT + "])(?![" + ECMASCRIPT_WORD_CLASS_CONTENT + "]))";
+
     /// Creates no instances.
     private ECMAScriptRegExpProcessor() {
     }
@@ -87,8 +100,9 @@ final class ECMAScriptRegExpProcessor {
                         canQuantify = true;
                     }
                     case '\\' -> {
-                        output.append(parseEscape(false).source());
-                        canQuantify = true;
+                        EscapeResult escape = parseEscape(false);
+                        output.append(escape.source());
+                        canQuantify = escape.quantifiable();
                     }
                     case '.' -> {
                         output.append(c);
@@ -244,6 +258,14 @@ final class ECMAScriptRegExpProcessor {
                 index++;
                 return new EscapeResult("\\x{8}", false);
             }
+            if (escaped == 'b') {
+                index++;
+                return new EscapeResult(ECMASCRIPT_WORD_BOUNDARY_ASSERTION, false, false);
+            }
+            if (escaped == 'B' && !inClass) {
+                index++;
+                return new EscapeResult(ECMASCRIPT_NON_WORD_BOUNDARY_ASSERTION, false, false);
+            }
             if (escaped == 'c') {
                 index++;
                 if (index >= input.length() || !isAsciiLetter(input.charAt(index))) {
@@ -268,13 +290,21 @@ final class ECMAScriptRegExpProcessor {
             throw unsupported();
         }
 
-        /// Parses a non-capturing or named-capturing group as a non-capturing Java group.
+        /// Parses a non-capturing group, named-capturing group, or lookahead assertion.
         private void parseGroup() {
             if (input.startsWith("(?:", index)) {
                 output.append("(?:");
                 index += 3;
                 canQuantify = false;
                 parseUntilGroupEnd(true);
+                return;
+            }
+            if (input.startsWith("(?=", index) || input.startsWith("(?!", index)) {
+                output.append(input, index, index + 3);
+                index += 3;
+                canQuantify = false;
+                parseUntilGroupEnd(true);
+                canQuantify = false;
                 return;
             }
             if (input.startsWith("(?<", index)) {
@@ -513,7 +543,15 @@ final class ECMAScriptRegExpProcessor {
         ///
         /// @param source Java Pattern source
         /// @param characterClass whether the escape denotes a character class rather than one code point
-        private record EscapeResult(String source, boolean characterClass) {
+        /// @param quantifiable whether the escape denotes an atom that can be quantified
+        private record EscapeResult(String source, boolean characterClass, boolean quantifiable) {
+            /// Creates a quantifiable escape result.
+            ///
+            /// @param source Java Pattern source
+            /// @param characterClass whether the escape denotes a character class rather than one code point
+            private EscapeResult(String source, boolean characterClass) {
+                this(source, characterClass, true);
+            }
         }
     }
 

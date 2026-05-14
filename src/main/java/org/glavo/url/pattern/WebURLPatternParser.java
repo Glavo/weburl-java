@@ -80,12 +80,13 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
         /// - quantifiers `*`, `+`, `?`, `{m}`, `{m,}`, and `{m,n}`, including lazy forms such as `*?`;
         /// - non-capturing groups `(?:...)`;
         /// - named capture groups `(?<name>...)`, compiled as non-capturing groups because URLPattern does
-        ///   not expose inner regular-expression groups.
+        ///   not expose inner regular-expression groups;
+        /// - positive and negative lookahead assertions;
+        /// - word-boundary assertions `\b` and `\B`.
         ///
-        /// Numbered capture groups, lookahead, and lookbehind are rejected. Anchors, backreferences, Unicode
-        /// property escapes, word-boundary escapes outside character classes, possessive quantifiers,
-        /// complemented class-set operands such as `\D`, `\S`, and `\W`, and non-ASCII class-set operands
-        /// are also rejected.
+        /// Numbered capture groups and lookbehind are rejected. Anchors, backreferences, Unicode property
+        /// escapes, possessive quantifiers, complemented class-set operands such as `\D`, `\S`, and `\W`,
+        /// and non-ASCII class-set operands are also rejected.
         ///
         /// Unsupported syntax is rejected during compilation. This is the default policy.
         SUPPORTED,

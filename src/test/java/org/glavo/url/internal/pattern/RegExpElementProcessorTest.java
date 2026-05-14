@@ -66,10 +66,14 @@ public final class RegExpElementProcessorTest {
         assertTranslated("\\0\\cA\\ca\\x41\\u0041\\u{1f600}", "\\x{0}\\x{1}\\x{1}\\x{41}\\x{41}\\x{1f600}");
         assertTranslated("\\uD83D\\uDE00", "\\x{1f600}");
         assertTranslated("\\uD83D\\u0041", "\\ud83d\\x{41}");
+        assertTranslated("\\b", "(?:(?<![A-Za-z0-9_])(?=[A-Za-z0-9_])|(?<=[A-Za-z0-9_])(?![A-Za-z0-9_]))");
+        assertTranslated("\\B", "(?:(?<=[A-Za-z0-9_])(?=[A-Za-z0-9_])|(?<![A-Za-z0-9_])(?![A-Za-z0-9_]))");
         assertSupported("a{1}b{2,}c{3,5}?");
         assertSupported("a+?");
         assertSupported("(?:ab)");
         assertTranslated("(?<name>ab)", "(?:ab)");
+        assertSupported("a(?=b)b");
+        assertSupported("a(?!c)b");
         assertTranslated("[[a-z]--a]", "[b-z]");
         assertTranslated("[\\d&&[0-1]]", "[01]");
         assertTranslated("[[a-f]--[bd]]", "[acef]");
@@ -100,6 +104,11 @@ public final class RegExpElementProcessorTest {
         assertMatches("a(?:b|c)", "ac");
         assertDoesNotMatch("a(?:b|c)", "ad");
         assertMatches("(?<inner>ab)", "ab");
+
+        assertMatches("a(?=b)b", "ab");
+        assertDoesNotMatch("a(?=c)b", "ab");
+        assertMatches("a(?!c)b", "ab");
+        assertDoesNotMatch("a(?!b)b", "ab");
     }
 
     /// Tests character class matching with the supported policy.
@@ -171,6 +180,12 @@ public final class RegExpElementProcessorTest {
         assertMatches("\\uD83D\\u0041", "\uD83D" + "A");
         assertMatches(".[\\b].", "a\bb");
 
+        assertMatches("\\b\\w+\\b", "robot");
+        assertDoesNotMatch("\\b\\w+\\b", "robot-");
+        assertMatches("\\B", "");
+        assertDoesNotMatch("\\b", "");
+        assertMatches("e\\Bv\\Bi\\Bl", "evil");
+
         assertMatches("\\.\\+\\*\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\\\/", ".+*?^${}()|[]\\/");
         assertDoesNotMatch("\\.\\+\\*\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\\\/", ".+*?^${}()|[]/");
     }
@@ -211,11 +226,12 @@ public final class RegExpElementProcessorTest {
     @Test
     public void supportedPolicyRejectsUnsupportedSyntax() {
         assertUnsupported("(ab)");
-        assertUnsupported("(?=ab)");
+        assertUnsupported("(?=ab)+");
         assertUnsupported("(?<=ab)");
         assertUnsupported("^abc");
         assertUnsupported("abc$");
-        assertUnsupported("\\b");
+        assertUnsupported("\\b+");
+        assertUnsupported("\\B+");
         assertUnsupported("\\p{ASCII}");
         assertUnsupported("\\07");
         assertUnsupported("\\c0");
