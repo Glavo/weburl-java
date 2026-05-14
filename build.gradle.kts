@@ -150,10 +150,7 @@ tasks.register<Sync>("buildWebsite") {
     description = "Builds the static project website with the TeaVM WebAssembly URL viewer."
     dependsOn(tasks.named("buildWasmGC"))
 
-    from("src/website") {
-        exclude("java/**")
-        exclude("teavm-resources/**")
-    }
+    from("src/website/resources")
     from(teavmWasmOutputDir) {
         into("wasm-gc")
     }
