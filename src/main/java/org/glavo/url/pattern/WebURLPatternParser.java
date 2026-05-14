@@ -82,9 +82,10 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
         /// - named capture groups `(?<name>...)`, compiled as non-capturing groups because URLPattern does
         ///   not expose inner regular-expression groups;
         /// - positive and negative lookahead assertions;
+        /// - start and end assertions `^` and `$`;
         /// - word-boundary assertions `\b` and `\B`.
         ///
-        /// Numbered capture groups and lookbehind are rejected. Anchors, backreferences, Unicode property
+        /// Numbered capture groups and lookbehind are rejected. Backreferences, Unicode property
         /// escapes, possessive quantifiers, complemented class-set operands such as `\D`, `\S`, and `\W`,
         /// and non-ASCII class-set operands are also rejected.
         ///

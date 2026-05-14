@@ -117,6 +117,11 @@ final class ECMAScriptRegExpProcessor {
                     case '*', '+', '?' -> parseSimpleQuantifier();
                     case '{' -> parseBraceQuantifier();
                     case '(' -> parseGroup();
+                    case '^', '$' -> {
+                        output.append(c);
+                        index++;
+                        canQuantify = false;
+                    }
                     case ')' -> {
                         if (!inGroup) {
                             throw unsupported();
@@ -126,7 +131,7 @@ final class ECMAScriptRegExpProcessor {
                         canQuantify = true;
                         return;
                     }
-                    case '^', '$', ']', '}' -> throw unsupported();
+                    case ']', '}' -> throw unsupported();
                     default -> {
                         output.append(c);
                         index++;

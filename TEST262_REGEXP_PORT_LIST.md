@@ -51,7 +51,6 @@ port it as an `@Disabled` test and include a specific reason. Common disabled re
 - capturing groups other than URLPattern outer capture handling
 - lookbehind assertions
 - backreferences
-- anchors when they are the behavior being tested rather than only forcing a full-string match
 - Unicode property escapes and property-of-strings escapes
 - non-ASCII or escaped Unicode group names
 - duplicate named-group early-error validation
@@ -68,11 +67,10 @@ Use shared helper methods only for common assertions:
 - `assertDoesNotMatch(String regexp, String input)`
 - `assertFinds(String regexp, String input, String expected)`
 
-For original test262 tests that use `^...$` only to force full-string matching, remove the outer
-anchors in the ported regexp and use full-match helpers. `ECMAScriptRegExpProcessor` component
-matching is already whole-component matching. For original unanchored `.exec` or `.test` cases, port
-them only when they directly validate regular-expression element semantics. Use a helper that
-simulates JavaScript search behavior with Java `Pattern.find()`.
+For original test262 tests that use `^` or `$`, keep the assertions when they are part of the tested
+regular-expression semantics. For original unanchored `.exec` or `.test` cases, port them only when
+they directly validate regular-expression element semantics. Use a helper that simulates JavaScript
+search behavior with Java `Pattern.find()`.
 
 Keep the hand-ported test262 source independent from `external/test262`; that checkout is only a
 local reference and must not be read at test runtime. The generated Unicode property escape tests
@@ -91,8 +89,8 @@ Shared helpers:
 `src/test/java/org/glavo/url/internal/pattern/ECMAScriptRegExpProcessorTest262Support.java`
 
 - Source-linked Java test methods: 806
-- Enabled Java test methods: 249
-- Disabled Java test methods: 557
+- Enabled Java test methods: 268
+- Disabled Java test methods: 538
 - Unique fixed-commit Test262 source links: 806
 - Runtime-generated Unicode property escape dynamic tests: 3520
 

@@ -74,6 +74,7 @@ public final class RegExpElementProcessorTest {
         assertTranslated("(?<name>ab)", "(?:ab)");
         assertSupported("a(?=b)b");
         assertSupported("a(?!c)b");
+        assertSupported("^abc$");
         assertTranslated("[[a-z]--a]", "[b-z]");
         assertTranslated("[\\d&&[0-1]]", "[01]");
         assertTranslated("[[a-f]--[bd]]", "[acef]");
@@ -109,6 +110,10 @@ public final class RegExpElementProcessorTest {
         assertDoesNotMatch("a(?=c)b", "ab");
         assertMatches("a(?!c)b", "ab");
         assertDoesNotMatch("a(?!b)b", "ab");
+
+        assertMatches("^abc$", "abc");
+        assertDoesNotMatch("^abc$", "xabc");
+        assertDoesNotMatch("^abc$", "abcx");
     }
 
     /// Tests character class matching with the supported policy.
@@ -228,8 +233,8 @@ public final class RegExpElementProcessorTest {
         assertUnsupported("(ab)");
         assertUnsupported("(?=ab)+");
         assertUnsupported("(?<=ab)");
-        assertUnsupported("^abc");
-        assertUnsupported("abc$");
+        assertUnsupported("^+");
+        assertUnsupported("$?");
         assertUnsupported("\\b+");
         assertUnsupported("\\B+");
         assertUnsupported("\\p{ASCII}");

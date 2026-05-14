@@ -1264,7 +1264,6 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T1.js
-    @Disabled("Anchors are rejected because URLPattern component matching is already whole-component matching")
     @Test
     public void anchorAssertion() {
         assertDoesNotFind("^m", "pairs\nmakes\tdouble");
@@ -1357,7 +1356,6 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.7_A4_T17.js
-    @Disabled("Anchors are rejected because URLPattern component matching is already whole-component matching")
     @Test
     public void starThenPlusQuantifierWithEndAnchor() {
         assertFinds("x*y+$", "xxxxxxyyyyyy", "xxxxxxyyyyyy");
@@ -1942,100 +1940,86 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A1_T1.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A1T1() {
-        assertUnsupported("s$");
+        assertDoesNotFind("s$", "pairs\nmakes\tdouble");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A1_T2.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A1T2() {
-        assertUnsupported("e$");
+        assertFinds("e$", "pairs\nmakes\tdouble", "e");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A1_T3.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A1T3() {
-        assertUnsupported("s$");
+        assertFinds("s$", "pairs\nmakes\tdouble", "s", Pattern.MULTILINE);
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A1_T4.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A1T4() {
-        assertUnsupported("[^e]$");
+        assertFinds("[^e]$", "pairs\nmakes\tdouble", "s", Pattern.MULTILINE);
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A1_T5.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A1T5() {
-        assertUnsupported("es$");
+        assertFinds("es$", "pairs\nmakes\tdoubles", "es", Pattern.MULTILINE);
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T10.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T10() {
-        assertUnsupported("^\\d+");
+        assertFinds("^\\d+", "abc\n123xyz", "123", Pattern.MULTILINE);
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T2.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T2() {
-        assertUnsupported("^m");
+        assertFinds("^m", "pairs\nmakes\tdouble", "m", Pattern.MULTILINE);
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T3.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T3() {
-        assertUnsupported("^p[a-z]");
+        assertFinds("^p[a-z]", "pairs\nmakes\tdouble\npesos", "pa");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T4.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T4() {
-        assertUnsupported("^p[b-z]");
+        assertFinds("^p[b-z]", "pairs\nmakes\tdouble\npesos", "pe", Pattern.MULTILINE);
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T5.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T5() {
-        assertUnsupported("^[^p]");
+        assertFinds("^[^p]", "pairs\nmakes\tdouble\npesos", "m", Pattern.MULTILINE);
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T6.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T6() {
-        assertUnsupported("^ab");
+        assertFinds("^ab", "abcde", "ab");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T7.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T7() {
-        assertUnsupported("^..^e");
+        assertDoesNotFind("^..^e", "ab\ncde");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T8.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T8() {
-        assertUnsupported("^xxx");
+        assertDoesNotFind("^xxx", "yyyyy");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A2_T9.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A2T9() {
-        assertUnsupported("^\\^+");
+        assertFinds("^\\^+", "^^^x", "^^^");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A3_T1.js
@@ -2172,9 +2156,8 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A5_T1.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A5T1() {
-        assertUnsupported("^^^^^^^robot$$");
+        assertFinds("^^^^^^^robot$$", "robot", "robot");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A5_T2.js
@@ -2185,28 +2168,26 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A6_T1.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A6T1() {
-        assertUnsupported("^.*?$");
+        assertFinds("^.*?$", "Hello World", "Hello World");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A6_T2.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
     public void test262S151026A6T2() {
-        assertUnsupported("^.*?");
+        assertFinds("^.*?", "Hello World", "");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A6_T3.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
+    @Disabled("Capturing groups inside user-written regular-expression elements are not supported")
     public void test262S151026A6T3() {
         assertUnsupported("^.*?(:|$)");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.6_A6_T4.js
     @Test
-    @Disabled("Anchors are not supported in this URLPattern regular-expression subset")
+    @Disabled("Capturing groups inside user-written regular-expression elements are not supported")
     public void test262S151026A6T4() {
         assertUnsupported("^.*(:|$)");
     }
