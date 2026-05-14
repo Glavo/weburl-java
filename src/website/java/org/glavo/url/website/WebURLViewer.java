@@ -134,29 +134,29 @@ public final class WebURLViewer {
     ///
     /// @param url the parsed URL
     private static void renderWebURLFields(WebURL url) {
-        setText("weburl-href", display(url.href()));
-        setText("weburl-origin", display(url.origin()));
-        setText("weburl-protocol", display(url.getWebProtocol()));
-        setText("weburl-username", display(url.getWebUsername()));
-        setText("weburl-password", display(url.getWebPassword()));
-        setText("weburl-host", display(url.getWebHost()));
-        setText("weburl-hostname", display(url.getWebHostname()));
-        setText("weburl-port", display(url.getWebPort()));
-        setText("weburl-pathname", display(url.getWebPathname()));
-        setText("weburl-search", display(url.getWebSearch()));
-        setText("weburl-hash", display(url.getWebHash()));
-        setText("weburl-raw-username", displayNullable(url.getRawUsername()));
-        setText("weburl-decoded-username", displayNullable(url.getUsername()));
-        setText("weburl-raw-password", displayNullable(url.getRawPassword()));
-        setText("weburl-decoded-password", displayNullable(url.getPassword()));
-        setText("weburl-raw-authority", displayNullable(url.getRawAuthority()));
-        setText("weburl-decoded-authority", displayNullable(url.getAuthority()));
-        setText("weburl-raw-path", display(url.getRawPath()));
-        setText("weburl-decoded-path", display(url.getPath()));
-        setText("weburl-raw-query", displayNullable(url.getRawQuery()));
-        setText("weburl-decoded-query", displayNullable(url.getQuery()));
-        setText("weburl-raw-fragment", displayNullable(url.getRawFragment()));
-        setText("weburl-decoded-fragment", displayNullable(url.getFragment()));
+        setComparedValue("weburl-href", url.href());
+        setComparedValue("weburl-origin", url.origin());
+        setComparedValue("weburl-protocol", url.getWebProtocol());
+        setComparedValue("weburl-username", url.getWebUsername());
+        setComparedValue("weburl-password", url.getWebPassword());
+        setComparedValue("weburl-host", url.getWebHost());
+        setComparedValue("weburl-hostname", url.getWebHostname());
+        setComparedValue("weburl-port", url.getWebPort());
+        setComparedValue("weburl-pathname", url.getWebPathname());
+        setComparedValue("weburl-search", url.getWebSearch());
+        setComparedValue("weburl-hash", url.getWebHash());
+        setJavaValue("weburl-raw-username", displayNullable(url.getRawUsername()));
+        setJavaValue("weburl-decoded-username", displayNullable(url.getUsername()));
+        setJavaValue("weburl-raw-password", displayNullable(url.getRawPassword()));
+        setJavaValue("weburl-decoded-password", displayNullable(url.getPassword()));
+        setJavaValue("weburl-raw-authority", displayNullable(url.getRawAuthority()));
+        setJavaValue("weburl-decoded-authority", displayNullable(url.getAuthority()));
+        setJavaValue("weburl-raw-path", display(url.getRawPath()));
+        setJavaValue("weburl-decoded-path", display(url.getPath()));
+        setJavaValue("weburl-raw-query", displayNullable(url.getRawQuery()));
+        setJavaValue("weburl-decoded-query", displayNullable(url.getQuery()));
+        setJavaValue("weburl-raw-fragment", displayNullable(url.getRawFragment()));
+        setJavaValue("weburl-decoded-fragment", displayNullable(url.getFragment()));
     }
 
     /// Clears a list of result fields.
@@ -164,7 +164,7 @@ public final class WebURLViewer {
     /// @param fieldIds HTML ids to clear
     private static void clearFields(String @Unmodifiable [] fieldIds) {
         for (String fieldId : fieldIds) {
-            setText(fieldId, "");
+            clearValue(fieldId);
         }
     }
 
@@ -197,6 +197,26 @@ public final class WebURLViewer {
     /// @param value the text value
     @JSBody(params = {"id", "value"}, script = "window.WebURLViewer.setText(id, value);")
     private static native void setText(String id, String value);
+
+    /// Sets a WebURL component value that should be compared against the browser result.
+    ///
+    /// @param id the element id
+    /// @param value the raw component value
+    @JSBody(params = {"id", "value"}, script = "window.WebURLViewer.setComparedValue(id, value);")
+    private static native void setComparedValue(String id, String value);
+
+    /// Sets a Java-style WebURL component display value.
+    ///
+    /// @param id the element id
+    /// @param value the display value
+    @JSBody(params = {"id", "value"}, script = "window.WebURLViewer.setJavaValue(id, value);")
+    private static native void setJavaValue(String id, String value);
+
+    /// Clears a result field and any attached value state.
+    ///
+    /// @param id the element id
+    @JSBody(params = {"id"}, script = "window.WebURLViewer.clearValue(id);")
+    private static native void clearValue(String id);
 
     /// Sets a panel state attribute used by CSS.
     ///

@@ -12,6 +12,21 @@
     "browser-search",
     "browser-hash"
   ];
+  const componentNames = [
+    "href",
+    "origin",
+    "protocol",
+    "username",
+    "password",
+    "host",
+    "hostname",
+    "port",
+    "pathname",
+    "search",
+    "hash"
+  ];
+  const browserValues = new Map();
+  const weburlValues = new Map();
 
   function byId(id) {
     return document.getElementById(id);
@@ -21,11 +36,91 @@
     return value === "" ? "(empty)" : value;
   }
 
+  function setValueState(id, state) {
+    const element = byId(id);
+    if (element) {
+      if (state) {
+        element.dataset.valueState = state;
+      } else {
+        delete element.dataset.valueState;
+      }
+    }
+  }
+
   function setText(id, value) {
     const element = byId(id);
     if (element) {
       element.textContent = value == null ? "" : value;
     }
+  }
+
+  function componentNameFromId(id, prefix) {
+    return id.startsWith(prefix) ? id.slice(prefix.length) : "";
+  }
+
+  function setDisplayedComponent(id, value) {
+    setText(id, display(value));
+  }
+
+  function updateComparisonStates() {
+    for (const name of componentNames) {
+      const browserId = `browser-${name}`;
+      const weburlId = `weburl-${name}`;
+      const hasBrowserValue = browserValues.has(name);
+      const hasWebURLValue = weburlValues.has(name);
+      const browserValue = browserValues.get(name);
+      const weburlValue = weburlValues.get(name);
+      const valuesMatch = hasBrowserValue && hasWebURLValue && browserValue === weburlValue;
+
+      setValueState(browserId, comparisonState(browserValue, hasBrowserValue, hasWebURLValue, valuesMatch));
+      setValueState(weburlId, comparisonState(weburlValue, hasWebURLValue, hasBrowserValue, valuesMatch));
+    }
+  }
+
+  function comparisonState(value, hasValue, hasCounterpart, valuesMatch) {
+    if (!hasValue) {
+      return "";
+    }
+    if (value === "") {
+      return "empty";
+    }
+    return hasCounterpart && valuesMatch ? "match" : "mismatch";
+  }
+
+  function setBrowserComponent(name, value) {
+    browserValues.set(name, value);
+    setDisplayedComponent(`browser-${name}`, value);
+    updateComparisonStates();
+  }
+
+  function setComparedValue(id, value) {
+    const name = componentNameFromId(id, "weburl-");
+    if (componentNames.includes(name)) {
+      weburlValues.set(name, value);
+      setDisplayedComponent(id, value);
+      updateComparisonStates();
+    } else {
+      setText(id, value);
+    }
+  }
+
+  function setJavaValue(id, value) {
+    setText(id, value);
+    setValueState(id, value === "(empty)" || value === "(absent)" ? "empty" : "value");
+  }
+
+  function clearValue(id) {
+    const browserName = componentNameFromId(id, "browser-");
+    const weburlName = componentNameFromId(id, "weburl-");
+    if (componentNames.includes(browserName)) {
+      browserValues.delete(browserName);
+    }
+    if (componentNames.includes(weburlName)) {
+      weburlValues.delete(weburlName);
+    }
+    setText(id, "");
+    setValueState(id, "");
+    updateComparisonStates();
   }
 
   function setState(id, state) {
@@ -37,7 +132,7 @@
 
   function clearBrowserFields() {
     for (const id of browserFieldIds) {
-      setText(id, "");
+      clearValue(id);
     }
   }
 
@@ -47,17 +142,17 @@
       setState("browser-panel", "ok");
       setText("browser-status", "Parsed");
       setText("browser-error", "");
-      setText("browser-href", display(url.href));
-      setText("browser-origin", display(url.origin));
-      setText("browser-protocol", display(url.protocol));
-      setText("browser-username", display(url.username));
-      setText("browser-password", display(url.password));
-      setText("browser-host", display(url.host));
-      setText("browser-hostname", display(url.hostname));
-      setText("browser-port", display(url.port));
-      setText("browser-pathname", display(url.pathname));
-      setText("browser-search", display(url.search));
-      setText("browser-hash", display(url.hash));
+      setBrowserComponent("href", url.href);
+      setBrowserComponent("origin", url.origin);
+      setBrowserComponent("protocol", url.protocol);
+      setBrowserComponent("username", url.username);
+      setBrowserComponent("password", url.password);
+      setBrowserComponent("host", url.host);
+      setBrowserComponent("hostname", url.hostname);
+      setBrowserComponent("port", url.port);
+      setBrowserComponent("pathname", url.pathname);
+      setBrowserComponent("search", url.search);
+      setBrowserComponent("hash", url.hash);
     } catch (error) {
       clearBrowserFields();
       setState("browser-panel", "error");
@@ -96,6 +191,9 @@
   window.WebURLViewer = {
     setText,
     setState,
+    setComparedValue,
+    setJavaValue,
+    clearValue,
     renderBrowserURL,
     setReady() {
       setText("runtime-status", "WebAssembly ready");

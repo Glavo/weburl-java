@@ -10,6 +10,9 @@
   --accent-ink: #064e49;
   --error: #b42318;
   --error-soft: #fff1f0;
+  --match: #0f7a4c;
+  --mismatch: #b42318;
+  --placeholder: #7a8490;
   --ok-soft: #eaf7f3;
   --code: #122034;
 }
@@ -218,6 +221,19 @@ dd {
   font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 0.88rem;
   overflow-wrap: anywhere;
+}
+
+dd[data-value-state="match"],
+dd[data-value-state="value"] {
+  color: var(--match);
+}
+
+dd[data-value-state="mismatch"] {
+  color: var(--mismatch);
+}
+
+dd[data-value-state="empty"] {
+  color: var(--placeholder);
 }
 
 .java-view {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>WebURL Live URL Viewer</title>
+  <title>WebURL for Java Live URL Viewer</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
   <script defer src="wasm-gc/weburl-viewer.wasm-runtime.js"></script>
@@ -14,7 +14,7 @@
     <header class="topbar">
       <div>
         <p class="eyebrow">WebURL</p>
-        <h1>Live URL Viewer</h1>
+        <h1>WebURL for Java Live URL Viewer</h1>
       </div>
       <p id="runtime-status" class="runtime-status">Loading WebAssembly...</p>
     </header>
@@ -39,6 +39,27 @@
     </section>
 
     <section class="comparison-grid" aria-label="URL parsing result comparison">
+      <article id="weburl-panel" class="result-panel" data-state="loading">
+        <div class="panel-heading">
+          <h2>WebURL for Java</h2>
+          <span id="weburl-status" class="status-pill">Waiting</span>
+        </div>
+        <p id="weburl-error" class="error-line"></p>
+        <dl class="component-table">
+          <div><dt>href</dt><dd id="weburl-href"></dd></div>
+          <div><dt>origin</dt><dd id="weburl-origin"></dd></div>
+          <div><dt>protocol</dt><dd id="weburl-protocol"></dd></div>
+          <div><dt>username</dt><dd id="weburl-username"></dd></div>
+          <div><dt>password</dt><dd id="weburl-password"></dd></div>
+          <div><dt>host</dt><dd id="weburl-host"></dd></div>
+          <div><dt>hostname</dt><dd id="weburl-hostname"></dd></div>
+          <div><dt>port</dt><dd id="weburl-port"></dd></div>
+          <div><dt>pathname</dt><dd id="weburl-pathname"></dd></div>
+          <div><dt>search</dt><dd id="weburl-search"></dd></div>
+          <div><dt>hash</dt><dd id="weburl-hash"></dd></div>
+        </dl>
+      </article>
+
       <article id="browser-panel" class="result-panel" data-state="loading">
         <div class="panel-heading">
           <h2>Browser URL</h2>
@@ -57,27 +78,6 @@
           <div><dt>pathname</dt><dd id="browser-pathname"></dd></div>
           <div><dt>search</dt><dd id="browser-search"></dd></div>
           <div><dt>hash</dt><dd id="browser-hash"></dd></div>
-        </dl>
-      </article>
-
-      <article id="weburl-panel" class="result-panel" data-state="loading">
-        <div class="panel-heading">
-          <h2>WebURL</h2>
-          <span id="weburl-status" class="status-pill">Waiting</span>
-        </div>
-        <p id="weburl-error" class="error-line"></p>
-        <dl class="component-table">
-          <div><dt>href</dt><dd id="weburl-href"></dd></div>
-          <div><dt>origin</dt><dd id="weburl-origin"></dd></div>
-          <div><dt>protocol</dt><dd id="weburl-protocol"></dd></div>
-          <div><dt>username</dt><dd id="weburl-username"></dd></div>
-          <div><dt>password</dt><dd id="weburl-password"></dd></div>
-          <div><dt>host</dt><dd id="weburl-host"></dd></div>
-          <div><dt>hostname</dt><dd id="weburl-hostname"></dd></div>
-          <div><dt>port</dt><dd id="weburl-port"></dd></div>
-          <div><dt>pathname</dt><dd id="weburl-pathname"></dd></div>
-          <div><dt>search</dt><dd id="weburl-search"></dd></div>
-          <div><dt>hash</dt><dd id="weburl-hash"></dd></div>
         </dl>
       </article>
     </section>
