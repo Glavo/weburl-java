@@ -3,7 +3,8 @@
 ## Summary
 
 This file lists all `external/test262/test/built-ins/RegExp` sources that should be considered when
-porting tests for `ECMAScriptRegExpProcessor`.
+porting tests for `ECMAScriptRegExpProcessor`. It also records the current porting rules so the
+coverage inventory and migration process stay in one place.
 
 Source commit: `673e9bacbe28590f501e2dcd817aadcc31899191`
 
@@ -20,6 +21,63 @@ Each ported Java test method should include a `/// Source: ...` Javadoc link to 
 test262 file with the commit hash above. Generated Unicode property escape dynamic tests are the
 exception: they use `DynamicTest` source URIs pointing to the fixed
 `unicode-property-escapes-tests` template source that generated the JavaScript file.
+
+## Porting Guidelines
+
+Port only tests that directly map to `ECMAScriptRegExpProcessor` behavior:
+
+- regular-expression grammar and syntax errors
+- disjunction, atom, quantifier, character class, and escape behavior
+- supported finite ASCII Unicode Sets behavior
+- named group syntax that maps to URLPattern regular-expression elements
+- matching behavior that can be expressed through the processor's translated Java pattern
+
+Do not port pure JavaScript `RegExp` runtime behavior:
+
+- constructor semantics
+- prototype methods
+- `lastIndex`, flags properties, species, and cross-realm behavior
+- `String.prototype` integration such as replace, split, match, and matchAll
+
+Prefer one JUnit `@Test` method per hand-ported test262 source. Annotate every test method with a
+`/// Source: ...` Javadoc link to the original GitHub file, including the fixed test262 commit hash
+above. Generated Unicode property escape cases are the exception: use runtime `DynamicTest` cases
+based on `external/unicode-property-escapes-tests/output`, and attach fixed GitHub source URIs for
+the corresponding `unicode-property-escapes-tests` templates.
+
+If a relevant test cannot pass because the processor intentionally does not support that syntax,
+port it as an `@Disabled` test and include a specific reason. Common disabled reasons include:
+
+- capturing groups other than URLPattern outer capture handling
+- lookbehind assertions
+- backreferences
+- anchors when they are the behavior being tested rather than only forcing a full-string match
+- Unicode property escapes and property-of-strings escapes
+- non-ASCII or escaped Unicode group names
+- duplicate named-group early-error validation
+- dotAll, multiline, sticky, global, modifiers, or other JavaScript flags not modeled by the
+  processor
+- Unicode Sets features beyond the current finite ASCII subset, including string properties
+
+Use shared helper methods only for common assertions:
+
+- `assertSupported(String regexp)`
+- `assertTranslated(String regexp, String expected)`
+- `assertUnsupported(String regexp)`
+- `assertMatches(String regexp, String input)`
+- `assertDoesNotMatch(String regexp, String input)`
+- `assertFinds(String regexp, String input, String expected)`
+
+For original test262 tests that use `^...$` only to force full-string matching, remove the outer
+anchors in the ported regexp and use full-match helpers. `ECMAScriptRegExpProcessor` component
+matching is already whole-component matching. For original unanchored `.exec` or `.test` cases, port
+them only when they directly validate regular-expression element semantics. Use a helper that
+simulates JavaScript search behavior with Java `Pattern.find()`.
+
+Keep the hand-ported test262 source independent from `external/test262`; that checkout is only a
+local reference and must not be read at test runtime. The generated Unicode property escape tests
+intentionally read `external/unicode-property-escapes-tests/output` at test runtime and are skipped
+when that checkout is absent.
 
 ## Current Java Source Coverage
 
@@ -157,3 +215,15 @@ The excluded root group includes files matching these selectors:
   assertions with different support status.
 - Disabled tests must remain source-linked and must state the unsupported syntax or behavior.
 - Do not read `external/test262` from test runtime.
+
+## Validation
+
+Run these commands after changing the processor or the ported tests:
+
+```shell
+./gradlew -g .gradle-user-home test --tests org.glavo.url.internal.pattern.ECMAScriptRegExpProcessorTest262*
+./gradlew -g .gradle-user-home test --tests org.glavo.url.internal.pattern.ECMAScriptRegExpProcessorUnicodePropertyEscapesGeneratedTest
+./gradlew -g .gradle-user-home test
+./gradlew -g .gradle-user-home compileBenchmarkJava
+git diff --check
+```
