@@ -61,59 +61,59 @@ public final class WebURLPatternImpl implements WebURLPattern {
     @Override
     @Contract(pure = true)
     public boolean test(String input) {
-        return exec(input) != null;
+        return match(input) != null;
     }
 
     /// Tests a URL string with a base URL.
     @Override
     @Contract(pure = true)
     public boolean test(String input, String baseURL) {
-        return exec(input, baseURL) != null;
+        return match(input, baseURL) != null;
     }
 
     /// Tests a parsed URL.
     @Override
     @Contract(pure = true)
     public boolean test(WebURL input) {
-        return exec(input) != null;
+        return match(input) != null;
     }
 
     /// Tests component input.
     @Override
     @Contract(pure = true)
     public boolean test(WebURLPattern.Builder input) {
-        return exec(input) != null;
+        return match(input) != null;
     }
 
-    /// Executes this pattern against a URL string.
+    /// Matches this pattern against a URL string.
     @Override
     @Contract(pure = true)
-    public @Nullable WebURLPattern.Result exec(String input) {
+    public @Nullable WebURLPattern.Result match(String input) {
         Objects.requireNonNull(input, "input");
         return toResult(engine.match(input, null));
     }
 
-    /// Executes this pattern against a URL string with a base URL.
+    /// Matches this pattern against a URL string with a base URL.
     @Override
     @Contract(pure = true)
-    public @Nullable WebURLPattern.Result exec(String input, String baseURL) {
+    public @Nullable WebURLPattern.Result match(String input, String baseURL) {
         Objects.requireNonNull(input, "input");
         Objects.requireNonNull(baseURL, "baseURL");
         return toResult(engine.match(input, baseURL));
     }
 
-    /// Executes this pattern against a parsed URL.
+    /// Matches this pattern against a parsed URL.
     @Override
     @Contract(pure = true)
-    public @Nullable WebURLPattern.Result exec(WebURL input) {
+    public @Nullable WebURLPattern.Result match(WebURL input) {
         Objects.requireNonNull(input, "input");
         return toResult(engine.match(input));
     }
 
-    /// Executes this pattern against component input.
+    /// Matches this pattern against component input.
     @Override
     @Contract(pure = true)
-    public @Nullable WebURLPattern.Result exec(WebURLPattern.Builder input) {
+    public @Nullable WebURLPattern.Result match(WebURLPattern.Builder input) {
         WebURLPatternBuilderImpl implementation = implementation(Objects.requireNonNull(input, "input"));
         return toResult(engine.match(implementation.toPatternInit()));
     }

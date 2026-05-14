@@ -89,14 +89,14 @@ public final class WebURLPatternTest {
                 .setQueryPattern("q=:term"));
 
         WebURLPattern.Result stringResult = requireMatch(
-                pattern.exec("https://example.com/books/42?q=java#ignored"));
+                pattern.match("https://example.com/books/42?q=java#ignored"));
         assertEquals("42", stringResult.getPath().getWebGroup("id"));
         assertEquals("java", stringResult.getQuery().getWebGroup("term"));
         assertEquals("ignored", stringResult.getFragment().getWebGroup(0));
 
         assertTrue(pattern.test(WebURL.parse("https://example.com/books/7?q=url")));
 
-        WebURLPattern.Result componentResult = requireMatch(pattern.exec(WebURLPattern.newBuilder()
+        WebURLPattern.Result componentResult = requireMatch(pattern.match(WebURLPattern.newBuilder()
                 .setSchemePattern("https")
                 .setHostPattern("example.com")
                 .setPathPattern("/books/99")
@@ -111,7 +111,7 @@ public final class WebURLPatternTest {
     @Test
     public void capturesEmptyWildcardGroups() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo/bar"));
-        WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPathPattern("/foo/bar")));
+        WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern("/foo/bar")));
 
         assertEquals("", result.getScheme().group());
         assertEquals("", result.getScheme().group(0));
@@ -147,7 +147,7 @@ public final class WebURLPatternTest {
     @Test
     public void capturesNonEmptyWildcardGroups() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo/bar"));
-        WebURLPattern.Result result = requireMatch(pattern.exec("https://example.com/foo/bar"));
+        WebURLPattern.Result result = requireMatch(pattern.match("https://example.com/foo/bar"));
 
         assertEquals("https", result.getScheme().group());
         assertEquals(Map.of("0", "https"), result.getScheme().getWebGroups());
@@ -163,7 +163,7 @@ public final class WebURLPatternTest {
     @Test
     public void mapsMultipleCaptureGroups() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/:a/:b/:c"));
-        WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
+        WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
 
         assertEquals("x", result.getPath().getWebGroup("a"));
         assertEquals("y", result.getPath().getWebGroup("b"));
@@ -178,7 +178,7 @@ public final class WebURLPatternTest {
     @Test
     public void mapsNamedAndNumericCaptureGroups() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/:name/*"));
-        WebURLPattern.Result result = requireMatch(pattern.exec(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
+        WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
 
         assertEquals("x", result.getPath().getWebGroup("name"));
         assertEquals("y/z", result.getPath().getWebGroup(0));
@@ -203,7 +203,7 @@ public final class WebURLPatternTest {
     public void supportsDefaultRegularExpressionSubset() {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/books/:id([0-9]+)"));
         WebURLPattern.Result result = requireMatch(
-                pattern.exec(WebURLPattern.newBuilder().setPathPattern("/books/42")));
+                pattern.match(WebURLPattern.newBuilder().setPathPattern("/books/42")));
 
         assertEquals("42", result.getPath().getWebGroup("id"));
         assertEquals("42", result.getPath().group(1));
@@ -214,7 +214,7 @@ public final class WebURLPatternTest {
         WebURLPattern nonCapturing = WebURLPattern.compile(
                 WebURLPattern.newBuilder().setPathPattern("/books/:id(a(?:b))"));
         WebURLPattern.Result nonCapturingResult = requireMatch(
-                nonCapturing.exec(WebURLPattern.newBuilder().setPathPattern("/books/ab")));
+                nonCapturing.match(WebURLPattern.newBuilder().setPathPattern("/books/ab")));
         assertEquals("ab", nonCapturingResult.getPath().getWebGroup("id"));
     }
 
@@ -354,9 +354,9 @@ public final class WebURLPatternTest {
         WebURLPattern pattern = WebURLPattern.compile(WebURLPattern.newBuilder().setPathPattern("/foo"));
 
         assertFalse(pattern.test("not a url"));
-        assertNull(pattern.exec("not a url"));
+        assertNull(pattern.match("not a url"));
         assertFalse(pattern.test(WebURLPattern.newBuilder().setPortPattern("99999")));
-        assertNull(pattern.exec(WebURLPattern.newBuilder().setPortPattern("99999")));
+        assertNull(pattern.match(WebURLPattern.newBuilder().setPortPattern("99999")));
     }
 
     /// Requires a non-null match result.

@@ -14,7 +14,7 @@
   `getWebPassword()`, `getWebHost()`, `getWebHostname()`, `getWebPort()`, `getWebPathname()`,
   `getWebSearch()`, and `getWebHash()`.
 - Added `org.glavo.url.pattern.WebURLPattern`, `WebURLPatternParser`, and `WebURLPatternSyntaxException` for precompiled WHATWG URLPattern-style
-  matching with component builders, shorthand string patterns, base URL handling, `test`, `exec`,
+  matching with component builders, shorthand string patterns, base URL handling, `test`, `match`,
   capture groups, `ignoreCase`, and `hasRegExpGroups()`.
   `WebURLPatternParser` owns compilation policy; derive case-insensitive parsers with
   `withIgnoreCase()`, and configure user-written regular-expression elements with `RegExpPolicy.SUPPORTED`,

@@ -94,11 +94,11 @@ public final class WebURLPatternWptTest {
         JsonElement expectedMatch = testCase.get("expected_match");
         if (expectedMatch != null && expectedMatch.isJsonPrimitive()
                 && expectedMatch.getAsString().equals("error")) {
-            assertThrows(IllegalArgumentException.class, () -> exec(pattern, inputs));
+            assertThrows(IllegalArgumentException.class, () -> match(pattern, inputs));
             return;
         }
 
-        @Nullable WebURLPattern.Result result = exec(pattern, inputs);
+        @Nullable WebURLPattern.Result result = match(pattern, inputs);
         if (expectedMatch == null || expectedMatch.isJsonNull()) {
             assertNull(result);
             return;
@@ -132,22 +132,22 @@ public final class WebURLPatternWptTest {
         }
     }
 
-    /// Executes a compiled pattern against the WPT `inputs` field.
-    private static @Nullable WebURLPattern.Result exec(WebURLPattern pattern, JsonArray inputs) {
+    /// Matches a compiled pattern against the WPT `inputs` field.
+    private static @Nullable WebURLPattern.Result match(WebURLPattern pattern, JsonArray inputs) {
         if (inputs.isEmpty()) {
-            return pattern.exec(WebURLPattern.newBuilder());
+            return pattern.match(WebURLPattern.newBuilder());
         }
         JsonElement first = inputs.get(0);
         if (first.isJsonPrimitive()) {
             if (inputs.size() > 1 && inputs.get(1).isJsonPrimitive()) {
-                return pattern.exec(first.getAsString(), inputs.get(1).getAsString());
+                return pattern.match(first.getAsString(), inputs.get(1).getAsString());
             }
-            return pattern.exec(first.getAsString());
+            return pattern.match(first.getAsString());
         }
         if (inputs.size() > 1 && inputs.get(1).isJsonPrimitive()) {
             throw new IllegalArgumentException("URLPattern init object input cannot be matched with a base URL");
         }
-        return pattern.exec(builder(first.getAsJsonObject()));
+        return pattern.match(builder(first.getAsJsonObject()));
     }
 
     /// Converts a WPT init object into a builder.

@@ -139,34 +139,34 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     @Contract(pure = true)
     boolean test(Builder input);
 
-    /// Executes this pattern against a URL string.
+    /// Matches this pattern against a URL string and returns the match result.
     ///
     /// @param input the URL input string
     /// @return the match result, or `null` when the input does not match or is not a valid URL
     @Contract(pure = true)
-    @Nullable Result exec(String input);
+    @Nullable Result match(String input);
 
-    /// Executes this pattern against a URL string with a base URL.
+    /// Matches this pattern against a URL string with a base URL and returns the match result.
     ///
     /// @param input the URL input string
     /// @param baseURL the base URL used for relative input
     /// @return the match result, or `null` when the input does not match or cannot be parsed
     @Contract(pure = true)
-    @Nullable Result exec(String input, String baseURL);
+    @Nullable Result match(String input, String baseURL);
 
-    /// Executes this pattern against a parsed URL.
+    /// Matches this pattern against a parsed URL and returns the match result.
     ///
     /// @param input the URL input value
     /// @return the match result, or `null` when the input does not match
     @Contract(pure = true)
-    @Nullable Result exec(WebURL input);
+    @Nullable Result match(WebURL input);
 
-    /// Executes this pattern against component input.
+    /// Matches this pattern against component input and returns the match result.
     ///
     /// @param input the component input builder
     /// @return the match result, or `null` when the input does not match or cannot be canonicalized
     @Contract(pure = true)
-    @Nullable Result exec(Builder input);
+    @Nullable Result match(Builder input);
 
     /// Returns the scheme component pattern string without a trailing colon.
     @Contract(pure = true)
