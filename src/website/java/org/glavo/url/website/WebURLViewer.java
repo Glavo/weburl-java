@@ -42,12 +42,21 @@ public final class WebURLViewer {
             "weburl-pathname",
             "weburl-search",
             "weburl-hash",
+            "weburl-serialized-url",
+            "weburl-display-string",
+            "weburl-rfc2396-string",
+            "weburl-scheme",
+            "weburl-raw-authority",
+            "weburl-decoded-authority",
+            "weburl-raw-user-info",
+            "weburl-decoded-user-info",
             "weburl-raw-username",
             "weburl-decoded-username",
             "weburl-raw-password",
             "weburl-decoded-password",
-            "weburl-raw-authority",
-            "weburl-decoded-authority",
+            "weburl-java-host",
+            "weburl-java-port",
+            "weburl-raw-port",
             "weburl-raw-path",
             "weburl-decoded-path",
             "weburl-raw-query",
@@ -145,12 +154,21 @@ public final class WebURLViewer {
         setComparedValue("weburl-pathname", url.getWebPathname());
         setComparedValue("weburl-search", url.getWebSearch());
         setComparedValue("weburl-hash", url.getWebHash());
+        setJavaValue("weburl-serialized-url", display(url.toString()));
+        setJavaValue("weburl-display-string", display(url.toDisplayString()));
+        setJavaValue("weburl-rfc2396-string", display(url.toRFC2396String()));
+        setJavaValue("weburl-scheme", display(url.getScheme()));
+        setJavaValue("weburl-raw-authority", displayNullable(url.getRawAuthority()));
+        setJavaValue("weburl-decoded-authority", displayNullable(url.getAuthority()));
+        setJavaValue("weburl-raw-user-info", displayNullable(url.getRawUserInfo()));
+        setJavaValue("weburl-decoded-user-info", displayNullable(url.getUserInfo()));
         setJavaValue("weburl-raw-username", displayNullable(url.getRawUsername()));
         setJavaValue("weburl-decoded-username", displayNullable(url.getUsername()));
         setJavaValue("weburl-raw-password", displayNullable(url.getRawPassword()));
         setJavaValue("weburl-decoded-password", displayNullable(url.getPassword()));
-        setJavaValue("weburl-raw-authority", displayNullable(url.getRawAuthority()));
-        setJavaValue("weburl-decoded-authority", displayNullable(url.getAuthority()));
+        setJavaValue("weburl-java-host", displayNullable(url.getHost()));
+        setJavaValue("weburl-java-port", Integer.toString(url.getPort()));
+        setJavaValue("weburl-raw-port", displayNullable(url.getRawPort()));
         setJavaValue("weburl-raw-path", display(url.getRawPath()));
         setJavaValue("weburl-decoded-path", display(url.getPath()));
         setJavaValue("weburl-raw-query", displayNullable(url.getRawQuery()));

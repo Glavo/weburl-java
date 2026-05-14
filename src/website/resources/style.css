@@ -260,11 +260,11 @@ dd[data-value-state="empty"] {
 }
 
 .dense-table {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .dense-table div {
-  grid-template-columns: 140px minmax(0, 1fr);
+  grid-template-columns: 160px minmax(0, 1fr);
 }
 
 @media (max-width: 920px) {
