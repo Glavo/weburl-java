@@ -29,6 +29,13 @@
   standard-compatible regular-expression semantics. The URLPattern API lives in the separate
   `org.glavo.url.pattern` package.
 
+### Improvements
+
+- Expanded `WebURLPatternParser.RegExpPolicy.SUPPORTED` to handle additional ECMAScript regular-expression
+  syntax, including whitespace escapes, NUL/control/hex/Unicode escapes, empty character classes, empty
+  negated character classes, backspace escapes inside character classes, and ampersand literals inside
+  character classes.
+
 ## 0.2.0 (2026-05-12)
 
 ### Breaking Changes

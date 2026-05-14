@@ -22,6 +22,23 @@ import org.jetbrains.annotations.Nullable;
 /// Processes the supported ECMAScript regular-expression subset used by URLPattern.
 @NotNullByDefault
 final class ECMAScriptRegExpProcessor {
+    /// Java Pattern character-class content for the ECMAScript whitespace set.
+    private static final String ECMASCRIPT_WHITESPACE_CLASS_CONTENT =
+            "\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}"
+                    + "\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}";
+
+    /// Java Pattern character class for ECMAScript `\s`.
+    private static final String ECMASCRIPT_WHITESPACE_CLASS = "[" + ECMASCRIPT_WHITESPACE_CLASS_CONTENT + "]";
+
+    /// Java Pattern character class for ECMAScript `\S`.
+    private static final String ECMASCRIPT_NON_WHITESPACE_CLASS = "[^" + ECMASCRIPT_WHITESPACE_CLASS_CONTENT + "]";
+
+    /// Java Pattern character class that never matches.
+    private static final String NEVER_MATCH_CLASS = "[^\\s\\S]";
+
+    /// Java Pattern character class that matches any code unit.
+    private static final String ANY_CODE_UNIT_CLASS = "[\\s\\S]";
+
     /// Creates no instances.
     private ECMAScriptRegExpProcessor() {
     }
@@ -70,7 +87,7 @@ final class ECMAScriptRegExpProcessor {
                         canQuantify = true;
                     }
                     case '\\' -> {
-                        parseEscape(false);
+                        output.append(parseEscape(false).source());
                         canQuantify = true;
                     }
                     case '.' -> {
@@ -110,7 +127,6 @@ final class ECMAScriptRegExpProcessor {
 
         /// Parses a character class.
         private void parseCharacterClass() {
-            int start = index;
             if (containsClassSetSyntax(index)) {
                 ClassSetParser parser = new ClassSetParser(input, index);
                 output.append(parser.parse());
@@ -118,38 +134,48 @@ final class ECMAScriptRegExpProcessor {
                 return;
             }
 
+            StringBuilder classOutput = new StringBuilder("[");
             index++;
+            boolean negated = false;
             if (index < input.length() && input.charAt(index) == '^') {
+                negated = true;
+                classOutput.append('^');
                 index++;
             }
 
             boolean hasContent = false;
-            boolean escaped = false;
+            boolean previousClassEscape = false;
             while (index < input.length()) {
                 char c = input.charAt(index);
-                if (escaped) {
-                    escaped = false;
-                    hasContent = true;
-                    index++;
-                    continue;
-                }
                 if (c == '\\') {
-                    parseEscape(true);
+                    EscapeResult escape = parseEscape(true);
+                    classOutput.append(escape.source());
                     hasContent = true;
+                    previousClassEscape = escape.characterClass();
                     continue;
                 }
                 if (c == ']') {
                     if (!hasContent) {
-                        throw unsupported();
+                        output.append(negated ? ANY_CODE_UNIT_CLASS : NEVER_MATCH_CLASS);
+                        index++;
+                        return;
                     }
                     index++;
-                    output.append(input, start, index);
+                    classOutput.append(']');
+                    output.append(classOutput);
                     return;
                 }
-                if (c == '[' || c == '&' || c == '-' && index + 1 < input.length() && input.charAt(index + 1) == '-') {
+                if (c == '[' || c == '&' && index + 1 < input.length() && input.charAt(index + 1) == '&'
+                        || c == '-' && index + 1 < input.length() && input.charAt(index + 1) == '-') {
                     throw unsupported();
                 }
+                if (c == '-' && index + 1 < input.length() && input.charAt(index + 1) != ']'
+                        && (previousClassEscape || nextIsCharacterClassEscape(index + 1))) {
+                    throw unsupported();
+                }
+                classOutput.append(c);
                 hasContent = true;
+                previousClassEscape = false;
                 index++;
             }
             throw unsupported();
@@ -175,7 +201,7 @@ final class ECMAScriptRegExpProcessor {
         }
 
         /// Parses an escape sequence.
-        private void parseEscape(boolean inClass) {
+        private EscapeResult parseEscape(boolean inClass) {
             int start = index;
             index++;
             if (index >= input.length()) {
@@ -185,24 +211,59 @@ final class ECMAScriptRegExpProcessor {
             char escaped = input.charAt(index);
             if (isAllowedCharacterClassEscape(escaped)) {
                 index++;
-                if (!inClass) {
-                    output.append(input, start, index);
+                return new EscapeResult(input.substring(start, index), true);
+            }
+            if (escaped == 's') {
+                index++;
+                return new EscapeResult(inClass ? ECMASCRIPT_WHITESPACE_CLASS_CONTENT : ECMASCRIPT_WHITESPACE_CLASS,
+                        true);
+            }
+            if (escaped == 'S') {
+                if (inClass) {
+                    throw unsupported();
                 }
-                return;
+                index++;
+                return new EscapeResult(ECMASCRIPT_NON_WHITESPACE_CLASS, true);
             }
             if (isAllowedControlEscape(escaped)) {
                 index++;
-                if (!inClass) {
-                    output.append(input, start, index);
+                return new EscapeResult(input.substring(start, index), false);
+            }
+            if (escaped == 'v') {
+                index++;
+                return new EscapeResult("\\x{b}", false);
+            }
+            if (escaped == '0') {
+                index++;
+                if (index < input.length() && Character.isDigit(input.charAt(index))) {
+                    throw unsupported();
                 }
-                return;
+                return new EscapeResult("\\x{0}", false);
+            }
+            if (escaped == 'b' && inClass) {
+                index++;
+                return new EscapeResult("\\x{8}", false);
+            }
+            if (escaped == 'c') {
+                index++;
+                if (index >= input.length() || !isAsciiLetter(input.charAt(index))) {
+                    throw unsupported();
+                }
+                int value = input.charAt(index) & 0x1f;
+                index++;
+                return new EscapeResult(codePointEscape(value), false);
+            }
+            if (escaped == 'x') {
+                index++;
+                return new EscapeResult(codePointEscape(parseFixedHexDigits(2)), false);
+            }
+            if (escaped == 'u') {
+                index++;
+                return new EscapeResult(codePointEscape(parseUnicodeEscape()), false);
             }
             if (isAllowedSyntaxEscape(escaped, inClass)) {
                 index++;
-                if (!inClass) {
-                    output.append(input, start, index);
-                }
-                return;
+                return new EscapeResult(input.substring(start, index), false);
             }
             throw unsupported();
         }
@@ -296,6 +357,67 @@ final class ECMAScriptRegExpProcessor {
             return value;
         }
 
+        /// Parses the next fixed-size hexadecimal escape payload.
+        ///
+        /// @param length number of hexadecimal digits
+        /// @return the parsed code point
+        private int parseFixedHexDigits(int length) {
+            if (index + length > input.length()) {
+                throw unsupported();
+            }
+
+            int value = 0;
+            for (int i = 0; i < length; i++) {
+                int digit = hexDigit(input.charAt(index));
+                if (digit < 0) {
+                    throw unsupported();
+                }
+                value = value * 16 + digit;
+                index++;
+            }
+            return value;
+        }
+
+        /// Parses a fixed-width or braced Unicode escape payload.
+        ///
+        /// @return the parsed code point
+        private int parseUnicodeEscape() {
+            if (index < input.length() && input.charAt(index) == '{') {
+                index++;
+                int start = index;
+                int value = 0;
+                while (index < input.length() && input.charAt(index) != '}') {
+                    int digit = hexDigit(input.charAt(index));
+                    if (digit < 0) {
+                        throw unsupported();
+                    }
+                    if (value > (Character.MAX_CODE_POINT - digit) / 16) {
+                        throw unsupported();
+                    }
+                    value = value * 16 + digit;
+                    index++;
+                }
+                if (index == start || index >= input.length() || input.charAt(index) != '}'
+                        || !Character.isValidCodePoint(value)) {
+                    throw unsupported();
+                }
+                index++;
+                return value;
+            }
+            int value = parseFixedHexDigits(4);
+            if (Character.isHighSurrogate((char) value) && index + 6 <= input.length()
+                    && input.charAt(index) == '\\' && input.charAt(index + 1) == 'u') {
+                int savedIndex = index;
+                index += 2;
+                int trailing = parseFixedHexDigits(4);
+                if (Character.isLowSurrogate((char) trailing)) {
+                    return Character.toCodePoint((char) value, (char) trailing);
+                }
+                index = savedIndex;
+            }
+            return value;
+        }
+
         /// Consumes a lazy quantifier suffix and rejects possessive quantifiers.
         private void consumeLazyMarker() {
             if (index >= input.length()) {
@@ -335,10 +457,63 @@ final class ECMAScriptRegExpProcessor {
             };
         }
 
+        /// Returns whether an escape at the given index is a character-class escape.
+        ///
+        /// @param escapeIndex index of the backslash
+        /// @return `true` when the escape denotes a character class
+        private boolean nextIsCharacterClassEscape(int escapeIndex) {
+            return escapeIndex < input.length() && input.charAt(escapeIndex) == '\\'
+                    && escapeIndex + 1 < input.length()
+                    && isCharacterClassEscape(input.charAt(escapeIndex + 1));
+        }
+
+        /// Returns whether the character names an ECMAScript character-class escape.
+        private static boolean isCharacterClassEscape(char c) {
+            return c == 'd' || c == 'D' || c == 's' || c == 'S' || c == 'w' || c == 'W';
+        }
+
+        /// Returns whether the character is an ASCII letter.
+        private static boolean isAsciiLetter(char c) {
+            return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z';
+        }
+
+        /// Returns the hexadecimal value of a digit, or `-1` when it is not hexadecimal.
+        private static int hexDigit(char c) {
+            if (c >= '0' && c <= '9') {
+                return c - '0';
+            }
+            if (c >= 'A' && c <= 'F') {
+                return c - 'A' + 10;
+            }
+            if (c >= 'a' && c <= 'f') {
+                return c - 'a' + 10;
+            }
+            return -1;
+        }
+
+        /// Returns a Java Pattern code-point escape.
+        private static String codePointEscape(int codePoint) {
+            if (!Character.isValidCodePoint(codePoint)) {
+                throw new WebURLPatternSyntaxException("Unsupported URLPattern regular-expression syntax");
+            }
+            if (codePoint >= Character.MIN_SURROGATE && codePoint <= Character.MAX_SURROGATE) {
+                String hex = Integer.toHexString(codePoint);
+                return "\\u" + "0".repeat(4 - hex.length()) + hex;
+            }
+            return "\\x{" + Integer.toHexString(codePoint) + "}";
+        }
+
         /// Returns whether a named group name character is supported.
         private static boolean isGroupNameChar(char c) {
             return c == '_' || c == '$' || c >= '0' && c <= '9'
                     || c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z';
+        }
+
+        /// Parsed Java Pattern source for one ECMAScript escape.
+        ///
+        /// @param source Java Pattern source
+        /// @param characterClass whether the escape denotes a character class rather than one code point
+        private record EscapeResult(String source, boolean characterClass) {
         }
     }
 
@@ -484,7 +659,7 @@ final class ECMAScriptRegExpProcessor {
                 throw unsupported();
             }
             char c = input.charAt(index);
-            if (c == '[' || c == ']' || c == '\\' || c == '&' || c == '-') {
+            if (c == '[' || c == ']' || c == '\\' || c == '&' && startsWith("&&") || c == '-') {
                 throw unsupported();
             }
             index++;

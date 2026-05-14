@@ -22,6 +22,8 @@ import org.junit.jupiter.api.Test;
 import java.util.regex.Pattern;
 
 import static org.glavo.url.internal.pattern.ECMAScriptRegExpProcessorTest262Support.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Tests core test262 regular-expression cases for `ECMAScriptRegExpProcessor`.
 @NotNullByDefault
@@ -829,7 +831,6 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A1_T14.js
-    @Disabled("Ampersand literals inside character classes are currently rejected by the supported subset")
     @Test
     public void punctuationCharacterClassWithQuantifier() {
         assertFinds("[*&$]{3}", "123*&$abc", "*&$");
@@ -1280,28 +1281,24 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.7_A3_T1.js
-    @Disabled("The whitespace class escape is not currently supported")
     @Test
     public void plusQuantifierWithWhitespaceEscape() {
         assertFinds("\\s+java\\s+", "language  java\n", "  java\n");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.7_A3_T2.js
-    @Disabled("The whitespace class escape is not currently supported")
     @Test
     public void plusQuantifierWithWhitespaceEscapeFindsTabbedInput() {
         assertFinds("\\s+java\\s+", "\t java object", "\t java ");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.7_A3_T3.js
-    @Disabled("The whitespace class escape is not currently supported")
     @Test
     public void plusQuantifierWithWhitespaceEscapeDoesNotMatchPrefixOnlyInput() {
         assertDoesNotFind("\\s+java\\s+", "\t javax package");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.7_A3_T4.js
-    @Disabled("The whitespace class escape is not currently supported")
     @Test
     public void plusQuantifierWithWhitespaceEscapeDoesNotMatchMissingLeadingWhitespace() {
         assertDoesNotFind("\\s+java\\s+", "java\n\nobject");
@@ -1371,14 +1368,12 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.7_A4_T18.js
-    @Disabled("The whitespace class escape is not currently supported")
     @Test
     public void starQuantifierWithDigitAndWhitespaceClassesBeforeLiteral() {
         assertFinds("[\\d]*[\\s]*bc.", "abcdef", "bcd");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.7_A4_T19.js
-    @Disabled("The whitespace class escape is not currently supported")
     @Test
     public void starQuantifierWithDigitAndWhitespaceClassesAfterLiteral() {
         assertFinds("bc..[\\d]*[\\s]*", "abcdef", "bcde");
@@ -1420,39 +1415,47 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.10_A1.3_T1.js
-    @Disabled("The vertical tab escape is not currently in the supported control-escape subset")
     @Test
     public void verticalTabEscape() {
         assertFinds("\\v", "\u000b", "\u000b");
+        assertFinds("\\v\\v", "a\u000b\u000bb", "\u000b\u000b");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.10_A2.1_T1.js
-    @Disabled("Control-letter escapes are not currently supported")
     @Test
     public void uppercaseControlLetterEscapes() {
-        assertFinds("\\cA", "\u0001", "\u0001");
+        for (char c = 'A'; c <= 'Z'; c++) {
+            String expected = Character.toString((char) (c % 32));
+            assertFinds("\\c" + c, expected, expected);
+        }
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.10_A2.1_T2.js
-    @Disabled("Control-letter escapes are not currently supported")
     @Test
     public void lowercaseControlLetterEscapes() {
-        assertFinds("\\ca", "\u0001", "\u0001");
+        for (char c = 'a'; c <= 'z'; c++) {
+            String expected = Character.toString((char) (c % 32));
+            assertFinds("\\c" + c, expected, expected);
+        }
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.10_A3.1_T1.js
-    @Disabled("Hexadecimal escapes are not currently supported")
     @Test
     public void hexadecimalEscapes() {
         assertFinds("\\x00", "\u0000", "\u0000");
+        assertFinds("\\x01", "\u0001", "\u0001");
+        assertFinds("\\x0A", "\n", "\n");
         assertFinds("\\xFF", "\u00ff", "\u00ff");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.10_A4.1_T1.js
-    @Disabled("Unicode escapes are not currently supported")
     @Test
     public void unicodeEscapes() {
         assertFinds("\\u0000", "\u0000", "\u0000");
+        assertFinds("\\u0001", "\u0001", "\u0001");
+        assertFinds("\\u000A", "\n", "\n");
+        assertFinds("\\u00FF", "\u00ff", "\u00ff");
+        assertFinds("\\u0FFF", "\u0fff", "\u0fff");
         assertFinds("\\uFFFF", "\uffff", "\uffff");
     }
 
@@ -1464,7 +1467,6 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.11_A1_T1.js
-    @Disabled("The NUL escape is not currently supported")
     @Test
     public void nulEscape() {
         assertFinds("\\0", "\u0000", "\u0000");
@@ -1513,14 +1515,12 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A1_T1.js
-    @Disabled("Empty character classes are not currently translated to a never-match class")
     @Test
     public void emptyCharacterClass() {
         assertDoesNotFind("[]a", "\u0000a\u0000a");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A1_T2.js
-    @Disabled("Empty character classes are not currently translated to a never-match class")
     @Test
     public void trailingEmptyCharacterClass() {
         assertDoesNotFind("a[]", "\u0000a\u0000a");
@@ -1548,77 +1548,66 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A1_T17.js
-    @Disabled("Empty character classes are not currently translated to a never-match class")
     @Test
     public void emptyCharacterClassDoesNotMatchMixedInput() {
         assertDoesNotFind("[]", "a[b\n[]\tc]d");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A2_T1.js
-    @Disabled("The JavaScript empty negated character class form is not currently supported")
     @Test
     public void emptyNegatedCharacterClass() {
         assertFinds("[^]a", "a\naba", "\na", Pattern.MULTILINE);
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A2_T2.js
-    @Disabled("The JavaScript empty negated character class form is not currently supported")
     @Test
     public void emptyNegatedCharacterClassAfterLiteral() {
         assertFinds("a[^]", "   a\t\n", "a\t");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A2_T3.js
-    @Disabled("The whitespace class escape is not currently supported")
     @Test
     public void negatedRangeClassFollowedByWhitespaceEscape() {
         assertFinds("a[^b-z]\\s+", "ab an az aY n", "aY ");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A2_T4.js
-    @Disabled("Backspace escapes inside character classes are not currently supported")
     @Test
     public void negatedBackspaceCharacterClass() {
         assertFinds("[^\\b]+", "easy\bto\u0008ride", "easy");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A2_T8.js
-    @Disabled("The JavaScript empty negated character class form is not currently supported")
     @Test
     public void emptyNegatedCharacterClassMatchesFirstCharacter() {
         assertFinds("[^]", "abc#$%def%&*@ghi", "a");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A3_T1.js
-    @Disabled("Backspace escapes inside character classes are not currently supported")
     @Test
     public void backspaceCharacterClass() {
         assertFinds(".[\\b].", "abc\bdef", "c\bd");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A3_T2.js
-    @Disabled("Backspace escapes inside character classes are not currently supported")
     @Test
     public void repeatedBackspaceCharacterClass() {
         assertFinds("c[\\b]{3}d", "abc\b\b\bdef", "c\b\b\bd");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A3_T3.js
-    @Disabled("Backspace escapes inside character classes are not currently supported")
     @Test
     public void negatedBracketAndBackspaceClassStopsAtBackspace() {
         assertFinds("[^\\[\\b\\]]+", "abc\bdef", "abc");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/S15.10.2.13_A3_T4.js
-    @Disabled("Backspace escapes inside character classes are not currently supported")
     @Test
     public void negatedBracketAndBackspaceClassMatchesPlainInput() {
         assertFinds("[^\\[\\b\\]]+", "abcdef", "abcdef");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/CharacterClassEscapes/character-class-whitespace-class-escape-positive-cases.js
-    @Disabled("The whitespace class escape is not currently supported")
     @Test
     public void whitespaceClassEscapePositiveCases() {
         assertMatches("\\s", " ");
@@ -1627,7 +1616,6 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/CharacterClassEscapes/character-class-whitespace-class-escape-negative-cases.js
-    @Disabled("The whitespace class escape is not currently supported")
     @Test
     public void whitespaceClassEscapeNegativeCases() {
         assertDoesNotMatch("\\s", "a");
@@ -1635,7 +1623,6 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/CharacterClassEscapes/character-class-non-whitespace-class-escape-positive-cases.js
-    @Disabled("The non-whitespace class escape is not currently supported")
     @Test
     public void nonWhitespaceClassEscapePositiveCases() {
         assertMatches("\\S", "a");
@@ -1643,7 +1630,6 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/CharacterClassEscapes/character-class-non-whitespace-class-escape-negative-cases.js
-    @Disabled("The non-whitespace class escape is not currently supported")
     @Test
     public void nonWhitespaceClassEscapeNegativeCases() {
         assertDoesNotMatch("\\S", " ");
@@ -1680,16 +1666,29 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/character-class-escape-non-whitespace-u180e.js
     @Test
-    @Disabled("The non-whitespace class escape is not currently supported")
     public void test262CharacterClassEscapeNonWhitespaceU180e() {
-        assertUnsupported("\\S+");
+        assertMatches("\\S+", "\u180e");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/character-class-escape-non-whitespace.js
     @Test
-    @Disabled("The non-whitespace class escape is not currently supported")
     public void test262CharacterClassEscapeNonWhitespace() {
-        assertUnsupported("\\S+");
+        Pattern pattern = compileProcessed("\\S+");
+        for (int codePoint = 0; codePoint < 0x10000; codePoint++) {
+            if (codePoint == 0x180e || codePoint == 0xfeff) {
+                continue;
+            }
+
+            String input = Character.toString((char) codePoint);
+            int currentCodePoint = codePoint;
+            if (isTest262WhitespaceCodePoint(currentCodePoint)) {
+                assertFalse(pattern.matcher(input).matches(),
+                        () -> "\\S+ should not match whitespace charCode " + currentCodePoint);
+            } else {
+                assertTrue(pattern.matcher(input).matches(),
+                        () -> "\\S+ should match non-whitespace charCode " + currentCodePoint);
+            }
+        }
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/dotall/with-dotall-unicode.js
@@ -1718,18 +1717,16 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/u180e.js
     @Test
-    @Disabled("Whitespace class semantics for U+180E are not currently modeled")
     public void test262U180e() {
-        assertUnsupported("\\s+");
-        assertUnsupported("\\S+");
+        assertDoesNotMatch("\\s+", "\u180e");
+        assertMatches("\\S+", "\u180e");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/unicode_character_class_backspace_escape.js
     @Test
-    @Disabled("Unicode-mode escape restrictions are not currently modeled")
     public void test262UnicodeCharacterClassBackspaceEscape() {
-        assertUnsupported("[\\b]");
-        assertUnsupported("[\\b-A]");
+        assertMatches("[\\b]", "\u0008");
+        assertMatches("[\\b-A]", "A");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/unicode_full_case_folding.js
@@ -2479,5 +2476,17 @@ public final class ECMAScriptRegExpProcessorTest262CoreTest {
         assertUnsupported("[ \\n\\t\\r]+");
         assertUnsupported("[A-Za-z_:]|[^\\x00-\\x7F]");
         assertUnsupported("([A-Za-z_:]|[^\\x00-\\x7F])([A-Za-z0-9_:.-]|[^\\x00-\\x7F])*");
+    }
+
+    /// Returns whether a code point is listed as whitespace by the ported test262 test.
+    ///
+    /// @param codePoint the BMP code point
+    /// @return `true` when the code point is in the test262 whitespace list
+    private static boolean isTest262WhitespaceCodePoint(int codePoint) {
+        return switch (codePoint) {
+            case 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x0020, 0x00a0, 0x1680,
+                    0x2028, 0x2029, 0x202f, 0x205f, 0x3000 -> true;
+            default -> codePoint >= 0x2000 && codePoint <= 0x200a;
+        };
     }
 }

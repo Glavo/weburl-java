@@ -51,10 +51,21 @@ public final class RegExpElementProcessorTest {
         assertSupported("a|b");
         assertSupported("[a-z]");
         assertSupported("[^abc]");
+        assertSupported("[*&$]");
         assertSupported("[\\d\\D\\w\\W\\-]");
         assertSupported("\\d+\\D*\\w?\\W{2}");
         assertSupported("\\n\\r\\t\\f");
+        assertTranslated("\\n\\r\\t\\f\\v", "\\n\\r\\t\\f\\x{b}");
         assertSupported("\\.\\+\\*\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\\\/");
+        assertTranslated("[]", "[^\\s\\S]");
+        assertTranslated("[^]", "[\\s\\S]");
+        assertTranslated("\\s", "[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}"
+                + "\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]");
+        assertTranslated("\\S", "[^\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}"
+                + "\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]");
+        assertTranslated("\\0\\cA\\ca\\x41\\u0041\\u{1f600}", "\\x{0}\\x{1}\\x{1}\\x{41}\\x{41}\\x{1f600}");
+        assertTranslated("\\uD83D\\uDE00", "\\x{1f600}");
+        assertTranslated("\\uD83D\\u0041", "\\ud83d\\x{41}");
         assertSupported("a{1}b{2,}c{3,5}?");
         assertSupported("a+?");
         assertSupported("(?:ab)");
@@ -120,6 +131,12 @@ public final class RegExpElementProcessorTest {
         assertMatches("[[a-c][x-z]]", "y");
         assertDoesNotMatch("[[a-c][x-z]]", "m");
         assertDoesNotMatch("[a&&b]", "a");
+
+        assertMatches("[*&$]{3}", "*&$");
+        assertDoesNotMatch("[]", "a");
+        assertDoesNotMatch("[]", "");
+        assertMatches("[^]", "a");
+        assertMatches("[^]", "\n");
     }
 
     /// Tests escape matching with the supported policy.
@@ -139,6 +156,20 @@ public final class RegExpElementProcessorTest {
 
         assertMatches("\\n\\r\\t\\f", "\n\r\t\f");
         assertDoesNotMatch("\\n\\r\\t\\f", "nr");
+
+        assertMatches("\\s+", " \n\t");
+        assertMatches("\\s", "\u00a0");
+        assertMatches("\\s", "\ufeff");
+        assertDoesNotMatch("\\s", "\u180e");
+
+        assertMatches("\\S+", "\u180eA");
+        assertDoesNotMatch("\\S", " ");
+        assertDoesNotMatch("\\S", "\ufeff");
+
+        assertMatches("\\v\\0\\cA\\ca\\x41\\u0041\\u{1f600}", "\u000b\u0000\u0001\u0001AA\uD83D\uDE00");
+        assertMatches("\\uD83D\\uDE00", "\uD83D\uDE00");
+        assertMatches("\\uD83D\\u0041", "\uD83D" + "A");
+        assertMatches(".[\\b].", "a\bb");
 
         assertMatches("\\.\\+\\*\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\\\/", ".+*?^${}()|[]\\/");
         assertDoesNotMatch("\\.\\+\\*\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\\\/", ".+*?^${}()|[]/");
@@ -186,17 +217,24 @@ public final class RegExpElementProcessorTest {
         assertUnsupported("abc$");
         assertUnsupported("\\b");
         assertUnsupported("\\p{ASCII}");
-        assertUnsupported("\\u0061");
+        assertUnsupported("\\07");
+        assertUnsupported("\\c0");
+        assertUnsupported("\\x0");
+        assertUnsupported("\\u123");
+        assertUnsupported("\\u{}");
+        assertUnsupported("\\u{110000}");
         assertUnsupported("\\1");
         assertUnsupported("a*+");
         assertUnsupported("a**");
         assertUnsupported("a{2,1}");
         assertUnsupported("a{}");
-        assertUnsupported("[]");
         assertUnsupported("[a&&b&&]");
         assertUnsupported("[a&&b--c]");
         assertUnsupported("[^a&&b]");
         assertUnsupported("[a[b]");
+        assertUnsupported("[\\d-a]");
+        assertUnsupported("[a-\\d]");
+        assertUnsupported("[\\S]");
         assertUnsupported("\\");
     }
 

@@ -33,13 +33,17 @@ Shared helpers:
 `src/test/java/org/glavo/url/internal/pattern/ECMAScriptRegExpProcessorTest262Support.java`
 
 - Source-linked Java test methods: 806
-- Enabled Java test methods: 186
-- Disabled Java test methods: 620
+- Enabled Java test methods: 219
+- Disabled Java test methods: 587
 - Unique fixed-commit Test262 source links: 806
 - Runtime-generated Unicode property escape dynamic tests: 3520
 
 Latest porting increment:
 
+- Enabled the ported Test262 cases covered by the newly supported ECMAScript whitespace and
+  non-whitespace escapes, NUL/control/hex/Unicode escapes, vertical-tab escape, empty character
+  classes, empty negated character classes, backspace escapes inside character classes, and
+  ampersand literals inside character classes.
 - Replaced the generated `RegExp/property-escapes/generated/*.js` and
   `RegExp/property-escapes/generated/strings/*.js` Java ports with runtime dynamic tests that read
   `external/unicode-property-escapes-tests/output`.
@@ -74,14 +78,14 @@ parts.
 | [`RegExp/S15.10.2*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp) | 291 | Mixed | Core ES5 regexp grammar and matching behavior. |
 | [`RegExp/15.10.2*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp) | 2 | Enabled syntax rejection if currently supported | Modernized syntax-error coverage for reversed ranges and quantifiers. |
 | [`RegExp/15.10.4.1-2.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/15.10.4.1-2.js) | 1 | Enabled syntax rejection if currently supported | Invalid trailing escape source. |
-| [`RegExp/CharacterClassEscapes/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/CharacterClassEscapes) | 12 | Mixed | `\d`, `\D`, `\w`, and `\W` should be enabled; `\s` and `\S` are disabled until supported. |
+| [`RegExp/CharacterClassEscapes/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/CharacterClassEscapes) | 12 | Mixed | `\d`, `\D`, `\s`, `\S`, `\w`, and `\W` cases are enabled where they map to URLPattern regexp elements. |
 | [`RegExp/dotall/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/dotall) | 4 | Disabled | JavaScript `s` flag semantics are not modeled by the processor. |
 | [`RegExp/lookBehind/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind) | 17 | Disabled | Lookbehind assertions are not supported. |
 | [`RegExp/named-groups/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/named-groups) | 36 | Mixed | ASCII named-group syntax can be enabled; backreferences, duplicate-name semantics, Unicode names, and string-method behavior are disabled or omitted. |
 | [`RegExp/property-escapes/**/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/property-escapes) | 613 | Disabled | Unicode property escapes are not supported. |
 | [`RegExp/regexp-modifiers/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/regexp-modifiers) | 70 | Disabled | Inline RegExp modifiers are not supported. |
 | [`RegExp/unicodeSets/**/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/unicodeSets) | 114 | Mixed | Finite ASCII class-set operations can be enabled; property escapes and string literals are disabled. |
-| [`RegExp/character-class-escape-non-whitespace*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp) | 2 | Disabled | `\S` is not supported. |
+| [`RegExp/character-class-escape-non-whitespace*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp) | 2 | Enabled | `\S` is translated with the ECMAScript whitespace set. |
 | [`RegExp/duplicate-named-capturing-groups-syntax.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/duplicate-named-capturing-groups-syntax.js) | 1 | Disabled | Duplicate named-group early-error validation is not implemented. |
 | [`RegExp/early-err-modifiers*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp) | 22 | Disabled | RegExp modifier flag syntax is not supported. |
 | [`RegExp/lookahead-quantifier-match-groups.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookahead-quantifier-match-groups.js) | 1 | Disabled | Lookahead assertions and nested capturing groups are not supported. |
@@ -89,14 +93,14 @@ parts.
 | [`RegExp/quantifier-integer-limit.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/quantifier-integer-limit.js) | 1 | Disabled or enabled syntax rejection | Quantifier integer bounds. |
 | [`RegExp/regexp-class-chars.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/regexp-class-chars.js) | 1 | Enabled | Forward slash inside character classes. |
 | [`RegExp/syntax-err-arithmetic-modifiers*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp) | 55 | Disabled | RegExp modifier arithmetic is not supported. |
-| [`RegExp/u180e.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/u180e.js) | 1 | Disabled | Depends on unsupported whitespace-class semantics. |
-| [`RegExp/unicode_*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp) | 14 | Disabled | Unicode-mode escape restrictions are not currently modeled. |
+| [`RegExp/u180e.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/u180e.js) | 1 | Enabled | U+180E is treated as non-whitespace. |
+| [`RegExp/unicode_*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp) | 14 | Mixed | Backspace class escapes are enabled; remaining Unicode-mode escape restrictions are disabled. |
 
 ## Root Unicode Files
 
-Port these root `unicode_*.js` sources as disabled tests unless support is added:
+Port these root `unicode_*.js` sources as disabled tests unless support is added. The
+`unicode_character_class_backspace_escape.js` source is currently enabled.
 
-- [`unicode_character_class_backspace_escape.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/unicode_character_class_backspace_escape.js)
 - [`unicode_full_case_folding.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/unicode_full_case_folding.js)
 - [`unicode_identity_escape.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/unicode_identity_escape.js)
 - [`unicode_restricted_brackets.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/unicode_restricted_brackets.js)
