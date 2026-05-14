@@ -26,13 +26,12 @@ import org.teavm.jso.JSBody;
 import org.teavm.jso.JSFunctor;
 import org.teavm.jso.JSObject;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 
 /// TeaVM entry point for the website's live URL viewer.
 @NotNullByDefault
 public final class WebURLViewer {
-    /// Display text for a java.net.URI component that has no corresponding API.
+    /// Display text for a JavaURI component that has no corresponding API.
     private static final String UNSUPPORTED = "(unsupported)";
 
     /// HTML ids for fields populated from the WebURL result.
@@ -202,18 +201,18 @@ public final class WebURLViewer {
         setJavaValue("weburl-java-decoded-query", displayNullable(url.getQuery()));
         setJavaValue("weburl-java-raw-fragment", displayNullable(url.getRawFragment()));
         setJavaValue("weburl-java-decoded-fragment", displayNullable(url.getFragment()));
-        renderURIFields(url);
+        renderJavaURIFields(url);
     }
 
-    /// Renders the java.net.URI comparison fields for the parsed WebURL.
+    /// Renders the JavaURI comparison fields for the parsed WebURL.
     ///
     /// @param url the parsed URL
-    private static void renderURIFields(WebURL url) {
+    private static void renderJavaURIFields(WebURL url) {
         try {
-            URI uri = url.toURI();
+            JavaURI uri = new JavaURI(url.toRFC2396String());
             setJavaValue("uri-java-serialized-url", display(uri.toString()));
             setJavaValue("uri-java-display-string", UNSUPPORTED);
-            setJavaValue("uri-java-rfc2396-string", display(uri.toString()));
+            setJavaValue("uri-java-rfc2396-string", display(uri.toASCIIString()));
             setJavaValue("uri-java-scheme", displayNullable(uri.getScheme()));
             setJavaValue("uri-java-raw-authority", displayNullable(uri.getRawAuthority()));
             setJavaValue("uri-java-decoded-authority", displayNullable(uri.getAuthority()));
@@ -237,7 +236,7 @@ public final class WebURLViewer {
         }
     }
 
-    /// Renders java.net.URI fields when the WebURL cannot be represented as a Java URI.
+    /// Renders JavaURI fields when the WebURL cannot be represented as a Java URI.
     ///
     /// @param exception the conversion failure
     private static void renderUnavailableURIFields(URISyntaxException exception) {
