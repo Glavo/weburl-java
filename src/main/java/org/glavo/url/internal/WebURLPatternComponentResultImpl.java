@@ -46,6 +46,8 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
     private @Nullable String match;
     /// Cached capture group values indexed by `groupRanges`.
     private String @Nullable [] groupValues;
+    /// Cached Java-style named capture group index view.
+    private @Nullable @Unmodifiable Map<String, Integer> namedGroups;
     /// Cached URLPattern groups object view.
     private @Nullable @Unmodifiable Map<String, @Nullable String> webGroups;
 
@@ -82,6 +84,13 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
         return group == 0 ? start() : groupRangeStart(group - 1);
     }
 
+    /// Returns the start index of one named Java-style capture group.
+    @Override
+    @Contract(pure = true)
+    public int start(String name) {
+        return start(namedGroupIndex(name));
+    }
+
     /// Returns the end index of the whole component match.
     @Override
     @Contract(pure = true)
@@ -94,6 +103,13 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
     @Contract(pure = true)
     public int end(int group) {
         return group == 0 ? end() : groupRangeEnd(group - 1);
+    }
+
+    /// Returns the end index of one named Java-style capture group.
+    @Override
+    @Contract(pure = true)
+    public int end(String name) {
+        return end(namedGroupIndex(name));
     }
 
     /// Returns the whole component match.
@@ -118,11 +134,52 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
         return groupValue(matchResultGroupIndex(group));
     }
 
+    /// Returns one named Java-style capture group.
+    @Override
+    @Contract(pure = true)
+    public @Nullable String group(String name) {
+        return group(namedGroupIndex(name));
+    }
+
     /// Returns the number of Java-style capture groups.
     @Override
     @Contract(pure = true)
     public int groupCount() {
         return groupRanges.length;
+    }
+
+    /// Returns Java-style named capture group indexes.
+    @Override
+    @Contract(pure = true)
+    public @Unmodifiable Map<String, Integer> namedGroups() {
+        @Nullable Map<String, Integer> result = namedGroups;
+        if (result != null) {
+            return result;
+        }
+
+        if (groupIndexes.isEmpty()) {
+            result = Map.of();
+            namedGroups = result;
+            return result;
+        }
+
+        LinkedHashMap<String, Integer> groups = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : groupIndexes.entrySet()) {
+            String name = entry.getKey();
+            if (!StringUtils.isAsciiDigit(name.charAt(0))) {
+                groups.put(name, entry.getValue() + 1);
+            }
+        }
+        result = Collections.unmodifiableMap(groups);
+        namedGroups = result;
+        return result;
+    }
+
+    /// Returns whether this result represents a successful match.
+    @Override
+    @Contract(pure = true)
+    public boolean hasMatch() {
+        return true;
     }
 
     /// Returns URLPattern named and numeric capture groups.
@@ -213,6 +270,15 @@ public final class WebURLPatternComponentResultImpl implements WebURLPattern.Com
             throw new IndexOutOfBoundsException("group: " + group);
         }
         return group - 1;
+    }
+
+    /// Returns the Java-style group index for a named group.
+    private int namedGroupIndex(String name) {
+        Integer index = namedGroups().get(Objects.requireNonNull(name, "name"));
+        if (index == null) {
+            throw new IllegalArgumentException("No group with name: " + name);
+        }
+        return index;
     }
 
     /// Compares this component result with another object.

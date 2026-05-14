@@ -313,6 +313,19 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
         @Contract(pure = true)
         int start(int group);
 
+        /// Returns the start index of a named Java-style capture group.
+        ///
+        /// If the requested group exists but did not match, this method returns `-1`. Numeric
+        /// URLPattern groups are not Java-style named groups; use [#group(int)] or [#getWebGroup(int)]
+        /// for those groups.
+        ///
+        /// @param name the capture group name
+        /// @return the start index of the group, or `-1` when the group did not match
+        /// @throws IllegalArgumentException when no group with `name` exists
+        // @Override
+        @Contract(pure = true)
+        int start(String name);
+
         /// Returns the end index of the whole component match.
         ///
         /// The index is relative to the component input represented by this result.
@@ -334,6 +347,19 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
         @Override
         @Contract(pure = true)
         int end(int group);
+
+        /// Returns the end index of a named Java-style capture group.
+        ///
+        /// If the requested group exists but did not match, this method returns `-1`. Numeric
+        /// URLPattern groups are not Java-style named groups; use [#group(int)] or [#getWebGroup(int)]
+        /// for those groups.
+        ///
+        /// @param name the capture group name
+        /// @return the end index of the group, or `-1` when the group did not match
+        /// @throws IllegalArgumentException when no group with `name` exists
+        // @Override
+        @Contract(pure = true)
+        int end(String name);
 
         /// Returns the whole component match.
         ///
@@ -357,6 +383,19 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
         @Contract(pure = true)
         @Nullable String group(int group);
 
+        /// Returns a named Java-style capture group.
+        ///
+        /// If the requested group exists but did not match, this method returns `null`. Numeric
+        /// URLPattern groups are not Java-style named groups; use [#group(int)] or [#getWebGroup(int)]
+        /// for those groups.
+        ///
+        /// @param name the capture group name
+        /// @return the group value, or `null` when the group did not match
+        /// @throws IllegalArgumentException when no group with `name` exists
+        // @Override
+        @Contract(pure = true)
+        @Nullable String group(String name);
+
         /// Returns the number of Java-style capture groups.
         ///
         /// The returned value excludes group `0`, which is always the whole component match.
@@ -365,6 +404,27 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
         @Override
         @Contract(pure = true)
         int groupCount();
+
+        /// Returns Java-style named capture groups.
+        ///
+        /// The returned map stores capture group names as keys and Java-style group numbers as values.
+        /// Group numbers are 1-based because group `0` is the whole component match. Anonymous
+        /// URLPattern groups with numeric keys are intentionally excluded from this map.
+        ///
+        /// @return immutable Java-style named capture group indexes
+        // @Override
+        @Contract(pure = true)
+        @Unmodifiable Map<String, Integer> namedGroups();
+
+        /// Returns whether this result represents a successful match.
+        ///
+        /// Component results are only created for successful matches, so this method always returns
+        /// `true`.
+        ///
+        /// @return `true`
+        // @Override
+        @Contract(pure = true)
+        boolean hasMatch();
 
         /// Returns URLPattern named and numeric capture groups.
         ///

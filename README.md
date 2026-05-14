@@ -299,7 +299,7 @@ WebURLPattern pattern = WebURLPattern.compile("https://example.com/users/:id");
 pattern.test("https://example.com/users/42"); // true
 
 WebURLPattern.Result result = pattern.match("https://example.com/users/42");
-result.getPath().getWebGroup("id"); // "42"
+result.getPath().group(1); // "42"
 ```
 
 The URLPattern API lives in `org.glavo.url.pattern`. Use `WebURLPattern.newBuilder()` for

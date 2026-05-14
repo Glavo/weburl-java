@@ -112,12 +112,20 @@ public final class WebURLPatternTest {
     public void mapsNamedAndNumericCaptureGroups() {
         WebURLPattern pattern = WebURLPattern.newBuilder().setPathPattern("/:name/*").build();
         WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
+        WebURLPattern.ComponentResult path = result.getPath();
 
-        assertEquals("x", result.getPath().getWebGroup("name"));
-        assertEquals("y/z", result.getPath().getWebGroup(0));
-        assertEquals("x", result.getPath().group(1));
-        assertEquals("y/z", result.getPath().group(2));
-        assertEquals(Map.of("name", "x", "0", "y/z"), result.getPath().getWebGroups());
+        assertTrue(path.hasMatch());
+        assertEquals("x", path.getWebGroup("name"));
+        assertEquals("y/z", path.getWebGroup(0));
+        assertEquals("x", path.group(1));
+        assertEquals("y/z", path.group(2));
+        assertEquals("x", path.group("name"));
+        assertEquals(1, path.start("name"));
+        assertEquals(2, path.end("name"));
+        assertEquals(Map.of("name", 1), path.namedGroups());
+        assertEquals(Map.of("name", "x", "0", "y/z"), path.getWebGroups());
+        assertThrows(IllegalArgumentException.class, () -> path.group("0"));
+        assertThrows(IllegalArgumentException.class, () -> path.start("missing"));
     }
 
     /// Tests the default supported regular-expression subset.
