@@ -24,8 +24,10 @@
   group semantics and exposes URLPattern groups object semantics through `getWebGroups()` and
   `getWebGroup(...)`. `WebURLPattern.Result` exposes Java-style component getters such as
   `getScheme()` and `getPath()`. `WebURLPattern`, `WebURLPattern.Result`, and `WebURLPattern.ComponentResult`
-  are exposed as interfaces with internal immutable implementations, matching the `WebURL` API shape. The URLPattern
-  API lives in the separate `org.glavo.url.pattern` package.
+  are exposed as interfaces with internal immutable implementations, matching the `WebURL` API shape.
+  `WebURLPattern.isStandardCompatible()` reports whether a compiled pattern still preserves URLPattern
+  standard-compatible regular-expression semantics. The URLPattern API lives in the separate
+  `org.glavo.url.pattern` package.
 
 ## 0.2.0 (2026-05-12)
 

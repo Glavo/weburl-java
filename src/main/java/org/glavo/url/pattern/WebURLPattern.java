@@ -204,6 +204,16 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     @Contract(pure = true)
     boolean isIgnoreCase();
 
+    /// Returns whether this pattern preserves URLPattern standard-compatible regular-expression semantics.
+    ///
+    /// This method returns `false` when the pattern contains a user-written regular-expression element and was
+    /// compiled with [WebURLPatternParser.RegExpPolicy#JAVA], because Java regular-expression syntax and
+    /// semantics are not equivalent to ECMAScript regular expressions used by the URLPattern standard.
+    ///
+    /// @return `true` when this pattern is standard-compatible
+    @Contract(pure = true)
+    boolean isStandardCompatible();
+
     /// Returns whether any component contains a user-written regular-expression element.
     ///
     /// @return `true` when any component contains a user-written regular-expression element

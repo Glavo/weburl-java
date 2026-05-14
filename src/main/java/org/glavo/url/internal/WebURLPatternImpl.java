@@ -181,6 +181,13 @@ public final class WebURLPatternImpl implements WebURLPattern {
         return engine.ignoreCase();
     }
 
+    /// Returns whether this pattern preserves URLPattern standard-compatible regular-expression semantics.
+    @Override
+    @Contract(pure = true)
+    public boolean isStandardCompatible() {
+        return engine.standardCompatible();
+    }
+
     /// Returns whether any component contains custom regular-expression groups.
     @Override
     @Contract(pure = true)

@@ -50,6 +50,8 @@ public final class WebURLPatternEngine {
     private final PatternComponent hash;
     /// Whether matching is case-insensitive.
     private final boolean ignoreCase;
+    /// Whether this pattern preserves URLPattern standard-compatible regular-expression semantics.
+    private final boolean standardCompatible;
 
     /// Creates a compiled engine.
     private WebURLPatternEngine(
@@ -61,7 +63,8 @@ public final class WebURLPatternEngine {
             PatternComponent pathname,
             PatternComponent search,
             PatternComponent hash,
-            boolean ignoreCase
+            boolean ignoreCase,
+            boolean standardCompatible
     ) {
         this.protocol = protocol;
         this.username = username;
@@ -72,6 +75,7 @@ public final class WebURLPatternEngine {
         this.search = search;
         this.hash = hash;
         this.ignoreCase = ignoreCase;
+        this.standardCompatible = standardCompatible;
     }
 
     /// Compiles a shorthand constructor string.
@@ -127,8 +131,10 @@ public final class WebURLPatternEngine {
                 URLPatternCanonicalizer::canonicalizeSearch, defaultOptions);
         PatternComponent hash = PatternComponent.compile(require(processed.hash),
                 URLPatternCanonicalizer::canonicalizeHash, defaultOptions);
+        boolean standardCompatible = regExpPolicy != WebURLPatternParser.RegExpPolicy.JAVA
+                || !hasRegExpGroups(protocol, username, password, hostname, port, pathname, search, hash);
         return new WebURLPatternEngine(protocol, username, password, hostname, port, pathname, search, hash,
-                ignoreCase);
+                ignoreCase, standardCompatible);
     }
 
     /// Matches a parsed URL.
@@ -212,8 +218,27 @@ public final class WebURLPatternEngine {
         return ignoreCase;
     }
 
+    /// Returns whether this pattern preserves URLPattern standard-compatible regular-expression semantics.
+    public boolean standardCompatible() {
+        return standardCompatible;
+    }
+
     /// Returns whether any component contains custom regular-expression groups.
     public boolean hasRegExpGroups() {
+        return hasRegExpGroups(protocol, username, password, hostname, port, pathname, search, hash);
+    }
+
+    /// Returns whether any component contains custom regular-expression groups.
+    private static boolean hasRegExpGroups(
+            PatternComponent protocol,
+            PatternComponent username,
+            PatternComponent password,
+            PatternComponent hostname,
+            PatternComponent port,
+            PatternComponent pathname,
+            PatternComponent search,
+            PatternComponent hash
+    ) {
         return protocol.hasRegExpGroups()
                 || username.hasRegExpGroups()
                 || password.hasRegExpGroups()

@@ -209,6 +209,7 @@ public final class WebURLPatternTest {
         assertEquals("42", result.getPath().group(1));
         assertTrue(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/123")));
         assertFalse(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/abc")));
+        assertTrue(pattern.isStandardCompatible());
 
         WebURLPattern nonCapturing = WebURLPattern.compile(
                 WebURLPattern.newBuilder().setPathPattern("/books/:id(a(?:b))"));
@@ -238,8 +239,11 @@ public final class WebURLPatternTest {
         WebURLPattern pattern = parser.compile(WebURLPattern.newBuilder().setPathPattern("/books/:id([0-9]++)"));
 
         assertTrue(pattern.hasRegExpGroups());
+        assertFalse(pattern.isStandardCompatible());
         assertTrue(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/42")));
         assertFalse(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/abc")));
+        assertTrue(parser.compile(WebURLPattern.newBuilder().setPathPattern("/books/:id"))
+                .isStandardCompatible());
         assertThrows(WebURLPatternSyntaxException.class,
                 () -> parser.compile(WebURLPattern.newBuilder().setPathPattern("/books/:id([)")));
         assertNull(parser.tryCompile(WebURLPattern.newBuilder().setPathPattern("/books/:id([)")));
