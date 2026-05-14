@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 @NotNullByDefault
 interface RegExpElementProcessor {
     /// Processor that accepts the supported standard-compatible subset.
-    RegExpElementProcessor SUPPORTED = JavaScriptRegExpProcessor::process;
+    RegExpElementProcessor SUPPORTED = ECMAScriptRegExpProcessor::process;
 
     /// Processor that rejects every user-written regular-expression element.
     RegExpElementProcessor REJECT = regexp -> {

@@ -61,7 +61,7 @@ public sealed interface WebURLPatternParser permits WebURLPatternParserImpl {
     /// component patterns. It does not disable the internal matching expressions used to implement
     /// wildcards and named segment groups.
     enum RegExpPolicy {
-        /// Accepts the currently implemented standard-compatible JavaScript regular-expression subset.
+        /// Accepts the currently implemented standard-compatible ECMAScript regular-expression subset.
         ///
         /// This policy currently accepts:
         ///

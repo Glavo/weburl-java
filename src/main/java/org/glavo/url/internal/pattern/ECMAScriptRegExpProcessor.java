@@ -19,16 +19,16 @@ import org.glavo.url.pattern.WebURLPatternSyntaxException;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-/// Processes the supported JavaScript regular-expression subset used by URLPattern.
+/// Processes the supported ECMAScript regular-expression subset used by URLPattern.
 @NotNullByDefault
-final class JavaScriptRegExpProcessor {
+final class ECMAScriptRegExpProcessor {
     /// Creates no instances.
-    private JavaScriptRegExpProcessor() {
+    private ECMAScriptRegExpProcessor() {
     }
 
-    /// Processes one JavaScript regular-expression element and returns Java-compatible source.
+    /// Processes one ECMAScript regular-expression element and returns Java-compatible source.
     ///
-    /// @param regexp JavaScript regular-expression element source
+    /// @param regexp ECMAScript regular-expression element source
     /// @return Java-compatible regular-expression source
     static String process(String regexp) {
         Parser parser = new Parser(regexp);
@@ -554,7 +554,7 @@ final class JavaScriptRegExpProcessor {
             return set;
         }
 
-        /// Creates the ASCII JavaScript `\w` set.
+        /// Creates the ASCII ECMAScript `\w` set.
         private static boolean[] wordSet() {
             boolean[] set = rangeSet('0', '9');
             unionInto(set, rangeSet('A', 'Z'));
