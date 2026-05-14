@@ -1,6 +1,7 @@
 import org.gradle.kotlin.dsl.sourceSets
 import org.gradle.language.jvm.tasks.ProcessResources
 import org.glavo.url.build.IdnaDataGenerator
+import org.glavo.url.build.WebsiteServer
 
 plugins {
     id("java-library")
@@ -10,6 +11,7 @@ plugins {
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     id("org.glavo.load-maven-publish-properties") version "0.1.0"
     id("de.undercouch.download") version "5.7.0"
+    id("org.teavm") version "0.14.0"
 }
 
 group = "org.glavo"
@@ -21,6 +23,14 @@ repositories {
 }
 
 val mainSourceSet = sourceSets["main"]
+val teavmSourceSet = sourceSets.getByName("teavm").apply {
+    java.setSrcDirs(listOf("src/website/java"))
+    resources.setSrcDirs(listOf("src/website/teavm-resources"))
+
+    compileClasspath += mainSourceSet.output + mainSourceSet.compileClasspath
+    runtimeClasspath += mainSourceSet.output + mainSourceSet.runtimeClasspath
+}
+
 val benchmarkSourceSet = sourceSets.create("benchmark") {
     java.srcDir("src/benchmark/java")
     resources.srcDir("src/benchmark/resources")
@@ -47,6 +57,11 @@ configurations.named(benchmarkSourceSet.runtimeOnlyConfigurationName) {
 
 dependencies {
     compileOnly("org.jetbrains:annotations:26.1.0")
+
+    teavm("org.teavm:teavm-jso:0.14.0")
+    teavm("org.teavm:teavm-jso-impl:0.14.0")
+    teavm("org.teavm:teavm-classlib:0.14.0")
+    add(teavmSourceSet.compileOnlyConfigurationName, "org.teavm:teavm-core:0.14.0")
 
     testImplementation("com.google.code.gson:gson:2.11.0")
     testImplementation("com.ibm.icu:icu4j:78.3")
@@ -78,6 +93,10 @@ tasks.named<JavaCompile>(benchmarkSourceSet.compileJavaTaskName) {
     modularity.inferModulePath.set(false)
 }
 
+tasks.named<JavaCompile>(teavmSourceSet.compileJavaTaskName) {
+    modularity.inferModulePath.set(false)
+}
+
 tasks.test {
     useJUnitPlatform()
     testLogging.showStandardStreams = true
@@ -96,6 +115,85 @@ tasks.register<JavaExec>("benchmark") {
     }
 
     mainClass.set("org.openjdk.jmh.Main")
+}
+
+teavm {
+    all {
+        mainClass.set("org.glavo.url.website.WebURLViewer")
+        outputDir.set(layout.buildDirectory.dir("generated/teavm"))
+        fastGlobalAnalysis.set(true)
+        processMemory.set(1024)
+    }
+
+    wasmGC {
+        targetFileName.set("weburl-viewer.wasm")
+        relativePathInOutputDir.set("wasm-gc")
+        copyRuntime.set(true)
+        obfuscated.set(false)
+        sourceMap.set(true)
+        strict.set(true)
+    }
+}
+
+val websiteOutputDir = layout.buildDirectory.dir("website")
+val teavmWasmOutputDir = layout.buildDirectory.dir("generated/teavm/wasm-gc")
+val websiteDeploymentDir = layout.buildDirectory.dir("website-deployment")
+
+tasks.register<Delete>("cleanWebsite") {
+    group = "website"
+    description = "Deletes generated website outputs."
+    delete(websiteOutputDir, websiteDeploymentDir)
+}
+
+tasks.register<Sync>("buildWebsite") {
+    group = "website"
+    description = "Builds the static project website with the TeaVM WebAssembly URL viewer."
+    dependsOn(tasks.named("buildWasmGC"))
+
+    from("src/website") {
+        exclude("java/**")
+        exclude("teavm-resources/**")
+    }
+    from(teavmWasmOutputDir) {
+        into("wasm-gc")
+    }
+    into(websiteOutputDir)
+}
+
+tasks.register("serveWebsite") {
+    group = "website"
+    description = "Builds and serves the website locally over HTTP. Set -Pwebsite.port=8080 to choose a port."
+    dependsOn(tasks.named("buildWebsite"))
+
+    doLast {
+        val port = providers.gradleProperty("website.port").orElse("8080").get().toInt()
+        WebsiteServer.serve(websiteOutputDir.get().asFile, port)
+    }
+}
+
+tasks.register<Sync>("stageWebsiteDeployment") {
+    group = "website"
+    description = "Copies the built website to build/website-deployment for CI deployment steps."
+    dependsOn(tasks.named("buildWebsite"))
+
+    from(websiteOutputDir)
+    into(websiteDeploymentDir)
+}
+
+tasks.register<Sync>("deployWebsite") {
+    group = "website"
+    description = "Copies the built website to -Pwebsite.deployDir=<directory>; publishing is left to CI."
+    dependsOn(tasks.named("buildWebsite"))
+
+    val deployDir = providers.gradleProperty("website.deployDir")
+    doFirst {
+        if (!deployDir.isPresent) {
+            throw GradleException("Set -Pwebsite.deployDir=<directory> to choose the website deployment target.")
+        }
+    }
+
+    from(websiteOutputDir)
+    into(deployDir.map { file(it) })
 }
 
 val downloadDir = layout.buildDirectory.dir("downloads")

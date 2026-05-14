@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebURL Live URL Viewer</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="wasm-gc/weburl-viewer.wasm-runtime.js"></script>
+  <script defer src="site.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">WebURL</p>
+        <h1>Live URL Viewer</h1>
+      </div>
+      <p id="runtime-status" class="runtime-status">Loading WebAssembly...</p>
+    </header>
+
+    <section class="input-band" aria-label="URL input">
+      <label class="field field-wide" for="url-input">
+        <span>URL input</span>
+        <input id="url-input" spellcheck="false" value="https://user:pass@EXAMPLE.com:443/a/../b?q=hello%20world#hash">
+      </label>
+      <label class="field" for="base-input">
+        <span>Base URL</span>
+        <input id="base-input" spellcheck="false" placeholder="https://example.com/base/">
+      </label>
+      <label class="field field-mode" for="parser-mode">
+        <span>WebURL parser</span>
+        <select id="parser-mode">
+          <option value="default">Default</option>
+          <option value="strict">Strict</option>
+          <option value="browser-input">Browser input</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="comparison-grid" aria-label="URL parsing result comparison">
+      <article id="browser-panel" class="result-panel" data-state="loading">
+        <div class="panel-heading">
+          <h2>Browser URL</h2>
+          <span id="browser-status" class="status-pill">Waiting</span>
+        </div>
+        <p id="browser-error" class="error-line"></p>
+        <dl class="component-table">
+          <div><dt>href</dt><dd id="browser-href"></dd></div>
+          <div><dt>origin</dt><dd id="browser-origin"></dd></div>
+          <div><dt>protocol</dt><dd id="browser-protocol"></dd></div>
+          <div><dt>username</dt><dd id="browser-username"></dd></div>
+          <div><dt>password</dt><dd id="browser-password"></dd></div>
+          <div><dt>host</dt><dd id="browser-host"></dd></div>
+          <div><dt>hostname</dt><dd id="browser-hostname"></dd></div>
+          <div><dt>port</dt><dd id="browser-port"></dd></div>
+          <div><dt>pathname</dt><dd id="browser-pathname"></dd></div>
+          <div><dt>search</dt><dd id="browser-search"></dd></div>
+          <div><dt>hash</dt><dd id="browser-hash"></dd></div>
+        </dl>
+      </article>
+
+      <article id="weburl-panel" class="result-panel" data-state="loading">
+        <div class="panel-heading">
+          <h2>WebURL</h2>
+          <span id="weburl-status" class="status-pill">Waiting</span>
+        </div>
+        <p id="weburl-error" class="error-line"></p>
+        <dl class="component-table">
+          <div><dt>href</dt><dd id="weburl-href"></dd></div>
+          <div><dt>origin</dt><dd id="weburl-origin"></dd></div>
+          <div><dt>protocol</dt><dd id="weburl-protocol"></dd></div>
+          <div><dt>username</dt><dd id="weburl-username"></dd></div>
+          <div><dt>password</dt><dd id="weburl-password"></dd></div>
+          <div><dt>host</dt><dd id="weburl-host"></dd></div>
+          <div><dt>hostname</dt><dd id="weburl-hostname"></dd></div>
+          <div><dt>port</dt><dd id="weburl-port"></dd></div>
+          <div><dt>pathname</dt><dd id="weburl-pathname"></dd></div>
+          <div><dt>search</dt><dd id="weburl-search"></dd></div>
+          <div><dt>hash</dt><dd id="weburl-hash"></dd></div>
+        </dl>
+      </article>
+    </section>
+
+    <section class="java-view" aria-label="Java-style WebURL components">
+      <div class="section-heading">
+        <h2>WebURL Java-style components</h2>
+      </div>
+      <dl class="component-table dense-table">
+        <div><dt>raw username</dt><dd id="weburl-raw-username"></dd></div>
+        <div><dt>decoded username</dt><dd id="weburl-decoded-username"></dd></div>
+        <div><dt>raw password</dt><dd id="weburl-raw-password"></dd></div>
+        <div><dt>decoded password</dt><dd id="weburl-decoded-password"></dd></div>
+        <div><dt>raw authority</dt><dd id="weburl-raw-authority"></dd></div>
+        <div><dt>decoded authority</dt><dd id="weburl-decoded-authority"></dd></div>
+        <div><dt>raw path</dt><dd id="weburl-raw-path"></dd></div>
+        <div><dt>decoded path</dt><dd id="weburl-decoded-path"></dd></div>
+        <div><dt>raw query</dt><dd id="weburl-raw-query"></dd></div>
+        <div><dt>decoded query</dt><dd id="weburl-decoded-query"></dd></div>
+        <div><dt>raw fragment</dt><dd id="weburl-raw-fragment"></dd></div>
+        <div><dt>decoded fragment</dt><dd id="weburl-decoded-fragment"></dd></div>
+      </dl>
+    </section>
+  </main>
+</body>
+</html>

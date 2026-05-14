@@ -7,6 +7,7 @@ build/
 .kotlin
 /external/
 .codex
+/teavm-local.properties
 
 ### IntelliJ IDEA ###
 .idea/

@@ -155,7 +155,7 @@ final class IdnaData {
     private static IdnaData load() {
         @Nullable InputStream input = IdnaData.class.getResourceAsStream(RESOURCE_NAME);
         if (input == null) {
-            throw new ExceptionInInitializerError("Missing generated IDNA data resource: " + RESOURCE_NAME);
+            throw new IllegalStateException("Missing generated IDNA data resource: " + RESOURCE_NAME);
         }
 
         try (input) {
@@ -226,7 +226,7 @@ final class IdnaData {
                     joiningTypes
             );
         } catch (IOException | RuntimeException e) {
-            throw new ExceptionInInitializerError(e);
+            throw new IllegalStateException("Unable to load generated IDNA data resource", e);
         }
     }
 
