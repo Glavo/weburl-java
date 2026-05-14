@@ -289,44 +289,21 @@ WebURL.parse("https://xn--bcher-kva.example/%F0%9F%98%80").toDisplayString();
 
 ### Matching URL Patterns
 
-`WebURLPattern` provides the core WHATWG URLPattern API with Java-style naming:
+Use `WebURLPattern` to precompile URL matchers:
 
 ```java
 import org.glavo.url.pattern.WebURLPattern;
-import org.glavo.url.pattern.WebURLPatternParser;
 
-WebURLPattern pattern = WebURLPattern.newBuilder()
-        .setSchemePattern("https")
-        .setHostPattern("example.com")
-        .setPathPattern("/users/:id")
-        .build();
+WebURLPattern pattern = WebURLPattern.compile("https://example.com/users/:id");
 
 pattern.test("https://example.com/users/42"); // true
 
 WebURLPattern.Result result = pattern.match("https://example.com/users/42");
 result.getPath().getWebGroup("id"); // "42"
-
-WebURLPattern ignoreCasePattern = WebURLPatternParser.getDefault().withIgnoreCase()
-        .newBuilder()
-        .setSchemePattern("https")
-        .setHostPattern("example.com")
-        .setPathPattern("/users/:id")
-        .build();
-ignoreCasePattern.test("https://example.com/Users/42"); // true
 ```
 
-Builder setters and component pattern getters use names such as `setSchemePattern()` and
-`getSchemePattern()` to distinguish pattern strings from parsed `WebURL` component values.
-`WebURLPattern` does not expose a separate WHATWG-style getter view.
-Component results implement `java.util.regex.MatchResult`; use `group()` and `group(int)` for
-Java-style match groups, and `getWebGroup(...)` for URLPattern groups object semantics.
-
-The URLPattern API lives in `org.glavo.url.pattern`. Use
-`WebURLPatternParser.getDefault().withIgnoreCase()` when compiled patterns should match case-insensitively.
-For component patterns, call `newBuilder()` on the parser so `build()` uses the parser's policy.
-By default, user-written regular-expression elements use the supported standard-compatible JavaScript subset;
-unsupported syntax is rejected during compilation. Use `withRegExpPolicy(WebURLPatternParser.RegExpPolicy.REJECT)`
-to forbid them, or `RegExpPolicy.JAVA` to explicitly use non-standard Java `Pattern` semantics.
+The URLPattern API lives in `org.glavo.url.pattern`. Use `WebURLPattern.newBuilder()` for
+component-by-component construction.
 
 ## License
 
