@@ -38,10 +38,14 @@ body {
 
 .topbar {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 24px;
+}
+
+.topbar > div {
+  max-width: 820px;
 }
 
 .eyebrow {
@@ -64,13 +68,20 @@ h1 {
   line-height: 1;
 }
 
+.intro {
+  max-width: 760px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+}
+
 h2 {
   font-size: 1rem;
   line-height: 1.2;
 }
 
 .runtime-status {
-  margin: 0;
+  margin: 58px 0 0;
   color: var(--muted);
   font-size: 0.94rem;
   white-space: nowrap;
@@ -256,6 +267,7 @@ dd[data-value-state="empty"] {
   }
 
   .runtime-status {
+    margin: 0;
     white-space: normal;
   }
 
