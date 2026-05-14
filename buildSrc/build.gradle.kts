@@ -24,6 +24,7 @@ repositories {
 
 dependencies {
     compileOnly("org.jetbrains:annotations:26.1.0")
+    implementation("io.undertow:undertow-core:2.3.18.Final")
 }
 
 java {
