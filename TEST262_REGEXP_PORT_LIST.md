@@ -49,7 +49,7 @@ If a relevant test cannot pass because the processor intentionally does not supp
 port it as an `@Disabled` test and include a specific reason. Common disabled reasons include:
 
 - capturing groups other than URLPattern outer capture handling
-- lookbehind assertions
+- capturing-group or backreference behavior inside lookbehind assertions
 - backreferences
 - Unicode property escapes and property-of-strings escapes
 - non-ASCII or escaped Unicode group names
@@ -88,9 +88,9 @@ Generated Unicode property escape target class:
 Shared helpers:
 `src/test/java/org/glavo/url/internal/pattern/ECMAScriptRegExpProcessorTest262Support.java`
 
-- Source-linked Java test methods: 806
-- Enabled Java test methods: 268
-- Disabled Java test methods: 538
+- Source-linked Java test methods: 810
+- Enabled Java test methods: 276
+- Disabled Java test methods: 534
 - Unique fixed-commit Test262 source links: 806
 - Runtime-generated Unicode property escape dynamic tests: 3520
 
@@ -123,7 +123,7 @@ parts.
 | [`RegExp/15.10.4.1-2.js`](https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/15.10.4.1-2.js) | 1 | Enabled syntax rejection if currently supported | Invalid trailing escape source. |
 | [`RegExp/CharacterClassEscapes/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/CharacterClassEscapes) | 12 | Mixed | `\d`, `\D`, `\s`, `\S`, `\w`, and `\W` cases are enabled where they map to URLPattern regexp elements. |
 | [`RegExp/dotall/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/dotall) | 4 | Disabled | JavaScript `s` flag semantics are not modeled by the processor. |
-| [`RegExp/lookBehind/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind) | 17 | Disabled | Lookbehind assertions are not supported. |
+| [`RegExp/lookBehind/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind) | 17 | Mixed | Lookbehind assertions are enabled when they do not depend on unsupported capture-group or backreference behavior. |
 | [`RegExp/named-groups/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/named-groups) | 36 | Mixed | ASCII named-group syntax can be enabled; backreferences, duplicate-name semantics, Unicode names, and string-method behavior are disabled or omitted. |
 | [`RegExp/property-escapes/**/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/property-escapes) | 613 | Disabled | Unicode property escapes are not supported. |
 | [`RegExp/regexp-modifiers/*.js`](https://github.com/tc39/test262/tree/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/regexp-modifiers) | 70 | Disabled | Inline RegExp modifiers are not supported. |

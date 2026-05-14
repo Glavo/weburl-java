@@ -295,7 +295,7 @@ final class ECMAScriptRegExpProcessor {
             throw unsupported();
         }
 
-        /// Parses a non-capturing group, named-capturing group, or lookahead assertion.
+        /// Parses a non-capturing group, named-capturing group, lookahead assertion, or lookbehind assertion.
         private void parseGroup() {
             if (input.startsWith("(?:", index)) {
                 output.append("(?:");
@@ -307,6 +307,14 @@ final class ECMAScriptRegExpProcessor {
             if (input.startsWith("(?=", index) || input.startsWith("(?!", index)) {
                 output.append(input, index, index + 3);
                 index += 3;
+                canQuantify = false;
+                parseUntilGroupEnd(true);
+                canQuantify = false;
+                return;
+            }
+            if (input.startsWith("(?<=", index) || input.startsWith("(?<!", index)) {
+                output.append(input, index, index + 4);
+                index += 4;
                 canQuantify = false;
                 parseUntilGroupEnd(true);
                 canQuantify = false;

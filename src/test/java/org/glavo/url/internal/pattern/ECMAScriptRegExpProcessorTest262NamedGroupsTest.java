@@ -202,7 +202,7 @@ public final class ECMAScriptRegExpProcessorTest262NamedGroupsTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/named-groups/lookbehind.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Named-group capture result semantics inside lookbehind are not modeled")
     public void test262NamedGroupsLookbehind() {
         assertUnsupported("(?<=(?<a>\\w){3})f");
         assertUnsupported("(?<=(?<a>\\w){4})f");

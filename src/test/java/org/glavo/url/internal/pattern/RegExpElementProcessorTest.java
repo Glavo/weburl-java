@@ -74,6 +74,8 @@ public final class RegExpElementProcessorTest {
         assertTranslated("(?<name>ab)", "(?:ab)");
         assertSupported("a(?=b)b");
         assertSupported("a(?!c)b");
+        assertSupported("a(?<=a)b");
+        assertSupported("a(?<!b)b");
         assertSupported("^abc$");
         assertTranslated("[[a-z]--a]", "[b-z]");
         assertTranslated("[\\d&&[0-1]]", "[01]");
@@ -110,6 +112,11 @@ public final class RegExpElementProcessorTest {
         assertDoesNotMatch("a(?=c)b", "ab");
         assertMatches("a(?!c)b", "ab");
         assertDoesNotMatch("a(?!b)b", "ab");
+
+        assertMatches("a(?<=a)b", "ab");
+        assertDoesNotMatch("a(?<=b)b", "ab");
+        assertMatches("a(?<!b)b", "ab");
+        assertDoesNotMatch("a(?<!a)b", "ab");
 
         assertMatches("^abc$", "abc");
         assertDoesNotMatch("^abc$", "xabc");
@@ -232,7 +239,8 @@ public final class RegExpElementProcessorTest {
     public void supportedPolicyRejectsUnsupportedSyntax() {
         assertUnsupported("(ab)");
         assertUnsupported("(?=ab)+");
-        assertUnsupported("(?<=ab)");
+        assertUnsupported("(?<=ab)+");
+        assertUnsupported("(?<!ab)?");
         assertUnsupported("^+");
         assertUnsupported("$?");
         assertUnsupported("\\b+");

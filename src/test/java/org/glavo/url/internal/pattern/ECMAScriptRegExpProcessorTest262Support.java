@@ -19,6 +19,8 @@ import org.glavo.url.pattern.WebURLPatternParser;
 import org.glavo.url.pattern.WebURLPatternSyntaxException;
 import org.jetbrains.annotations.NotNullByDefault;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -308,6 +310,30 @@ final class ECMAScriptRegExpProcessorTest262Support {
     /// @param input the input
     static void assertDoesNotFind(String regexp, String input) {
         assertFalse(compileProcessed(regexp).matcher(input).find(), () -> regexp + " should not be found in " + input);
+    }
+
+    /// Asserts that a processed regular-expression element finds all expected matches in order.
+    ///
+    /// @param regexp the regular-expression element source
+    /// @param input the input
+    /// @param expected the expected matches
+    static void assertFindsAll(String regexp, String input, String... expected) {
+        assertFindsAll(regexp, input, 0, expected);
+    }
+
+    /// Asserts that a processed regular-expression element finds all expected matches in order.
+    ///
+    /// @param regexp the regular-expression element source
+    /// @param input the input
+    /// @param flags Java regular-expression flags
+    /// @param expected the expected matches
+    static void assertFindsAll(String regexp, String input, int flags, String... expected) {
+        Matcher matcher = compileProcessed(regexp, flags).matcher(input);
+        ArrayList<String> matches = new ArrayList<>();
+        while (matcher.find()) {
+            matches.add(matcher.group());
+        }
+        assertEquals(List.of(expected), matches);
     }
 
     /// Compiles a processed regular-expression element.

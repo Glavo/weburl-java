@@ -36,8 +36,7 @@
   negated character classes, backspace escapes inside character classes, and ampersand literals inside
   character classes. The supported subset also accepts positive and negative lookahead assertions when
   they do not depend on unsupported capture-group or backreference behavior, start and end assertions,
-  plus ECMAScript
-  word-boundary assertions.
+  positive and negative lookbehind assertions, plus ECMAScript word-boundary assertions.
 
 ## 0.2.0 (2026-05-12)
 

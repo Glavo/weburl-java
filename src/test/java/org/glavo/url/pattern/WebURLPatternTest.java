@@ -136,6 +136,17 @@ public final class WebURLPatternTest {
         WebURLPattern.Result nonCapturingResult = requireMatch(
                 nonCapturing.match(WebURLPattern.newBuilder().setPathPattern("/books/ab")));
         assertEquals("ab", nonCapturingResult.getPath().getWebGroup("id"));
+
+        WebURLPattern lookbehind = WebURLPattern.compile(
+                WebURLPattern.newBuilder().setPathPattern("/books/:id([a-z]{3}(?<=foo)[0-9]+)"));
+        assertTrue(lookbehind.isStandardCompatible());
+        assertTrue(lookbehind.test(WebURLPattern.newBuilder().setPathPattern("/books/foo42")));
+        assertFalse(lookbehind.test(WebURLPattern.newBuilder().setPathPattern("/books/bar42")));
+
+        WebURLPattern negativeLookbehind = WebURLPattern.compile(
+                WebURLPattern.newBuilder().setPathPattern("/books/:id([a-z]{3}(?<!bar)[0-9]+)"));
+        assertTrue(negativeLookbehind.test(WebURLPattern.newBuilder().setPathPattern("/books/foo42")));
+        assertFalse(negativeLookbehind.test(WebURLPattern.newBuilder().setPathPattern("/books/bar42")));
     }
 
     /// Tests the reject regular-expression policy.

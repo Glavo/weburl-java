@@ -27,15 +27,30 @@ import static org.glavo.url.internal.pattern.ECMAScriptRegExpProcessorTest262Sup
 @NotNullByDefault
 public final class ECMAScriptRegExpProcessorTest262LookaroundTest {
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/simple-fixed-length.js
-    @Disabled("Lookbehind assertions are not supported")
     @Test
     public void lookbehindSimpleFixedLength() {
-        assertFinds("(?<=a)b", "ab", "b");
+        assertDoesNotFind("^.(?<=a)", "b");
+        assertDoesNotFind("^f\\w\\w(?<=\\woo)", "boo");
+        assertDoesNotFind("^f\\w\\w(?<=\\woo)", "fao");
+        assertDoesNotFind("^f\\w\\w(?<=\\woo)", "foa");
+
+        assertFinds("^.(?<=a)", "a", "a");
+        assertFinds("^f..(?<=.oo)", "foo1", "foo");
+        assertFinds("^f\\w\\w(?<=\\woo)", "foo2", "foo");
+        assertFinds("(?<=abc)\\w\\w\\w", "abcdef", "def");
+        assertFinds("(?<=a.c)\\w\\w\\w", "abcdef", "def");
+        assertFinds("(?<=a\\wc)\\w\\w\\w", "abcdef", "def");
+        assertFinds("(?<=a[a-z])\\w\\w\\w", "abcdef", "cde");
+        assertFinds("(?<=a[a-z][a-z])\\w\\w\\w", "abcdef", "def");
+        assertFinds("(?<=a[a-z]{2})\\w\\w\\w", "abcdef", "def");
+        assertFinds("(?<=a{1})\\w\\w\\w", "abcdef", "bcd");
+        assertFinds("(?<=a{1}b{1})\\w\\w\\w", "abcdef", "cde");
+        assertFinds("(?<=a{1}[a-z]{2})\\w\\w\\w", "abcdef", "def");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/alternations.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Capturing groups inside regular-expression elements are not supported")
     public void test262LookBehindAlternations() {
         assertUnsupported(".*(?<=(..|...|....))(.*)");
         assertUnsupported(".*(?<=(xx|...|....))(.*)");
@@ -45,7 +60,7 @@ public final class ECMAScriptRegExpProcessorTest262LookaroundTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/back-references-to-captures.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Capturing groups and backreferences are not supported")
     public void test262LookBehindBackReferencesToCaptures() {
         assertUnsupported("(?<=\\1(\\w))d");
         assertUnsupported("(?<=\\1([abx]))d");
@@ -55,7 +70,7 @@ public final class ECMAScriptRegExpProcessorTest262LookaroundTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/back-references.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Capturing groups and backreferences are not supported")
     public void test262LookBehindBackReferences() {
         assertUnsupported("(.)(?<=(\\1\\1))");
         assertUnsupported("(.)(?<=(\\1\\1))");
@@ -69,14 +84,14 @@ public final class ECMAScriptRegExpProcessorTest262LookaroundTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/captures-negative.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Capturing groups inside regular-expression elements are not supported")
     public void test262LookBehindCapturesNegative() {
         assertUnsupported("(?<!(^|[ab]))\\w{2}");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/captures.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Capturing groups inside regular-expression elements are not supported")
     public void test262LookBehindCaptures() {
         assertUnsupported("(?<=(c))def");
         assertUnsupported("(?<=(\\w{2}))def");
@@ -85,20 +100,25 @@ public final class ECMAScriptRegExpProcessorTest262LookaroundTest {
         assertUnsupported("(?<=(bc)|(cd)).");
         assertUnsupported("(?<=([ab]{1,2})\\D|(abc))\\w");
         assertUnsupported("\\D(?<=([ab]+))(\\w)");
-        assertUnsupported("(?<=b|c)\\w");
-        assertUnsupported("(?<=[b-e])\\w{2}");
+    }
+
+    /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/captures.js
+    @Test
+    public void test262LookBehindCapturesNonCapturingMatches() {
+        assertFindsAll("(?<=b|c)\\w", "abcdef", "c", "d");
+        assertFindsAll("(?<=[b-e])\\w{2}", "abcdef", "cd", "ef");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/do-not-backtrack.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Capturing groups and backreferences are not supported")
     public void test262LookBehindDoNotBacktrack() {
         assertUnsupported("(?<=([abc]+)).\\1");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/greedy-loop.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Capturing groups inside regular-expression elements are not supported")
     public void test262LookBehindGreedyLoop() {
         assertUnsupported("(?<=(b+))c");
         assertUnsupported("(?<=(b\\d+))c");
@@ -107,20 +127,29 @@ public final class ECMAScriptRegExpProcessorTest262LookaroundTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/misc.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
     public void test262LookBehindMisc() {
-        assertUnsupported("(?<=$abc)def");
-        assertUnsupported("^f.o(?<=foo)$");
-        assertUnsupported("^foo(?<!foo)$");
-        assertUnsupported("^f.o(?<!foo)$");
-        assertUnsupported("^foo(?<=foo)$");
-        assertUnsupported("^foooo(?<=fo+)$");
-        assertUnsupported("^foooo(?<=fo*)$");
+        assertDoesNotFind("(?<=$abc)def", "abcdef");
+        assertDoesNotFind("^f.o(?<=foo)$", "fno");
+        assertDoesNotFind("^foo(?<!foo)$", "foo");
+        assertDoesNotFind("^f.o(?<!foo)$", "foo");
+
+        assertFinds("^foo(?<=foo)$", "foo", "foo");
+        assertFinds("^f.o(?<=foo)$", "foo", "foo");
+        assertFinds("^f.o(?<!foo)$", "fno", "fno");
+        assertFinds("^foooo(?<=fo+)$", "foooo", "foooo");
+        assertFinds("^foooo(?<=fo*)$", "foooo", "foooo");
+    }
+
+    /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/misc.js
+    @Test
+    @Disabled("Capturing groups and backreferences are not supported")
+    public void test262LookBehindMiscBackReferences() {
+        assertUnsupported("(abc\\1)");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/mutual-recursive.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Capturing groups and backreferences are not supported")
     public void test262LookBehindMutualRecursive() {
         assertUnsupported("(?<=a(.\\2)b(\\1)).{4}");
         assertUnsupported("(?<=a(\\2)b(..\\1))b");
@@ -130,34 +159,40 @@ public final class ECMAScriptRegExpProcessorTest262LookaroundTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/negative.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
     public void test262LookBehindNegative() {
-        assertUnsupported("(?<!abc)\\w\\w\\w");
-        assertUnsupported("(?<!a.c)\\w\\w\\w");
-        assertUnsupported("(?<!a\\wc)\\w\\w\\w");
-        assertUnsupported("(?<!a[a-z])\\w\\w\\w");
-        assertUnsupported("(?<!a[a-z]{2})\\w\\w\\w");
-        assertUnsupported("(?<!abc)def");
-        assertUnsupported("(?<!a.c)def");
-        assertUnsupported("(?<!a\\wc)def");
-        assertUnsupported("(?<!a[a-z][a-z])def");
-        assertUnsupported("(?<!a[a-z]{2})def");
+        assertFinds("(?<!abc)\\w\\w\\w", "abcdef", "abc");
+        assertFinds("(?<!a.c)\\w\\w\\w", "abcdef", "abc");
+        assertFinds("(?<!a\\wc)\\w\\w\\w", "abcdef", "abc");
+        assertFinds("(?<!a[a-z])\\w\\w\\w", "abcdef", "abc");
+        assertFinds("(?<!a[a-z]{2})\\w\\w\\w", "abcdef", "abc");
+        assertDoesNotFind("(?<!abc)def", "abcdef");
+        assertDoesNotFind("(?<!a.c)def", "abcdef");
+        assertDoesNotFind("(?<!a\\wc)def", "abcdef");
+        assertDoesNotFind("(?<!a[a-z][a-z])def", "abcdef");
+        assertDoesNotFind("(?<!a[a-z]{2})def", "abcdef");
+        assertDoesNotFind("(?<!a{1}b{1})cde", "abcdef");
+        assertDoesNotFind("(?<!a{1}[a-z]{2})def", "abcdef");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/nested-lookaround.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
     public void test262LookBehindNestedLookaround() {
-        assertUnsupported("(?<=ab(?=c)\\wd)\\w\\w");
+        assertFinds("(?<=ab(?=c)\\wd)\\w\\w", "abcdef", "ef");
+        assertFinds("^faaao?(?<=^f[oa]+(?=o))", "faaao", "faaa");
+    }
+
+    /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/nested-lookaround.js
+    @Test
+    @Disabled("Capturing groups inside regular-expression elements are not supported")
+    public void test262LookBehindNestedLookaroundCaptures() {
         assertUnsupported("(?<=a(?=([^a]{2})d)\\w{3})\\w\\w");
         assertUnsupported("(?<=a(?=([bc]{2}(?<!a{2}))d)\\w{3})\\w\\w");
-        assertUnsupported("^faaao?(?<=^f[oa]+(?=o))");
         assertUnsupported("(?<=a(?=([bc]{2}(?<!a*))d)\\w{3})\\w\\w");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/sliced-strings.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Capturing groups and backreferences are not supported")
     public void test262LookBehindSlicedStrings() {
         assertUnsupported("(?=(abcdefghijklmn))(?<=\\1)a");
         assertUnsupported("(?=(abcdefghijklmn))(?<=\\1)a");
@@ -166,42 +201,53 @@ public final class ECMAScriptRegExpProcessorTest262LookaroundTest {
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/start-of-line.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
     public void test262LookBehindStartOfLine() {
-        assertUnsupported("(?<=^[^a-c]{3})def");
-        assertUnsupported("\"^foooo(?<=^o+)$");
-        assertUnsupported("\"^foooo(?<=^o*)$");
-        assertUnsupported("(?<=^abc)def");
-        assertUnsupported("(?<=^[a-c]{3})def");
-        assertUnsupported("(?<=^[a-c]{3})def");
-        assertUnsupported("(?<=^)\\w+");
-        assertUnsupported("\\w+(?<=$)");
-        assertUnsupported("(?<=^)\\w+(?<=$)");
-        assertUnsupported("^foo(?<=^fo+)$");
+        assertDoesNotFind("(?<=^[^a-c]{3})def", "abcdef");
+        assertDoesNotFind("\"^foooo(?<=^o+)$", "foooo");
+        assertDoesNotFind("\"^foooo(?<=^o*)$", "foooo");
+
+        assertFinds("(?<=^abc)def", "abcdef", "def");
+        assertFinds("(?<=^[a-c]{3})def", "abcdef", "def");
+        assertFinds("(?<=^[a-c]{3})def", "xyz\nabcdef", "def", Pattern.MULTILINE);
+        assertFindsAll("(?<=^)\\w+", "ab\ncd\nefg", Pattern.MULTILINE, "ab", "cd", "efg");
+        assertFindsAll("\\w+(?<=$)", "ab\ncd\nefg", Pattern.MULTILINE, "ab", "cd", "efg");
+        assertFindsAll("(?<=^)\\w+(?<=$)", "ab\ncd\nefg", Pattern.MULTILINE, "ab", "cd", "efg");
+
+        assertFinds("^foo(?<=^fo+)$", "foo", "foo");
+        assertFinds("^foooo(?<=^fo*)", "foooo", "foooo");
+        assertFinds("(?<=^\\w+)def", "abcdefdef", "def");
+        assertFindsAll("(?<=^\\w+)def", "abcdefdef", "def", "def");
+    }
+
+    /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/start-of-line.js
+    @Test
+    @Disabled("Capturing groups and backreferences are not supported")
+    public void test262LookBehindStartOfLineCaptures() {
+        assertUnsupported("^(f)oo(?<=^\\1o+)$");
+        assertUnsupported("^(f)oo(?<=^\\1o+).$");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/sticky.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
+    @Disabled("Capturing groups inside regular-expression elements are not supported")
     public void test262LookBehindSticky() {
         assertUnsupported("(?<=^(\\w+))def");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/variable-length.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
     public void test262LookBehindVariableLength() {
-        assertUnsupported("(?<=[a|b|c]*)[^a|b|c]{3}");
-        assertUnsupported("(?<=\\w*)[^a|b|c]{3}");
+        assertFinds("(?<=[a|b|c]*)[^a|b|c]{3}", "abcdef", "def");
+        assertFinds("(?<=\\w*)[^a|b|c]{3}", "abcdef", "def");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookBehind/word-boundary.js
     @Test
-    @Disabled("Lookbehind assertions are not supported")
     public void test262LookBehindWordBoundary() {
-        assertUnsupported("(?<=\\b)[d-f]{3}");
-        assertUnsupported("(?<=\\B)\\w{3}");
-        assertUnsupported("(?<=\\B)(?<=c(?<=\\w))\\w{3}");
+        assertFinds("(?<=\\b)[d-f]{3}", "abc def", "def");
+        assertFinds("(?<=\\B)\\w{3}", "ab cdef", "def");
+        assertFinds("(?<=\\B)(?<=c(?<=\\w))\\w{3}", "ab cdef", "def");
+        assertDoesNotFind("(?<=\\b)[d-f]{3}", "abcdef");
     }
 
     /// Source: https://github.com/tc39/test262/blob/673e9bacbe28590f501e2dcd817aadcc31899191/test/built-ins/RegExp/lookahead-quantifier-match-groups.js
