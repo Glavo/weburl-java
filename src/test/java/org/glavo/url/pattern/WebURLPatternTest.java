@@ -80,7 +80,7 @@ public final class WebURLPatternTest {
         assertFalse(pattern.test("http://example.com/users/alice"));
     }
 
-    /// Tests matching URL strings, parsed URLs, and component builder input.
+    /// Tests matching URL strings and parsed URLs.
     @Test
     public void matchesInputsAndCapturesGroups() {
         WebURLPattern pattern = WebURLPattern.newBuilder()
@@ -98,20 +98,17 @@ public final class WebURLPatternTest {
 
         assertTrue(pattern.test(WebURL.parse("https://example.com/books/7?q=url")));
 
-        WebURLPattern.Result componentResult = requireMatch(pattern.match(WebURLPattern.newBuilder()
-                .setSchemePattern("https")
-                .setHostPattern("example.com")
-                .setPathPattern("/books/99")
-                .setQueryPattern("q=patterns")));
-        assertEquals("99", componentResult.getPath().getWebGroup("id"));
-        assertEquals("patterns", componentResult.getQuery().getWebGroup("term"));
+        WebURLPattern.Result parsedResult = requireMatch(
+                pattern.match(WebURL.parse("https://example.com/books/99?q=patterns")));
+        assertEquals("99", parsedResult.getPath().getWebGroup("id"));
+        assertEquals("patterns", parsedResult.getQuery().getWebGroup("term"));
     }
 
     /// Tests named groups and numeric wildcard groups together.
     @Test
     public void mapsNamedAndNumericCaptureGroups() {
         WebURLPattern pattern = WebURLPattern.newBuilder().setPathPattern("/:name/*").build();
-        WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern("/x/y/z")));
+        WebURLPattern.Result result = requireMatch(pattern.match("https://example.com/x/y/z"));
         WebURLPattern.ComponentResult path = result.getPath();
 
         assertTrue(path.hasMatch());
@@ -133,31 +130,31 @@ public final class WebURLPatternTest {
     public void supportsDefaultRegularExpressionSubset() {
         WebURLPattern pattern = WebURLPattern.newBuilder().setPathPattern("/books/:id([0-9]+)").build();
         WebURLPattern.Result result = requireMatch(
-                pattern.match(WebURLPattern.newBuilder().setPathPattern("/books/42")));
+                pattern.match("https://example.com/books/42"));
 
         assertEquals("42", result.getPath().getWebGroup("id"));
         assertEquals("42", result.getPath().group(1));
-        assertTrue(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/123")));
-        assertFalse(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/abc")));
+        assertTrue(pattern.test("https://example.com/books/123"));
+        assertFalse(pattern.test("https://example.com/books/abc"));
         assertTrue(pattern.isStandardCompatible());
 
         WebURLPattern nonCapturing = WebURLPattern.newBuilder().setPathPattern("/books/:id(a(?:b))").build();
         WebURLPattern.Result nonCapturingResult = requireMatch(
-                nonCapturing.match(WebURLPattern.newBuilder().setPathPattern("/books/ab")));
+                nonCapturing.match("https://example.com/books/ab"));
         assertEquals("ab", nonCapturingResult.getPath().getWebGroup("id"));
 
         WebURLPattern lookbehind = WebURLPattern.newBuilder()
                 .setPathPattern("/books/:id([a-z]{3}(?<=foo)[0-9]+)")
                 .build();
         assertTrue(lookbehind.isStandardCompatible());
-        assertTrue(lookbehind.test(WebURLPattern.newBuilder().setPathPattern("/books/foo42")));
-        assertFalse(lookbehind.test(WebURLPattern.newBuilder().setPathPattern("/books/bar42")));
+        assertTrue(lookbehind.test("https://example.com/books/foo42"));
+        assertFalse(lookbehind.test("https://example.com/books/bar42"));
 
         WebURLPattern negativeLookbehind = WebURLPattern.newBuilder()
                 .setPathPattern("/books/:id([a-z]{3}(?<!bar)[0-9]+)")
                 .build();
-        assertTrue(negativeLookbehind.test(WebURLPattern.newBuilder().setPathPattern("/books/foo42")));
-        assertFalse(negativeLookbehind.test(WebURLPattern.newBuilder().setPathPattern("/books/bar42")));
+        assertTrue(negativeLookbehind.test("https://example.com/books/foo42"));
+        assertFalse(negativeLookbehind.test("https://example.com/books/bar42"));
     }
 
     /// Tests the reject regular-expression policy.
@@ -182,8 +179,8 @@ public final class WebURLPatternTest {
 
         assertTrue(pattern.hasRegExpGroups());
         assertFalse(pattern.isStandardCompatible());
-        assertTrue(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/42")));
-        assertFalse(pattern.test(WebURLPattern.newBuilder().setPathPattern("/books/abc")));
+        assertTrue(pattern.test("https://example.com/books/42"));
+        assertFalse(pattern.test("https://example.com/books/abc"));
         assertTrue(parser.newBuilder().setPathPattern("/books/:id").build()
                 .isStandardCompatible());
         assertThrows(WebURLPatternSyntaxException.class,
@@ -221,9 +218,9 @@ public final class WebURLPatternTest {
                 .setPathPattern("/Books")
                 .build();
 
-        assertFalse(sensitive.test(WebURLPattern.newBuilder().setPathPattern("/books")));
+        assertFalse(sensitive.test("https://example.com/books"));
         assertFalse(sensitive.isIgnoreCase());
-        assertTrue(insensitive.test(WebURLPattern.newBuilder().setPathPattern("/books")));
+        assertTrue(insensitive.test("https://example.com/books"));
         assertTrue(WebURLPatternParser.getDefault().withIgnoreCase(true).isIgnoreCase());
         assertEquals(WebURLPatternParser.getDefault(), WebURLPatternParser.getDefault().withIgnoreCase(false));
         assertTrue(insensitive.isIgnoreCase());
@@ -281,8 +278,8 @@ public final class WebURLPatternTest {
         WebURLPattern pattern = WebURLPattern.newBuilder().setPortPattern("").build();
 
         assertEquals("", pattern.getPortPattern());
-        assertTrue(pattern.test(WebURLPattern.newBuilder().setPortPattern("")));
-        assertFalse(pattern.test(WebURLPattern.newBuilder().setPortPattern("8080")));
+        assertTrue(pattern.test("https://example.com/"));
+        assertFalse(pattern.test("https://example.com:8080/"));
     }
 
     /// Tests invalid pattern handling.
@@ -304,8 +301,8 @@ public final class WebURLPatternTest {
 
         assertFalse(pattern.test("not a url"));
         assertNull(pattern.match("not a url"));
-        assertFalse(pattern.test(WebURLPattern.newBuilder().setPortPattern("99999")));
-        assertNull(pattern.match(WebURLPattern.newBuilder().setPortPattern("99999")));
+        assertFalse(pattern.test("https://example.com:99999/"));
+        assertNull(pattern.match("https://example.com:99999/"));
     }
 
     /// Requires a non-null match result.

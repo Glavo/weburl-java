@@ -19,6 +19,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.glavo.url.internal.WebURLPatternImpl;
+import org.glavo.url.internal.pattern.URLPatternInit;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.DynamicTest;
@@ -135,7 +137,7 @@ public final class WebURLPatternWptTest {
     /// Matches a compiled pattern against the WPT `inputs` field.
     private static @Nullable WebURLPattern.Result match(WebURLPattern pattern, JsonArray inputs) {
         if (inputs.isEmpty()) {
-            return pattern.match(WebURLPattern.newBuilder());
+            return matchInit(pattern, new URLPatternInit(null, null, null, null, null, null, null, null, null));
         }
         JsonElement first = inputs.get(0);
         if (first.isJsonPrimitive()) {
@@ -147,7 +149,20 @@ public final class WebURLPatternWptTest {
         if (inputs.size() > 1 && inputs.get(1).isJsonPrimitive()) {
             throw new IllegalArgumentException("URLPattern init object input cannot be matched with a base URL");
         }
-        return pattern.match(builder(first.getAsJsonObject()));
+        return matchInit(pattern, init(first.getAsJsonObject()));
+    }
+
+    /// Matches a compiled pattern against an internal init input.
+    private static @Nullable WebURLPattern.Result matchInit(WebURLPattern pattern, URLPatternInit input) {
+        return implementation(pattern).matchInit(input);
+    }
+
+    /// Casts a public pattern to the internal implementation used by these tests.
+    private static WebURLPatternImpl implementation(WebURLPattern pattern) {
+        if (pattern instanceof WebURLPatternImpl implementation) {
+            return implementation;
+        }
+        throw new AssertionError("Unexpected WebURLPattern implementation: " + pattern.getClass().getName());
     }
 
     /// Converts a WPT init object into a builder.
@@ -176,6 +191,29 @@ public final class WebURLPatternWptTest {
             }
         }
         return builder;
+    }
+
+    /// Converts a WPT init object into an internal init value.
+    private static URLPatternInit init(JsonObject object) {
+        URLPatternInit init = new URLPatternInit(null, null, null, null, null, null, null, null, null);
+        for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+            switch (entry.getKey()) {
+                case "protocol" -> init.protocol = entry.getValue().getAsString();
+                case "username" -> init.username = entry.getValue().getAsString();
+                case "password" -> init.password = entry.getValue().getAsString();
+                case "hostname" -> init.hostname = entry.getValue().getAsString();
+                case "port" -> init.port = entry.getValue().getAsString();
+                case "pathname" -> init.pathname = entry.getValue().getAsString();
+                case "search" -> init.search = entry.getValue().getAsString();
+                case "hash" -> init.hash = entry.getValue().getAsString();
+                case "baseURL" -> init.baseURL = entry.getValue().getAsString();
+                case "ignoreCase" -> {
+                    // WPT option objects may contain this field, but init objects do not consume it here.
+                }
+                default -> throw new AssertionError("Unsupported URLPattern field: " + entry.getKey());
+            }
+        }
+        return init;
     }
 
     /// Asserts expected compiled object fields.

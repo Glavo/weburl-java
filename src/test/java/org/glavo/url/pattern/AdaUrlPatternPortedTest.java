@@ -15,6 +15,8 @@
  */
 package org.glavo.url.pattern;
 
+import org.glavo.url.internal.WebURLPatternImpl;
+import org.glavo.url.internal.pattern.URLPatternInit;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -76,7 +78,7 @@ public final class AdaUrlPatternPortedTest {
     @Test
     public void capturesEmptyWildcardGroups() {
         WebURLPattern pattern = WebURLPattern.newBuilder().setPathPattern("/foo/bar").build();
-        WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern("/foo/bar")));
+        WebURLPattern.Result result = requireMatch(matchComponents(pattern, "/foo/bar"));
 
         assertWildcardComponent(result.getScheme(), "");
         assertWildcardComponent(result.getUsername(), "");
@@ -182,7 +184,7 @@ public final class AdaUrlPatternPortedTest {
     /// Asserts ordered path capture groups.
     private static void assertPathGroups(String patternText, String input, String... expectedPairs) {
         WebURLPattern pattern = WebURLPattern.newBuilder().setPathPattern(patternText).build();
-        WebURLPattern.Result result = requireMatch(pattern.match(WebURLPattern.newBuilder().setPathPattern(input)));
+        WebURLPattern.Result result = requireMatch(pattern.match("https://example.com" + input));
 
         WebURLPattern.ComponentResult path = result.getPath();
         assertEquals(input, path.group());
@@ -222,5 +224,11 @@ public final class AdaUrlPatternPortedTest {
     private static WebURLPattern.Result requireMatch(@Nullable WebURLPattern.Result result) {
         assertNotNull(result);
         return result;
+    }
+
+    /// Matches a pathname as an internal URLPattern init input.
+    private static @Nullable WebURLPattern.Result matchComponents(WebURLPattern pattern, String pathname) {
+        return ((WebURLPatternImpl) pattern).matchInit(new URLPatternInit(
+                null, null, null, null, null, pathname, null, null, null));
     }
 }

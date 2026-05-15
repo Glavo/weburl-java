@@ -16,6 +16,7 @@
 package org.glavo.url.internal;
 
 import org.glavo.url.WebURL;
+import org.glavo.url.internal.pattern.URLPatternInit;
 import org.glavo.url.internal.pattern.WebURLPatternEngine;
 import org.glavo.url.pattern.WebURLPattern;
 import org.glavo.url.pattern.WebURLPatternParser;
@@ -78,13 +79,6 @@ public final class WebURLPatternImpl implements WebURLPattern {
         return match(input) != null;
     }
 
-    /// Tests component input.
-    @Override
-    @Contract(pure = true)
-    public boolean test(WebURLPattern.Builder input) {
-        return match(input) != null;
-    }
-
     /// Matches this pattern against a URL string.
     @Override
     @Contract(pure = true)
@@ -110,12 +104,14 @@ public final class WebURLPatternImpl implements WebURLPattern {
         return toResult(engine.match(input));
     }
 
-    /// Matches this pattern against component input.
-    @Override
+    /// Matches this pattern against an internal URLPattern init input.
+    ///
+    /// @param input the internal init input
+    /// @return the match result, or `null` when the input does not match or cannot be canonicalized
     @Contract(pure = true)
-    public @Nullable WebURLPattern.Result match(WebURLPattern.Builder input) {
-        WebURLPatternBuilderImpl implementation = implementation(Objects.requireNonNull(input, "input"));
-        return toResult(engine.match(implementation.toPatternInit()));
+    public @Nullable WebURLPattern.Result matchInit(URLPatternInit input) {
+        Objects.requireNonNull(input, "input");
+        return toResult(engine.match(input));
     }
 
     /// Returns the scheme component pattern string without a trailing colon.

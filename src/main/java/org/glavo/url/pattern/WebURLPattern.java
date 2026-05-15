@@ -33,7 +33,7 @@ import java.util.regex.MatchResult;
 /// `WebURLPattern` follows the core URLPattern model from the
 /// [WHATWG URL Pattern Standard](https://urlpattern.spec.whatwg.org/). It can be created from
 /// a shorthand pattern string or from component patterns via [Builder#build()], and it can match
-/// URL strings, [WebURL] values, or component inputs.
+/// URL strings or [WebURL] values.
 ///
 /// Builder setters and component pattern getters such as [Builder#setSchemePattern(String)] and
 /// [#getSchemePattern()] use the `Pattern` suffix to avoid confusing component pattern strings with
@@ -114,13 +114,6 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     @Contract(pure = true)
     boolean test(WebURL input);
 
-    /// Tests component input.
-    ///
-    /// @param input the component input builder
-    /// @return `true` if the input matches this pattern
-    @Contract(pure = true)
-    boolean test(Builder input);
-
     /// Matches this pattern against a URL string and returns the match result.
     ///
     /// @param input the URL input string
@@ -142,13 +135,6 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     /// @return the match result, or `null` when the input does not match
     @Contract(pure = true)
     @Nullable Result match(WebURL input);
-
-    /// Matches this pattern against component input and returns the match result.
-    ///
-    /// @param input the component input builder
-    /// @return the match result, or `null` when the input does not match or cannot be canonicalized
-    @Contract(pure = true)
-    @Nullable Result match(Builder input);
 
     /// Returns the scheme component pattern string without a trailing colon.
     @Contract(pure = true)
@@ -202,7 +188,7 @@ public sealed interface WebURLPattern permits WebURLPatternImpl {
     @Contract(pure = true)
     boolean hasRegExpGroups();
 
-    /// Mutable builder for URLPattern component pattern strings or component match input strings.
+    /// Mutable builder for URLPattern component pattern strings.
     ///
     /// The builder uses `*Pattern` names because the primary construction use case stores URLPattern
     /// component pattern strings. Scheme maps to URLPattern `protocol`, host maps to URLPattern
