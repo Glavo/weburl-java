@@ -32,14 +32,11 @@ public sealed interface UrlHost permits UrlHost.Domain, UrlHost.Opaque, UrlHost.
 
     /// Creates a domain host.
     static UrlHost domain(String value) {
-        Objects.requireNonNull(value, "value");
-        if (value.isEmpty()) {
-            return EMPTY_DOMAIN;
-        }
-        if (value.equals("localhost")) {
-            return LOCALHOST_DOMAIN;
-        }
-        return new Domain(value);
+        return switch (value) {
+            case "" -> EMPTY_DOMAIN;
+            case "localhost" -> LOCALHOST_DOMAIN;
+            default -> new Domain(value);
+        };
     }
 
     /// Creates an opaque host.
