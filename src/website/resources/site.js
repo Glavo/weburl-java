@@ -27,6 +27,7 @@
   ];
   const javaFieldNames = [
     "serialized-url",
+    "ascii-string",
     "normalized-string",
     "display-string",
     "rfc2396-string",
