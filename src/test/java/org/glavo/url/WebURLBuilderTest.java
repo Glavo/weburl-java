@@ -222,29 +222,23 @@ public final class WebURLBuilderTest {
                 .setHost("example.com")
                 .setRawPath("/%zz");
         assertThrows(IllegalArgumentException.class, invalidPercentEscape::build);
-
-        WebURL.Builder invalidRawPort = WebURL.newBuilder()
-                .setScheme("https")
-                .setHost("example.com")
-                .setRawPort("7z");
-        assertThrows(IllegalArgumentException.class, invalidRawPort::build);
     }
 
     /// Tests that invalid intermediate values may be replaced before build-time validation.
     @Test
     public void allowsInvalidIntermediateComponentsToBeCorrected() {
         WebURL url = WebURL.newBuilder()
-                .setScheme("1https")
                 .setHost("exa mple.com")
-                .setRawPort("7z")
                 .setRawPath("/a b")
+                .setRawQuery("x=#")
                 .setScheme("https")
                 .setHost("example.com")
                 .setRawPort("443")
                 .setRawPath("/a%20b")
+                .setRawQuery("x=%23")
                 .build();
 
-        assertEquals("https://example.com/a%20b", url.href());
+        assertEquals("https://example.com/a%20b?x=%23", url.href());
     }
 
     /// Tests builder error reporting.
@@ -254,9 +248,9 @@ public final class WebURLBuilderTest {
         assertThrows(IllegalStateException.class, () -> WebURL.newBuilder().setScheme("https").build());
         assertThrows(IllegalStateException.class, () -> WebURL.newBuilder().setScheme("foo").setPort(1).build());
 
-        assertThrows(IllegalArgumentException.class, () -> WebURL.newBuilder().setScheme("1https").build());
+        assertThrows(IllegalArgumentException.class, () -> WebURL.newBuilder().setScheme("1https"));
         assertThrows(IllegalArgumentException.class,
-                () -> WebURL.newBuilder().setScheme("https").setRawPort("7z").build());
+                () -> WebURL.newBuilder().setScheme("https").setRawPort("7z"));
         assertThrows(IllegalArgumentException.class,
                 () -> WebURL.newBuilder().setScheme("https").setHost("exa mple.com").build());
         assertThrows(IllegalArgumentException.class,
@@ -264,9 +258,9 @@ public final class WebURLBuilderTest {
         assertThrows(IllegalArgumentException.class,
                 () -> WebURL.newBuilder().setScheme("https").setHost("example.com").setRawQuery("x=#").build());
         assertThrows(IllegalArgumentException.class,
-                () -> WebURL.newBuilder().setScheme("https").setHost("example.com").setPort(70000).build());
+                () -> WebURL.newBuilder().setScheme("https").setHost("example.com").setPort(70000));
         assertThrows(IllegalArgumentException.class,
-                () -> WebURL.newBuilder().setScheme("https").setHost("example.com").setPort(-2).build());
+                () -> WebURL.newBuilder().setScheme("https").setHost("example.com").setPort(-2));
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> WebURL.newBuilder().setScheme("https").setHost("example.com").setRawPath("/%zz").build());

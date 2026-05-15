@@ -7,8 +7,8 @@
 - Removed `WebURL` `getRawUsernameOrEmpty()`, `getRawPasswordOrEmpty()`, `getRawQueryOrEmpty()`,
   and `getRawFragmentOrEmpty()`. Use the nullable Java-style raw getters or the null-free WHATWG-style
   getters instead.
-- `WebURL.Builder` setters now defer URL component syntax validation until `build()`, allowing invalid
-  intermediate values to be corrected before construction.
+- `WebURL.Builder` now defers parsing-context validation until `build()`, while setters still reject basic
+  scheme and port argument errors.
 
 ### New APIs
 

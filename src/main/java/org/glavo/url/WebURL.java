@@ -390,8 +390,8 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
 
     /// Creates an empty mutable URL builder.
     ///
-    /// The returned builder has no scheme. Setters store component inputs without URL syntax validation; inputs
-    /// are validated and normalized together when [Builder#build()] is called.
+    /// The returned builder has no scheme. Setters perform basic scheme-independent argument checks where possible,
+    /// and the remaining URL syntax is validated and normalized when [Builder#build()] is called.
     ///
     /// @return a new URL builder
     @Contract(value = "-> new", pure = true)
@@ -1161,8 +1161,9 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     /// Mutable builder for constructing immutable [WebURL] values from URL components.
     ///
     /// A builder is mutable and is not thread-safe. Each setter updates one logical URL component and returns this
-    /// builder so calls can be chained. Setters store their inputs without URL syntax validation. Validation and
-    /// scheme-sensitive normalization happen when [Builder#build()] is called, so invalid intermediate component
+    /// builder so calls can be chained. Setters perform basic scheme-independent argument checks where possible,
+    /// such as URL scheme syntax and port syntax or range. Validation that depends on URL parsing context or the
+    /// final component combination happens when [Builder#build()] is called, so some invalid intermediate component
     /// values may be overwritten before the final URL is built.
     ///
     /// Methods whose names contain `Raw` accept serialized component text, preserving valid percent escapes.
@@ -1179,12 +1180,13 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     sealed interface Builder permits WebURLBuilderImpl {
         /// Sets the URL scheme.
         ///
-        /// The scheme must not include the trailing colon. It is validated and normalized to lowercase ASCII when
-        /// [Builder#build()] is called. The scheme may be changed after other components have been set; affected
-        /// components are interpreted against the final scheme.
+        /// The scheme must not include the trailing colon. It is validated and normalized to lowercase ASCII by
+        /// this method. The scheme may be changed after other components have been set; affected components are
+        /// interpreted against the final scheme.
         ///
         /// @param scheme the URL scheme without the trailing colon
         /// @return this builder
+        /// @throws IllegalArgumentException when `scheme` is not a valid URL scheme
         /// @throws NullPointerException when `scheme` is `null`
         @Contract("_ -> this")
         WebURL.Builder setScheme(String scheme);
@@ -1241,6 +1243,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param port the port number, or `-1` to remove it
         /// @return this builder
+        /// @throws IllegalArgumentException when `port` is outside `-1..65535`
         @Contract("_ -> this")
         WebURL.Builder setPort(int port);
 
@@ -1248,6 +1251,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         ///
         /// @param port the raw port text, or `null` to remove it
         /// @return this builder
+        /// @throws IllegalArgumentException when `port` is not a valid URL port
         @Contract("_ -> this")
         WebURL.Builder setRawPort(@Nullable String port);
 

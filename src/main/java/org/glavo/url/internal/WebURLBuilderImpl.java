@@ -105,7 +105,7 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     /// Sets the URL scheme.
     @Override
     public WebURL.Builder setScheme(String scheme) {
-        this.scheme = Objects.requireNonNull(scheme, "scheme");
+        this.scheme = normalizeScheme(Objects.requireNonNull(scheme, "scheme"));
         return this;
     }
 
@@ -148,6 +148,9 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     /// Sets the numeric port.
     @Override
     public WebURL.Builder setPort(int port) {
+        if (port < -1 || port > 65535) {
+            throw new IllegalArgumentException("Port must be in the range -1..65535");
+        }
         return setPortInput(port == -1 ? null : Integer.toString(port));
     }
 
@@ -254,6 +257,12 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Sets the port input.
     private WebURL.Builder setPortInput(@Nullable String value) {
+        if (value != null) {
+            if (value.isEmpty()) {
+                throw invalidComponent("port", null);
+            }
+            parsePort(value);
+        }
         portInput = value;
         return this;
     }
@@ -285,7 +294,7 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Creates a normalized URL record from the current component inputs.
     private UrlRecord createRecord() {
-        String schemeValue = normalizeScheme(requireScheme());
+        String schemeValue = requireScheme();
         UrlRecord result = new UrlRecord();
         result.scheme = schemeValue;
         result.username = normalizeStringComponent(usernameInput, usernameRaw,
