@@ -77,8 +77,6 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     private boolean fragmentRaw = true;
     /// Whether the current fragment input came from an existing parsed URL.
     private boolean fragmentTrusted;
-    /// Current normalized mutable URL record.
-    private UrlRecord record = new UrlRecord();
 
     /// Creates an empty builder.
     public WebURLBuilderImpl() {
@@ -87,8 +85,7 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     /// Creates a builder initialized from an existing URL.
     public WebURLBuilderImpl(WebURL url) {
         WebURLImpl implementation = implementation(Objects.requireNonNull(url, "url"));
-        this.record = implementation.toRecord();
-        this.scheme = record.scheme;
+        this.scheme = implementation.getScheme();
         this.usernameInput = implementation.getRawUsername();
         this.usernameTrusted = true;
         this.passwordInput = implementation.getRawPassword();
@@ -108,11 +105,8 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     /// Sets the URL scheme.
     @Override
     public WebURL.Builder setScheme(String scheme) {
-        String normalizedScheme = normalizeScheme(Objects.requireNonNull(scheme, "scheme"));
-        @Nullable String oldScheme = this.scheme;
-        UrlRecord oldRecord = record.copy();
-        this.scheme = normalizedScheme;
-        return rebuildOrRestore(oldRecord, () -> this.scheme = oldScheme);
+        this.scheme = Objects.requireNonNull(scheme, "scheme");
+        return this;
     }
 
     /// Sets the decoded username.
@@ -154,10 +148,7 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     /// Sets the numeric port.
     @Override
     public WebURL.Builder setPort(int port) {
-        if (port < -1 || port > 65535) {
-            throw new IllegalArgumentException("Port must be in the range -1..65535");
-        }
-        return setPortInput(port < 0 ? null : Integer.toString(port));
+        return setPortInput(port == -1 ? null : Integer.toString(port));
     }
 
     /// Sets the raw port.
@@ -205,8 +196,8 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     /// Builds an immutable URL.
     @Override
     public WebURL build() {
-        UrlRecord output = record.copy();
-        String schemeValue = requireScheme();
+        UrlRecord output = createRecord();
+        String schemeValue = output.scheme;
         if (output.host == null && (!output.username.isEmpty() || !output.password.isEmpty())) {
             throw new IllegalStateException("Credentials require a host");
         }
@@ -239,167 +230,62 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
 
     /// Sets the username input.
     private WebURL.Builder setUsernameInput(@Nullable String value, boolean raw) {
-        if (scheme == null && raw && value != null) {
-            validateGenericRawComponent(value, "username");
-        }
-        @Nullable String oldValue = usernameInput;
-        boolean oldRaw = usernameRaw;
-        boolean oldTrusted = usernameTrusted;
-        UrlRecord oldRecord = record.copy();
         usernameInput = value;
         usernameRaw = raw;
         usernameTrusted = false;
-        return rebuildOrRestore(oldRecord, () -> {
-            usernameInput = oldValue;
-            usernameRaw = oldRaw;
-            usernameTrusted = oldTrusted;
-        });
+        return this;
     }
 
     /// Sets the password input.
     private WebURL.Builder setPasswordInput(@Nullable String value, boolean raw) {
-        if (scheme == null && raw && value != null) {
-            validateGenericRawComponent(value, "password");
-        }
-        @Nullable String oldValue = passwordInput;
-        boolean oldRaw = passwordRaw;
-        boolean oldTrusted = passwordTrusted;
-        UrlRecord oldRecord = record.copy();
         passwordInput = value;
         passwordRaw = raw;
         passwordTrusted = false;
-        return rebuildOrRestore(oldRecord, () -> {
-            passwordInput = oldValue;
-            passwordRaw = oldRaw;
-            passwordTrusted = oldTrusted;
-        });
+        return this;
     }
 
     /// Sets the host input.
     private WebURL.Builder setHostInput(@Nullable String value, boolean raw) {
-        if (scheme == null && raw && value != null) {
-            validateGenericRawComponent(value, "host");
-        }
-        @Nullable String oldValue = hostInput;
-        boolean oldRaw = hostRaw;
-        boolean oldTrusted = hostTrusted;
-        UrlRecord oldRecord = record.copy();
         hostInput = value;
         hostRaw = raw;
         hostTrusted = false;
-        return rebuildOrRestore(oldRecord, () -> {
-            hostInput = oldValue;
-            hostRaw = oldRaw;
-            hostTrusted = oldTrusted;
-        });
+        return this;
     }
 
     /// Sets the port input.
     private WebURL.Builder setPortInput(@Nullable String value) {
-        if (value != null) {
-            if (value.isEmpty()) {
-                throw invalidComponent("port", null);
-            }
-            parsePort(value);
-        }
-        @Nullable String oldValue = portInput;
-        UrlRecord oldRecord = record.copy();
         portInput = value;
-        return rebuildOrRestore(oldRecord, () -> portInput = oldValue);
+        return this;
     }
 
     /// Sets the path input.
     private WebURL.Builder setPathInput(String value, boolean raw) {
-        if (scheme == null && raw) {
-            validateGenericRawComponent(value, "path");
-        }
-        String oldValue = pathInput;
-        boolean oldRaw = pathRaw;
-        boolean oldTrusted = pathTrusted;
-        boolean oldOpaque = pathOpaque;
-        UrlRecord oldRecord = record.copy();
         pathInput = value;
         pathRaw = raw;
         pathTrusted = false;
         pathOpaque = shouldPreferOpaquePath(value);
-        return rebuildOrRestore(oldRecord, () -> {
-            pathInput = oldValue;
-            pathRaw = oldRaw;
-            pathTrusted = oldTrusted;
-            pathOpaque = oldOpaque;
-        });
+        return this;
     }
 
     /// Sets the query input.
     private WebURL.Builder setQueryInput(@Nullable String value, boolean raw) {
-        if (scheme == null && raw && value != null) {
-            validateGenericRawComponent(value, "query");
-        }
-        @Nullable String oldValue = queryInput;
-        boolean oldRaw = queryRaw;
-        boolean oldTrusted = queryTrusted;
-        UrlRecord oldRecord = record.copy();
         queryInput = value;
         queryRaw = raw;
         queryTrusted = false;
-        return rebuildOrRestore(oldRecord, () -> {
-            queryInput = oldValue;
-            queryRaw = oldRaw;
-            queryTrusted = oldTrusted;
-        });
+        return this;
     }
 
     /// Sets the fragment input.
     private WebURL.Builder setFragmentInput(@Nullable String value, boolean raw) {
-        if (scheme == null && raw && value != null) {
-            validateGenericRawComponent(value, "fragment");
-        }
-        @Nullable String oldValue = fragmentInput;
-        boolean oldRaw = fragmentRaw;
-        boolean oldTrusted = fragmentTrusted;
-        UrlRecord oldRecord = record.copy();
         fragmentInput = value;
         fragmentRaw = raw;
         fragmentTrusted = false;
-        return rebuildOrRestore(oldRecord, () -> {
-            fragmentInput = oldValue;
-            fragmentRaw = oldRaw;
-            fragmentTrusted = oldTrusted;
-        });
-    }
-
-    /// Rebuilds the normalized URL record or restores the old builder state.
-    private WebURL.Builder rebuildOrRestore(UrlRecord oldRecord, Runnable restore) {
-        if (scheme == null) {
-            return this;
-        }
-        try {
-            record = createRecord();
-            return this;
-        } catch (RuntimeException exception) {
-            restore.run();
-            record = oldRecord;
-            throw exception;
-        }
-    }
-
-    /// Validates only syntax that is independent of URL scheme and component kind.
-    private static void validateGenericRawComponent(String value, String component) {
-        for (int index = 0; index < value.length(); ) {
-            if (value.charAt(index) == '%') {
-                if (!PercentEncoding.isValidPercentTriplet(value, index, value.length())) {
-                    throw invalidComponent(component, null);
-                }
-                index += 3;
-            } else {
-                index += Character.charCount(value.codePointAt(index));
-            }
-        }
+        return this;
     }
 
     /// Creates a normalized URL record from the current component inputs.
     private UrlRecord createRecord() {
-        String schemeValue = requireScheme();
+        String schemeValue = normalizeScheme(requireScheme());
         UrlRecord result = new UrlRecord();
         result.scheme = schemeValue;
         result.username = normalizeStringComponent(usernameInput, usernameRaw,
