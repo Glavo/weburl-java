@@ -43,17 +43,6 @@
 /// # Dependencies
 ///
 /// This module requires **only `java.base`** at runtime.
-/// [JetBrains Annotations](https://github.com/JetBrains/java-annotations) (`org.jetbrains.annotations`)
-/// are used for compile-time nullability checking and are declared as a static (`compileOnly`)
-/// dependency; they are not required on the module path at runtime.
-///
-/// # Thread Safety
-///
-/// [org.glavo.url.WebURL] instances are deeply immutable and safe for concurrent use without
-/// additional synchronization. The built-in parsers exposed by
-/// [org.glavo.url.WebURLParser#getDefault()] and
-/// [org.glavo.url.WebURLParser#getStrict()] are likewise immutable and thread-safe. URLPattern
-/// matchers and parsers are also immutable and reusable.
 ///
 /// @see <a href="https://url.spec.whatwg.org/">WHATWG URL Standard</a>
 /// @see org.glavo.url
