@@ -70,7 +70,7 @@
 /// {@link org.glavo.url.WebURL} instances are deeply immutable and safe for concurrent use. The default and strict
 /// parsers from {@link org.glavo.url.WebURLParser} are also immutable and thread-safe.
 ///
-/// @see <a href="https://url.spec.whatwg.org/">WHATWG URL Living Standard</a>
+/// @see <a href="https://url.spec.whatwg.org/">WHATWG URL Standard</a>
 /// @see org.glavo.url.WebURL
 /// @see org.glavo.url.WebURLParser
 /// @see org.glavo.url.WebURLParseException

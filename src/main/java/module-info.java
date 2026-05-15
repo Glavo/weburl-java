@@ -19,7 +19,7 @@
 /// # Overview
 ///
 /// The `org.glavo.url` module provides a modern, zero-dependency URL library that implements the
-/// [WHATWG URL Living Standard](https://url.spec.whatwg.org/) — the same specification followed
+/// [WHATWG URL Standard](https://url.spec.whatwg.org/) — the same specification followed
 /// by Chrome, Firefox, and Safari. It is designed as a drop-in improvement over
 /// `java.net.URI` and `java.net.URL` for applications that need URL handling aligned with the
 /// web platform.
@@ -55,7 +55,7 @@
 /// [org.glavo.url.WebURLParser#getStrict()] are likewise immutable and thread-safe. URLPattern
 /// matchers and parsers are also immutable and reusable.
 ///
-/// @see <a href="https://url.spec.whatwg.org/">WHATWG URL Living Standard</a>
+/// @see <a href="https://url.spec.whatwg.org/">WHATWG URL Standard</a>
 /// @see org.glavo.url
 module org.glavo.url {
     requires static org.jetbrains.annotations;

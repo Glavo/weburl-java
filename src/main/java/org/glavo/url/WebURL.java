@@ -224,7 +224,7 @@ import java.util.Objects;
 ///
 /// | Aspect             | `WebURL`                              | `java.net.URI`                             |
 /// |--------------------|---------------------------------------|--------------------------------------------|
-/// | Specification      | WHATWG URL Living Standard            | RFC 2396, updated by RFC 2732             |
+/// | Specification      | WHATWG URL Standard                   | RFC 2396, updated by RFC 2732             |
 /// | Design goal        | Match browser behavior for the web    | Model the generic hierarchical URI syntax  |
 /// | Relative references | Resolved against a base; `WebURL` is always absolute | URIs can be either absolute or relative |
 /// | Input preservation | Always normalized; original input may be rewritten | Preserves original input string        |
