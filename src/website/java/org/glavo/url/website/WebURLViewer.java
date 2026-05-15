@@ -84,6 +84,33 @@ public final class WebURLViewer {
             "weburl-java-decoded-fragment",
     };
 
+    /// HTML ids for fields populated from the java.net.URI result.
+    private static final String @Unmodifiable [] JAVA_URI_FIELD_IDS = {
+            "uri-java-serialized-url",
+            "uri-java-ascii-string",
+            "uri-java-normalized-string",
+            "uri-java-display-string",
+            "uri-java-rfc2396-string",
+            "uri-java-scheme",
+            "uri-java-raw-authority",
+            "uri-java-decoded-authority",
+            "uri-java-raw-user-info",
+            "uri-java-decoded-user-info",
+            "uri-java-raw-username",
+            "uri-java-decoded-username",
+            "uri-java-raw-password",
+            "uri-java-decoded-password",
+            "uri-java-host",
+            "uri-java-raw-port",
+            "uri-java-port",
+            "uri-java-raw-path",
+            "uri-java-decoded-path",
+            "uri-java-raw-query",
+            "uri-java-decoded-query",
+            "uri-java-raw-fragment",
+            "uri-java-decoded-fragment",
+    };
+
     /// Parser mode value for the default parser.
     private static final String MODE_DEFAULT = "default";
 
@@ -127,20 +154,19 @@ public final class WebURLViewer {
     private static void renderWebURL(String input, String base, String mode) {
         try {
             WebURL url = parse(input, base, mode);
-            setState("weburl-panel", "ok");
-            setText("weburl-status", "Parsed");
-            setText("weburl-error", "");
+            setPanelParsed("weburl-panel", "weburl-status", "weburl-error");
+            setPanelParsed("weburl-java-panel", "weburl-java-status", "weburl-java-error");
             renderWebURLFields(url);
         } catch (WebURLParseException e) {
+            String message = formatWebURLParseException(e);
             clearFields(WEBURL_FIELD_IDS);
-            setState("weburl-panel", "error");
-            setText("weburl-status", "Rejected");
-            setText("weburl-error", e.getErrorName() + " at index " + e.getIndex() + ": " + e.getReason());
+            setPanelRejected("weburl-panel", "weburl-status", "weburl-error", message);
+            setPanelRejected("weburl-java-panel", "weburl-java-status", "weburl-java-error", message);
         } catch (RuntimeException e) {
+            String message = e.toString();
             clearFields(WEBURL_FIELD_IDS);
-            setState("weburl-panel", "error");
-            setText("weburl-status", "Failed");
-            setText("weburl-error", e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage()));
+            setPanelFailed("weburl-panel", "weburl-status", "weburl-error", message);
+            setPanelFailed("weburl-java-panel", "weburl-java-status", "weburl-java-error", message);
         }
     }
 
@@ -205,6 +231,7 @@ public final class WebURLViewer {
     private static void renderJavaURIFields(String input) {
         try {
             JavaURI uri = new JavaURI(input);
+            setPanelParsed("uri-java-panel", "uri-java-status", "uri-java-error");
             setJavaStringValue("uri-java-serialized-url", uri.toString());
             setJavaStringValue("uri-java-ascii-string", uri.toASCIIString());
             setJavaStringValue("uri-java-normalized-string", uri.normalize().toString());
@@ -229,37 +256,75 @@ public final class WebURLViewer {
             setJavaNullableValue("uri-java-raw-fragment", uri.getRawFragment());
             setJavaNullableValue("uri-java-decoded-fragment", uri.getFragment());
         } catch (URISyntaxException e) {
-            renderUnavailableURIFields(e);
+            clearFields(JAVA_URI_FIELD_IDS);
+            setPanelRejected("uri-java-panel", "uri-java-status", "uri-java-error", formatURISyntaxException(e));
         }
     }
 
-    /// Renders java.net.URI fields when the original input cannot be represented as a Java URI.
+    /// Formats a WebURL parse exception for display in a result panel.
     ///
-    /// @param exception the conversion failure
-    private static void renderUnavailableURIFields(URISyntaxException exception) {
-        setJavaStringValue("uri-java-serialized-url", "conversion failed: " + exception.getReason());
-        setJavaUnsupportedValue("uri-java-ascii-string");
-        setJavaUnsupportedValue("uri-java-normalized-string");
-        setJavaUnsupportedValue("uri-java-display-string");
-        setJavaUnsupportedValue("uri-java-rfc2396-string");
-        setJavaUnsupportedValue("uri-java-scheme");
-        setJavaUnsupportedValue("uri-java-raw-authority");
-        setJavaUnsupportedValue("uri-java-decoded-authority");
-        setJavaUnsupportedValue("uri-java-raw-user-info");
-        setJavaUnsupportedValue("uri-java-decoded-user-info");
-        setJavaUnsupportedValue("uri-java-raw-username");
-        setJavaUnsupportedValue("uri-java-decoded-username");
-        setJavaUnsupportedValue("uri-java-raw-password");
-        setJavaUnsupportedValue("uri-java-decoded-password");
-        setJavaUnsupportedValue("uri-java-host");
-        setJavaUnsupportedValue("uri-java-raw-port");
-        setJavaUnsupportedValue("uri-java-port");
-        setJavaUnsupportedValue("uri-java-raw-path");
-        setJavaUnsupportedValue("uri-java-decoded-path");
-        setJavaUnsupportedValue("uri-java-raw-query");
-        setJavaUnsupportedValue("uri-java-decoded-query");
-        setJavaUnsupportedValue("uri-java-raw-fragment");
-        setJavaUnsupportedValue("uri-java-decoded-fragment");
+    /// @param exception the parse failure
+    /// @return the display error message
+    private static String formatWebURLParseException(WebURLParseException exception) {
+        return exception.getErrorName() + ": " + exception.getMessage();
+    }
+
+    /// Formats a URI syntax exception for display in a result panel.
+    ///
+    /// @param exception the parse failure
+    /// @return the display error message
+    private static String formatURISyntaxException(URISyntaxException exception) {
+        StringBuilder message = new StringBuilder("java.net.URISyntaxException: ");
+        String reason = exception.getReason();
+        if (reason != null) {
+            message.append(reason);
+        }
+
+        int index = exception.getIndex();
+        if (index >= 0) {
+            message.append(" at index ").append(index);
+        }
+
+        String input = exception.getInput();
+        if (input != null) {
+            message.append(": ").append(input);
+        }
+        return message.toString();
+    }
+
+    /// Marks a result panel as successfully parsed.
+    ///
+    /// @param panelId the panel element id
+    /// @param statusId the status text element id
+    /// @param errorId the error text element id
+    private static void setPanelParsed(String panelId, String statusId, String errorId) {
+        setState(panelId, "ok");
+        setText(statusId, "Parsed");
+        setText(errorId, "");
+    }
+
+    /// Marks a result panel as rejected by validation.
+    ///
+    /// @param panelId the panel element id
+    /// @param statusId the status text element id
+    /// @param errorId the error text element id
+    /// @param message the error message
+    private static void setPanelRejected(String panelId, String statusId, String errorId, String message) {
+        setState(panelId, "error");
+        setText(statusId, "Rejected");
+        setText(errorId, message);
+    }
+
+    /// Marks a result panel as failed by an unexpected runtime error.
+    ///
+    /// @param panelId the panel element id
+    /// @param statusId the status text element id
+    /// @param errorId the error text element id
+    /// @param message the error message
+    private static void setPanelFailed(String panelId, String statusId, String errorId, String message) {
+        setState(panelId, "error");
+        setText(statusId, "Failed");
+        setText(errorId, message);
     }
 
     /// Clears a list of result fields.

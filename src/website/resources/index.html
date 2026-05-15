@@ -88,10 +88,12 @@
     </section>
 
     <section class="comparison-grid java-comparison-grid" aria-label="Java-style component comparison">
-      <article class="result-panel">
+      <article id="weburl-java-panel" class="result-panel" data-state="loading">
         <div class="panel-heading">
           <h2>WebURL for Java (Java-style components)</h2>
+          <span id="weburl-java-status" class="status-pill">Waiting</span>
         </div>
+        <p id="weburl-java-error" class="error-line"></p>
         <dl class="component-table">
           <div><dt>URL string</dt><dd id="weburl-java-serialized-url"></dd></div>
           <div><dt>ASCII string</dt><dd id="weburl-java-ascii-string"></dd></div>
@@ -119,10 +121,12 @@
         </dl>
       </article>
 
-      <article class="result-panel">
+      <article id="uri-java-panel" class="result-panel" data-state="loading">
         <div class="panel-heading">
           <h2>java.net.URI</h2>
+          <span id="uri-java-status" class="status-pill">Waiting</span>
         </div>
+        <p id="uri-java-error" class="error-line"></p>
         <dl class="component-table">
           <div><dt>URL string</dt><dd id="uri-java-serialized-url"></dd></div>
           <div><dt>ASCII string</dt><dd id="uri-java-ascii-string"></dd></div>

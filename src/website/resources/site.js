@@ -280,9 +280,18 @@
       });
       teavm.exports.main([]);
     } catch (error) {
-      setText("runtime-status", error && error.message ? error.message : String(error));
-      setState("browser-panel", "error");
-      setState("weburl-panel", "error");
+      const message = error && error.message ? error.message : String(error);
+      setText("runtime-status", message);
+      for (const panel of [
+        ["browser-panel", "browser-status", "browser-error"],
+        ["weburl-panel", "weburl-status", "weburl-error"],
+        ["weburl-java-panel", "weburl-java-status", "weburl-java-error"],
+        ["uri-java-panel", "uri-java-status", "uri-java-error"]
+      ]) {
+        setState(panel[0], "error");
+        setText(panel[1], "Failed");
+        setText(panel[2], message);
+      }
     }
   }
 
