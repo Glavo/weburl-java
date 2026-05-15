@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "org.glavo"
-version = "0.3.0" + "-SNAPSHOT"
+version = "0.3.0" // + "-SNAPSHOT"
 description = "A modern Java URL library that brings browser-grade WHATWG URL parsing to URI-style APIs."
 
 repositories {
