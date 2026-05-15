@@ -60,6 +60,7 @@ public final class WebURLViewer {
             "weburl-search",
             "weburl-hash",
             "weburl-java-serialized-url",
+            "weburl-java-normalized-string",
             "weburl-java-display-string",
             "weburl-java-rfc2396-string",
             "weburl-java-scheme",
@@ -173,6 +174,7 @@ public final class WebURLViewer {
         setComparedValue("weburl-search", url.getWebSearch());
         setComparedValue("weburl-hash", url.getWebHash());
         setJavaStringValue("weburl-java-serialized-url", url.toString());
+        setJavaStringValue("weburl-java-normalized-string", url.toString());
         setJavaStringValue("weburl-java-display-string", url.toDisplayString());
         setJavaStringValue("weburl-java-rfc2396-string", url.toRFC2396String());
         setJavaStringValue("weburl-java-scheme", url.getScheme());
@@ -202,6 +204,7 @@ public final class WebURLViewer {
         try {
             JavaURI uri = new JavaURI(input);
             setJavaStringValue("uri-java-serialized-url", uri.toString());
+            setJavaStringValue("uri-java-normalized-string", uri.normalize().toString());
             setJavaUnsupportedValue("uri-java-display-string");
             setJavaStringValue("uri-java-rfc2396-string", uri.toString());
             setJavaNullableValue("uri-java-scheme", uri.getScheme());
@@ -232,6 +235,7 @@ public final class WebURLViewer {
     /// @param exception the conversion failure
     private static void renderUnavailableURIFields(URISyntaxException exception) {
         setJavaStringValue("uri-java-serialized-url", "conversion failed: " + exception.getReason());
+        setJavaUnsupportedValue("uri-java-normalized-string");
         setJavaUnsupportedValue("uri-java-display-string");
         setJavaUnsupportedValue("uri-java-rfc2396-string");
         setJavaUnsupportedValue("uri-java-scheme");
