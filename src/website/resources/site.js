@@ -1,5 +1,7 @@
+import "./jsdom-url.js";
+
 (function () {
-  const browserFieldIds = [
+  const referenceFieldIds = [
     "browser-href",
     "browser-origin",
     "browser-protocol",
@@ -50,7 +52,7 @@
     "decoded-fragment",
     "raw-fragment"
   ];
-  const browserValues = new Map();
+  const referenceValues = new Map();
   const weburlValues = new Map();
   const weburlJavaValues = new Map();
   const uriJavaValues = new Map();
@@ -93,9 +95,9 @@
     for (const name of componentNames) {
       const browserId = `browser-${name}`;
       const weburlId = `weburl-${name}`;
-      const hasBrowserValue = browserValues.has(name);
+      const hasBrowserValue = referenceValues.has(name);
       const hasWebURLValue = weburlValues.has(name);
-      const browserValue = browserValues.get(name);
+      const browserValue = referenceValues.get(name);
       const weburlValue = weburlValues.get(name);
       const valuesMatch = hasBrowserValue && hasWebURLValue && browserValue === weburlValue;
 
@@ -114,8 +116,8 @@
     return hasCounterpart && valuesMatch ? "match" : "mismatch";
   }
 
-  function setBrowserComponent(name, value) {
-    browserValues.set(name, value);
+  function setReferenceComponent(name, value) {
+    referenceValues.set(name, value);
     setDisplayedComponent(`browser-${name}`, value);
     updateComparisonStates();
   }
@@ -203,7 +205,7 @@
     const weburlName = componentNameFromId(id, "weburl-");
     const javaField = javaFieldFromId(id);
     if (componentNames.includes(browserName)) {
-      browserValues.delete(browserName);
+      referenceValues.delete(browserName);
     }
     if (componentNames.includes(weburlName)) {
       weburlValues.delete(weburlName);
@@ -228,31 +230,31 @@
     }
   }
 
-  function clearBrowserFields() {
-    for (const id of browserFieldIds) {
+  function clearReferenceFields() {
+    for (const id of referenceFieldIds) {
       clearValue(id);
     }
   }
 
-  function renderBrowserURL(input, base) {
+  function renderJsdomURL(input, base) {
     try {
-      const url = base === "" ? new URL(input) : new URL(input, base);
+      const url = window.WebURLJsdomURL.parse(input, base);
       setState("browser-panel", "ok");
       setText("browser-status", "Parsed");
       setText("browser-error", "");
-      setBrowserComponent("href", url.href);
-      setBrowserComponent("origin", url.origin);
-      setBrowserComponent("protocol", url.protocol);
-      setBrowserComponent("username", url.username);
-      setBrowserComponent("password", url.password);
-      setBrowserComponent("host", url.host);
-      setBrowserComponent("hostname", url.hostname);
-      setBrowserComponent("port", url.port);
-      setBrowserComponent("pathname", url.pathname);
-      setBrowserComponent("search", url.search);
-      setBrowserComponent("hash", url.hash);
+      setReferenceComponent("href", url.href);
+      setReferenceComponent("origin", url.origin);
+      setReferenceComponent("protocol", url.protocol);
+      setReferenceComponent("username", url.username);
+      setReferenceComponent("password", url.password);
+      setReferenceComponent("host", url.host);
+      setReferenceComponent("hostname", url.hostname);
+      setReferenceComponent("port", url.port);
+      setReferenceComponent("pathname", url.pathname);
+      setReferenceComponent("search", url.search);
+      setReferenceComponent("hash", url.hash);
     } catch (error) {
-      clearBrowserFields();
+      clearReferenceFields();
       setState("browser-panel", "error");
       setText("browser-status", "Rejected");
       setText("browser-error", error && error.message ? error.message : String(error));
@@ -301,7 +303,7 @@
     setComparedValue,
     setJavaValue,
     clearValue,
-    renderBrowserURL,
+    renderJsdomURL,
     setReady() {
       setText("runtime-status", "WebAssembly ready");
     }

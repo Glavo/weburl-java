@@ -141,7 +141,7 @@ public final class WebURLViewer {
         String base = readValue("base-input");
         String mode = readValue("parser-mode");
 
-        renderBrowserURL(input, base);
+        renderJsdomURL(input, base);
         renderJavaURIFields(input);
         renderWebURL(input, base, mode);
     }
@@ -413,12 +413,12 @@ public final class WebURLViewer {
     @JSBody(params = {"id", "state"}, script = "window.WebURLViewer.setState(id, state);")
     private static native void setState(String id, String state);
 
-    /// Renders the browser-native `URL` comparison view.
+    /// Renders the jsdom `whatwg-url` comparison view.
     ///
     /// @param input the URL input text
     /// @param base the optional base URL text
-    @JSBody(params = {"input", "base"}, script = "window.WebURLViewer.renderBrowserURL(input, base);")
-    private static native void renderBrowserURL(String input, String base);
+    @JSBody(params = {"input", "base"}, script = "window.WebURLViewer.renderJsdomURL(input, base);")
+    private static native void renderJsdomURL(String input, String base);
 
     /// Registers live update listeners on a form control.
     ///
