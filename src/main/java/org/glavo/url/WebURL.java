@@ -424,11 +424,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///                                       Java `URI`
     @Contract(pure = true)
     static URI toURI(String input) {
-        try {
-            return parse(input).toURI();
-        } catch (URISyntaxException exception) {
-            throw new IllegalArgumentException(exception.getMessage(), exception);
-        }
+        return WebURLParser.getDefault().toURI(input);
     }
 
     /// Parses an absolute URL string and returns it as a Java `URL`.
@@ -446,11 +442,7 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
     ///                               handler for the scheme or rejects the URL
     @Contract(pure = true)
     static URL toURL(String input) throws MalformedURLException {
-        try {
-            return parse(input).toURL();
-        } catch (WebURLParseException exception) {
-            throw malformedURL(exception);
-        }
+        return WebURLParser.getDefault().toURL(input);
     }
 
     /// Parses an absolute input string and returns the parsed URL.

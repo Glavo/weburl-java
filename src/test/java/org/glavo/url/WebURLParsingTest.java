@@ -80,7 +80,7 @@ public final class WebURLParsingTest {
 
     /// Tests reusable parser instances and strict validation behavior.
     @Test
-    public void parsesWithReusableParsers() {
+    public void parsesWithReusableParsers() throws Exception {
         assertEquals(Set.of(), WebURLParser.getDefault().getRejectedValidationErrors());
         assertEquals(WebURLParser.getDefault(), WebURLParser.getDefault());
         assertNotEquals(WebURLParser.getDefault(), WebURLParser.getStrict());
@@ -101,6 +101,10 @@ public final class WebURLParsingTest {
         assertNotNull(WebURLParser.getDefault().tryParse("a", WebURL.parse("https://example.com/")));
         assertEquals("https://example.com/", WebURLParser.getDefault().parseBrowserInput("example.com").href());
         assertNotNull(WebURLParser.getDefault().tryParseBrowserInput("example.com"));
+        assertEquals(new URI("https://example.com/a%20b"),
+                WebURLParser.getDefault().toURI("https://example.com/a b"));
+        assertEquals("http://example.com/",
+                WebURLParser.getDefault().toURL("HTTP://EXAMPLE.COM:80/").toExternalForm());
 
         WebURLParseException exception = assertThrows(WebURLParseException.class,
                 () -> WebURLParser.getStrict().parse("http://user@example.com/"));
@@ -123,6 +127,20 @@ public final class WebURLParsingTest {
         assertEquals(WebURLParseException.ErrorType.IPV4_NON_DECIMAL_PART,
                 assertThrows(WebURLParseException.class,
                         () -> WebURLParser.getStrict().parse("http://0x7f.0.0.1/")).getErrorType());
+
+        assertThrows(WebURLParseException.class,
+                () -> WebURLParser.getStrict().toURI(" https://example.com/"));
+        MalformedURLException strictUrlException = assertThrows(MalformedURLException.class,
+                () -> WebURLParser.getStrict().toURL(" http://example.com/"));
+        assertTrue(strictUrlException.getCause() instanceof WebURLParseException);
+
+        IllegalArgumentException uriException = assertThrows(IllegalArgumentException.class,
+                () -> WebURLParser.getDefault().toURI("non-special:"));
+        assertTrue(uriException.getCause() instanceof URISyntaxException);
+
+        MalformedURLException urlException = assertThrows(MalformedURLException.class,
+                () -> WebURLParser.getDefault().toURL("non-special:"));
+        assertTrue(urlException.getCause() instanceof URISyntaxException);
     }
 
     /// Tests browser-style URL input conversion to Java networking types.

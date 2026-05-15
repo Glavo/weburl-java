@@ -16,6 +16,7 @@
 - Added WHATWG-style `WebURL` component getters: `getWebProtocol()`, `getWebUsername()`,
   `getWebPassword()`, `getWebHost()`, `getWebHostname()`, `getWebPort()`, `getWebPathname()`,
   `getWebSearch()`, and `getWebHash()`.
+- Added parser-aware `WebURLParser.toURI(String)` and `WebURLParser.toURL(String)` conversion helpers.
 - Added `org.glavo.url.pattern.WebURLPattern`, `WebURLPatternParser`, and
   `WebURLPatternSyntaxException` for precompiled WHATWG URLPattern-style matching from shorthand
   strings or component builders.

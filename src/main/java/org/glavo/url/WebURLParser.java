@@ -21,6 +21,10 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URISyntaxException;
 import java.util.Set;
 
 /// A reusable parser for creating [WebURL] values from URL strings.
@@ -118,6 +122,50 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     @Contract(pure = true)
     WebURL parse(String input);
 
+    /// Parses an absolute input string and returns it as a Java `URI`.
+    ///
+    /// The input is parsed with this parser's validation policy first, then converted to Java's RFC
+    /// 2396-oriented `URI` syntax. URI construction failures are wrapped in `IllegalArgumentException` so
+    /// this string helper follows the same unchecked conversion style as [URI#create(String)].
+    ///
+    /// @param input the URL input string
+    /// @return a Java `URI` representing the parsed URL
+    /// @throws WebURLParseException when the input is not accepted by this parser
+    /// @throws IllegalArgumentException when the parsed URL has no RFC 2396 representation accepted by Java
+    ///                                  `URI`
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default URI toURI(String input) {
+        try {
+            return parse(input).toURI();
+        } catch (URISyntaxException exception) {
+            throw new IllegalArgumentException(exception.getMessage(), exception);
+        }
+    }
+
+    /// Parses an absolute input string and returns it as a Java `URL`.
+    ///
+    /// The input is parsed with this parser's validation policy first, then converted to Java's `URL` type.
+    /// Java [URL] supports only schemes for which the runtime has a URL stream handler, so some valid WHATWG
+    /// URLs cannot be represented as a Java `URL`. Parse failures are wrapped in `MalformedURLException` so
+    /// callers using this URL helper can handle parsing, URI conversion, and URL handler failures through one
+    /// checked exception type.
+    ///
+    /// @param input the URL input string
+    /// @return a Java `URL` representing the parsed URL
+    /// @throws MalformedURLException when the input is not accepted by this parser, when the parsed URL has no
+    ///                               RFC 2396 representation accepted by Java `URI`, or when Java has no URL
+    ///                               handler for the scheme or rejects the URL
+    /// @since 0.3.0
+    @Contract(pure = true)
+    default URL toURL(String input) throws MalformedURLException {
+        try {
+            return parse(input).toURL();
+        } catch (WebURLParseException exception) {
+            throw malformedURL(exception);
+        }
+    }
+
     /// Parses an input string against a base URL string and returns the parsed URL.
     ///
     /// The base string must be a valid absolute URL. The input may be either absolute or relative to that base.
@@ -192,4 +240,14 @@ public sealed interface WebURLParser permits WebURLParserImpl {
     /// @return the parsed URL, or `null` if the input is not accepted by this parser
     @Contract(pure = true)
     @Nullable WebURL tryParseBrowserInput(String input);
+
+    /// Creates a Java `URL` failure that preserves the underlying parsing exception.
+    ///
+    /// @param exception the parsing exception to preserve
+    /// @return a malformed URL exception with `exception` as its cause
+    private static MalformedURLException malformedURL(WebURLParseException exception) {
+        MalformedURLException malformed = new MalformedURLException(exception.getMessage());
+        malformed.initCause(exception);
+        return malformed;
+    }
 }
