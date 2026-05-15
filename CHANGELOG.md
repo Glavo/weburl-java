@@ -7,6 +7,7 @@
 - Removed `WebURL` `getRawUsernameOrEmpty()`, `getRawPasswordOrEmpty()`, `getRawQueryOrEmpty()`,
   and `getRawFragmentOrEmpty()`. Use the nullable Java-style raw getters or the null-free WHATWG-style
   getters instead.
+- Removed `WebURL.Builder.setRawHost()`. Use `setHost()` for URL Standard host input parsing.
 - `WebURL.Builder` now defers parsing-context validation until `build()`, while setters still reject basic
   scheme and port argument errors.
 

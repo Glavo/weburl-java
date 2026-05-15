@@ -82,7 +82,7 @@ public final class WebURLBuilderTest {
 
         WebURL raw = WebURL.newBuilder()
                 .setScheme("https")
-                .setRawHost("example.com")
+                .setHost("example.com")
                 .setRawPath("/a%20b")
                 .setRawQuery("x=a%23b")
                 .setRawFragment("frag%20ment")
@@ -144,7 +144,7 @@ public final class WebURLBuilderTest {
 
         WebURL ipv6 = WebURL.newBuilder()
                 .setScheme("http")
-                .setRawHost("[::1]")
+                .setHost("[::1]")
                 .build();
         assertEquals("http://[::1]/", ipv6.href());
 

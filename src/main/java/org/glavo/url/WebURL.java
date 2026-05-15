@@ -1219,22 +1219,15 @@ public sealed interface WebURL extends Comparable<WebURL>, Serializable
         @Contract("_ -> this")
         WebURL.Builder setRawPassword(@Nullable String password);
 
-        /// Sets the host from decoded text, or removes it when `host` is `null`.
+        /// Sets the host input, or removes it when `host` is `null`.
         ///
         /// Domain hosts are processed with IDNA ToASCII. IPv4 and IPv6 hosts are normalized according to the URL
         /// Standard. For non-special schemes, the host is treated as an opaque host.
         ///
-        /// @param host the decoded host, or `null` to remove it
+        /// @param host the host input, or `null` to remove it
         /// @return this builder
         @Contract("_ -> this")
         WebURL.Builder setHost(@Nullable String host);
-
-        /// Sets the host from serialized text, or removes it when `host` is `null`.
-        ///
-        /// @param host the raw host, or `null` to remove it
-        /// @return this builder
-        @Contract("_ -> this")
-        WebURL.Builder setRawHost(@Nullable String host);
 
         /// Sets the port number.
         ///

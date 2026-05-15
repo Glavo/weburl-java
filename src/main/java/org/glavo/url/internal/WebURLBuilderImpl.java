@@ -51,10 +51,6 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     private boolean passwordTrusted;
     /// Last host input, or `null` when absent.
     private @Nullable String hostInput;
-    /// Whether the last host input was raw serialized text.
-    private boolean hostRaw = true;
-    /// Whether the current host input came from an existing parsed URL.
-    private boolean hostTrusted;
     /// Last port input, or `null` when absent.
     private @Nullable String portInput;
     /// Last path input.
@@ -91,7 +87,6 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
         this.passwordInput = implementation.getRawPassword();
         this.passwordTrusted = true;
         this.hostInput = implementation.getHost();
-        this.hostTrusted = true;
         this.portInput = implementation.getRawPort();
         this.pathInput = implementation.getRawPath();
         this.pathTrusted = true;
@@ -133,16 +128,10 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
         return setPasswordInput(password, true);
     }
 
-    /// Sets the decoded host.
+    /// Sets the host input.
     @Override
     public WebURL.Builder setHost(@Nullable String host) {
-        return setHostInput(host, false);
-    }
-
-    /// Sets the raw host.
-    @Override
-    public WebURL.Builder setRawHost(@Nullable String host) {
-        return setHostInput(host, true);
+        return setHostInput(host);
     }
 
     /// Sets the numeric port.
@@ -248,10 +237,8 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
     }
 
     /// Sets the host input.
-    private WebURL.Builder setHostInput(@Nullable String value, boolean raw) {
+    private WebURL.Builder setHostInput(@Nullable String value) {
         hostInput = value;
-        hostRaw = raw;
-        hostTrusted = false;
         return this;
     }
 
@@ -314,9 +301,6 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
         @Nullable String value = hostInput;
         if (value == null) {
             return;
-        }
-        if (hostRaw && !hostTrusted) {
-            validateRawHost(value);
         }
         parseComponent(value, result, UrlParser.State.HOSTNAME, "host");
     }
@@ -444,24 +428,6 @@ public final class WebURLBuilderImpl implements WebURL.Builder {
             } else {
                 if (predicate.test(codePoint)) {
                     throw invalidComponent(component, null);
-                }
-                index += Character.charCount(codePoint);
-            }
-        }
-    }
-
-    /// Validates raw serialized host text before URL host parsing.
-    private static void validateRawHost(String value) {
-        for (int index = 0; index < value.length(); ) {
-            int codePoint = value.codePointAt(index);
-            if (codePoint == '%') {
-                if (!PercentEncoding.isValidPercentTriplet(value, index, value.length())) {
-                    throw invalidComponent("host", null);
-                }
-                index += 3;
-            } else {
-                if (PercentEncoding.isC0ControlPercentEncode(codePoint) || codePoint == ' ') {
-                    throw invalidComponent("host", null);
                 }
                 index += Character.charCount(codePoint);
             }
