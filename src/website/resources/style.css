@@ -197,13 +197,17 @@ select:focus {
 }
 
 .error-line {
-  min-height: 20px;
+  display: none;
   margin: 0;
-  padding: 10px 16px 0;
   color: var(--error);
   font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 0.82rem;
   overflow-wrap: anywhere;
+}
+
+.error-line:not(:empty) {
+  display: block;
+  padding: 10px 16px 0;
 }
 
 .component-table {
