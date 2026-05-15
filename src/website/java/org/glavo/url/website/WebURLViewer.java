@@ -131,7 +131,6 @@ public final class WebURLViewer {
         addLiveUpdateListener("url-input", WebURLViewer::update);
         addLiveUpdateListener("base-input", WebURLViewer::update);
         addLiveUpdateListener("parser-mode", WebURLViewer::update);
-        markReady();
         update();
     }
 
@@ -431,10 +430,6 @@ public final class WebURLViewer {
             + "  e.addEventListener('change', function () { listener(); });"
             + "}")
     private static native void addLiveUpdateListener(String id, UpdateListener listener);
-
-    /// Marks the viewer as ready.
-    @JSBody(script = "window.WebURLViewer.setReady();")
-    private static native void markReady();
 
     /// Java function type passed to JavaScript as an event callback.
     @JSFunctor

@@ -311,7 +311,6 @@
       teavm.exports.main([]);
     } catch (error) {
       const message = error && error.message ? error.message : String(error);
-      setText("runtime-status", message);
       for (const panel of [
         ["browser-panel", "browser-status", "browser-error"],
         ["weburl-panel", "weburl-status", "weburl-error"],
@@ -331,10 +330,7 @@
     setComparedValue,
     setJavaValue,
     clearValue,
-    renderJsdomURL,
-    setReady() {
-      setText("runtime-status", "WebAssembly ready");
-    }
+    renderJsdomURL
   };
 
   loadTeaVM();
