@@ -73,8 +73,8 @@ public final class WebURLViewer {
             "weburl-java-raw-password",
             "weburl-java-decoded-password",
             "weburl-java-host",
-            "weburl-java-port",
             "weburl-java-raw-port",
+            "weburl-java-port",
             "weburl-java-raw-path",
             "weburl-java-decoded-path",
             "weburl-java-raw-query",
@@ -187,8 +187,8 @@ public final class WebURLViewer {
         setJavaNullableValue("weburl-java-raw-password", url.getRawPassword());
         setJavaNullableValue("weburl-java-decoded-password", url.getPassword());
         setJavaNullableValue("weburl-java-host", url.getHost());
-        setJavaStringValue("weburl-java-port", Integer.toString(url.getPort()));
         setJavaNullableValue("weburl-java-raw-port", url.getRawPort());
+        setJavaStringValue("weburl-java-port", Integer.toString(url.getPort()));
         setJavaStringValue("weburl-java-raw-path", url.getRawPath());
         setJavaStringValue("weburl-java-decoded-path", url.getPath());
         setJavaNullableValue("weburl-java-raw-query", url.getRawQuery());
@@ -217,8 +217,8 @@ public final class WebURLViewer {
             setJavaUnsupportedValue("uri-java-raw-password");
             setJavaUnsupportedValue("uri-java-decoded-password");
             setJavaNullableValue("uri-java-host", uri.getHost());
-            setJavaStringValue("uri-java-port", Integer.toString(uri.getPort()));
             setJavaUnsupportedValue("uri-java-raw-port");
+            setJavaStringValue("uri-java-port", Integer.toString(uri.getPort()));
             setJavaNullableValue("uri-java-raw-path", uri.getRawPath());
             setJavaNullableValue("uri-java-decoded-path", uri.getPath());
             setJavaNullableValue("uri-java-raw-query", uri.getRawQuery());
@@ -248,8 +248,8 @@ public final class WebURLViewer {
         setJavaUnsupportedValue("uri-java-raw-password");
         setJavaUnsupportedValue("uri-java-decoded-password");
         setJavaUnsupportedValue("uri-java-host");
-        setJavaUnsupportedValue("uri-java-port");
         setJavaUnsupportedValue("uri-java-raw-port");
+        setJavaUnsupportedValue("uri-java-port");
         setJavaUnsupportedValue("uri-java-raw-path");
         setJavaUnsupportedValue("uri-java-decoded-path");
         setJavaUnsupportedValue("uri-java-raw-query");

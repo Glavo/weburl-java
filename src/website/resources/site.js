@@ -31,23 +31,23 @@
     "display-string",
     "rfc2396-string",
     "scheme",
-    "raw-authority",
     "decoded-authority",
-    "raw-user-info",
+    "raw-authority",
     "decoded-user-info",
-    "raw-username",
+    "raw-user-info",
     "decoded-username",
-    "raw-password",
+    "raw-username",
     "decoded-password",
+    "raw-password",
     "host",
     "port",
     "raw-port",
-    "raw-path",
     "decoded-path",
-    "raw-query",
+    "raw-path",
     "decoded-query",
-    "raw-fragment",
-    "decoded-fragment"
+    "raw-query",
+    "decoded-fragment",
+    "raw-fragment"
   ];
   const browserValues = new Map();
   const weburlValues = new Map();
