@@ -235,7 +235,7 @@ public final class WebURLViewer {
             setJavaStringValue("uri-java-serialized-url", uri.toString());
             setJavaStringValue("uri-java-ascii-string", uri.toASCIIString());
             setJavaStringValue("uri-java-normalized-string", uri.normalize().toString());
-            setJavaUnsupportedValue("uri-java-display-string");
+            setJavaStringValue("uri-java-display-string", uri.toString());
             setJavaStringValue("uri-java-rfc2396-string", uri.toString());
             setJavaNullableValue("uri-java-scheme", uri.getScheme());
             setJavaNullableValue("uri-java-raw-authority", uri.getRawAuthority());

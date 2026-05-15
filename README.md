@@ -9,6 +9,9 @@
 major browser. This means WebURL parses, normalizes, and serializes URLs exactly the way
 Chrome, Firefox, and Safari do, giving Java applications the same URL behavior as the web platform.
 
+Try the [online Live URL Viewer](https://weburl.glavo.site/) to compare WebURL for Java
+(compiled to WASM with TeaVM) with [jsdom/whatwg-url](https://github.com/jsdom/whatwg-url) and `java.net.URI` directly in the browser.
+
 > **"Web"** in the name refers to WHATWG (The Web Hypertext Application Technology Working Group).
 > Despite the name, WebURL is not limited to `http`/`https` — it handles any URL scheme,
 > including `file`, `ws`, `wss`, `ftp`, `data`, `blob`, `mailto`, `tel`, `urn` and more.
