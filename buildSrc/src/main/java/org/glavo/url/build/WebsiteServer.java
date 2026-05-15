@@ -38,6 +38,7 @@ public final class WebsiteServer {
             .addMapping("html", "text/html; charset=utf-8")
             .addMapping("css", "text/css; charset=utf-8")
             .addMapping("js", "text/javascript; charset=utf-8")
+            .addMapping("mjs", "text/javascript; charset=utf-8")
             .addMapping("wasm", "application/wasm")
             .build();
 

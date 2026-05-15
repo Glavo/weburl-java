@@ -1,6 +1,10 @@
-import "./jsdom-url.js";
-
 (function () {
+  const jsdomURLPromise = import("./jsdom-url.js").then(() => {
+    if (!window.WebURLJsdomURL || typeof window.WebURLJsdomURL.parse !== "function") {
+      throw new Error("jsdom whatwg-url parser is not available.");
+    }
+    return window.WebURLJsdomURL;
+  });
   const referenceFieldIds = [
     "browser-href",
     "browser-origin",
@@ -56,6 +60,7 @@ import "./jsdom-url.js";
   const weburlValues = new Map();
   const weburlJavaValues = new Map();
   const uriJavaValues = new Map();
+  let referenceRenderId = 0;
 
   function byId(id) {
     return document.getElementById(id);
@@ -236,29 +241,52 @@ import "./jsdom-url.js";
     }
   }
 
+  function renderJsdomFailure(error, status) {
+    clearReferenceFields();
+    setState("browser-panel", "error");
+    setText("browser-status", status);
+    setText("browser-error", error && error.message ? error.message : String(error));
+  }
+
   function renderJsdomURL(input, base) {
-    try {
-      const url = window.WebURLJsdomURL.parse(input, base);
-      setState("browser-panel", "ok");
-      setText("browser-status", "Parsed");
-      setText("browser-error", "");
-      setReferenceComponent("href", url.href);
-      setReferenceComponent("origin", url.origin);
-      setReferenceComponent("protocol", url.protocol);
-      setReferenceComponent("username", url.username);
-      setReferenceComponent("password", url.password);
-      setReferenceComponent("host", url.host);
-      setReferenceComponent("hostname", url.hostname);
-      setReferenceComponent("port", url.port);
-      setReferenceComponent("pathname", url.pathname);
-      setReferenceComponent("search", url.search);
-      setReferenceComponent("hash", url.hash);
-    } catch (error) {
-      clearReferenceFields();
-      setState("browser-panel", "error");
-      setText("browser-status", "Rejected");
-      setText("browser-error", error && error.message ? error.message : String(error));
-    }
+    const renderId = ++referenceRenderId;
+    clearReferenceFields();
+    setState("browser-panel", "loading");
+    setText("browser-status", "Loading");
+    setText("browser-error", "");
+
+    jsdomURLPromise.then(
+      parser => {
+        if (renderId !== referenceRenderId) {
+          return;
+        }
+
+        try {
+          const url = parser.parse(input, base);
+          setState("browser-panel", "ok");
+          setText("browser-status", "Parsed");
+          setText("browser-error", "");
+          setReferenceComponent("href", url.href);
+          setReferenceComponent("origin", url.origin);
+          setReferenceComponent("protocol", url.protocol);
+          setReferenceComponent("username", url.username);
+          setReferenceComponent("password", url.password);
+          setReferenceComponent("host", url.host);
+          setReferenceComponent("hostname", url.hostname);
+          setReferenceComponent("port", url.port);
+          setReferenceComponent("pathname", url.pathname);
+          setReferenceComponent("search", url.search);
+          setReferenceComponent("hash", url.hash);
+        } catch (error) {
+          renderJsdomFailure(error, "Rejected");
+        }
+      },
+      error => {
+        if (renderId === referenceRenderId) {
+          renderJsdomFailure(error, "Failed");
+        }
+      }
+    );
   }
 
   async function loadTeaVM() {
