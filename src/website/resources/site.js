@@ -96,7 +96,15 @@
     setText(id, display(value));
   }
 
+  function panelState(id) {
+    const element = byId(id);
+    return element ? element.dataset.state || "" : "";
+  }
+
   function updateComparisonStates() {
+    const referenceLoading = panelState("browser-panel") === "loading";
+    const weburlLoading = panelState("weburl-panel") === "loading";
+
     for (const name of componentNames) {
       const browserId = `browser-${name}`;
       const weburlId = `weburl-${name}`;
@@ -106,19 +114,28 @@
       const weburlValue = weburlValues.get(name);
       const valuesMatch = hasBrowserValue && hasWebURLValue && browserValue === weburlValue;
 
-      setValueState(browserId, comparisonState(browserValue, hasBrowserValue, hasWebURLValue, valuesMatch));
-      setValueState(weburlId, comparisonState(weburlValue, hasWebURLValue, hasBrowserValue, valuesMatch));
+      setValueState(
+        browserId,
+        comparisonState(browserValue, hasBrowserValue, hasWebURLValue, valuesMatch, weburlLoading)
+      );
+      setValueState(
+        weburlId,
+        comparisonState(weburlValue, hasWebURLValue, hasBrowserValue, valuesMatch, referenceLoading)
+      );
     }
   }
 
-  function comparisonState(value, hasValue, hasCounterpart, valuesMatch) {
+  function comparisonState(value, hasValue, hasCounterpart, valuesMatch, counterpartLoading) {
     if (!hasValue) {
       return "";
     }
     if (value === "") {
       return "empty";
     }
-    return hasCounterpart && valuesMatch ? "match" : "mismatch";
+    if (!hasCounterpart) {
+      return counterpartLoading ? "match" : "mismatch";
+    }
+    return valuesMatch ? "match" : "mismatch";
   }
 
   function setReferenceComponent(name, value) {
