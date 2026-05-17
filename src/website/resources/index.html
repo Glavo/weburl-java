@@ -10,12 +10,14 @@
   <script defer src="site.js"></script>
   <script>
       var _hmt = _hmt || [];
-      (function() {
-          var hm = document.createElement("script");
-          hm.src = "https://hm.baidu.com/hm.js?9deac5f4d146e7472e321a80592b4785";
-          var s = document.getElementsByTagName("script")[0];
-          s.parentNode.insertBefore(hm, s);
-      })();
+      if (location.hostname === "weburl.glavo.site") {
+          (function() {
+              var hm = document.createElement("script");
+              hm.src = "https://hm.baidu.com/hm.js?9deac5f4d146e7472e321a80592b4785";
+              var s = document.getElementsByTagName("script")[0];
+              s.parentNode.insertBefore(hm, s);
+          })();
+      }
   </script>
 </head>
 <body>
