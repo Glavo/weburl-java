@@ -13,6 +13,7 @@ plugins {
     id("org.glavo.load-maven-publish-properties") version "0.1.0"
     id("de.undercouch.download") version "5.7.0"
     id("org.teavm") version "0.14.0"
+    id("org.glavo.gradle-wrapper-neo") version "0.2.0"
 }
 
 group = "org.glavo"
