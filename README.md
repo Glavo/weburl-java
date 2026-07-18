@@ -137,7 +137,7 @@ Gradle:
 
 ```kotlin
 dependencies {
-    implementation("org.glavo:weburl:0.1.0")
+    implementation("org.glavo:weburl:0.3.0")
 }
 ```
 
@@ -147,7 +147,7 @@ Maven:
 <dependency>
     <groupId>org.glavo</groupId>
     <artifactId>weburl</artifactId>
-    <version>0.1.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
